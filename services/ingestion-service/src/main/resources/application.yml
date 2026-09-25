@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ingestion-service
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+server:
+  port: ${SERVER_PORT:8081}
+
+couchdb:
+  url: ${COUCHDB_URL:http://localhost:5984}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
