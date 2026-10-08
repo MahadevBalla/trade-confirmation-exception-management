@@ -1,0 +1,418 @@
+Trade Confirmation Exception Management Platform
+Student-Facing Capstone Project Specification
+Generic educational brief for Java backend + React frontend delivery
+Backend
+Frontend
+Messaging
+NoSQL Store
+Java / Spring Boot
+React + TypeScript
+Apache Kafka
+Apache CouchDB
+
+Project intent
+Build an event-driven platform that consumes synthetic trade events, enriches and validates them, generates confirmations where possible, captures exceptions where not possible, classifies root causes, links issues to remediation work items, and gives users a dashboard-driven operating view.
+
+Document status: Externally shareable educational specification | Version 1.0 | Prepared for university capstone use
+
+1. Quick answers on open-source technology choices
+Recommended stack
+Use Apache Kafka for event streaming and Apache CouchDB for the NoSQL document database. Kafka is an Apache Software Foundation project under Apache License 2.0, and CouchDB is an Apache project with native JSON/HTTP APIs and Apache License 2.0. MongoDB Community Server is usable for many internal learning projects, but its current SSPL license is not OSI-approved according to MongoDB’s own FAQ, so it is not the cleanest choice for a “fully open-source” university brief.
+Area
+Primary recommendation
+Why
+Alternatives
+Decision
+Messaging / event streaming
+Apache Kafka
+Open-source distributed event streaming platform; broad Java ecosystem; durable event log; replay-friendly; familiar in industry and academia.
+Pulsar, RabbitMQ, NATS JetStream, ActiveMQ Artemis, RocketMQ, Redpanda
+Use Kafka for MVP and stretch.
+NoSQL document store
+Apache CouchDB
+Open-source Apache project; JSON-native; HTTP API; simple local deployment; document model fits trades, confirmations, exceptions, audit events.
+FerretDB over PostgreSQL if MongoDB API compatibility is desired; Cassandra for wide-column scale; Couchbase CE has license constraints; MongoDB Community uses SSPL.
+Use CouchDB for fully open-source stance.
+Work-item tracking
+Mock issue tracker service
+Keeps the project generic and avoids external commercial dependency.
+GitHub Issues API, Redmine, Gitea, or local mock.
+MVP uses mock work-item entity.
+2. Business problem
+Financial institutions process large volumes of post-trade confirmations. A confirmation must reflect the agreed economic and non-economic terms of a trade. When trade data is incomplete, inconsistent, delayed, or cannot be matched to a valid confirmation template, the trade becomes an exception and requires investigation.
+This capstone asks students to design a generic educational platform that does not submit trades from a UI. Instead, trade messages arrive through an event broker, are processed by backend services, and are surfaced in dashboards after automated enrichment, validation, confirmation generation, and exception classification have been attempted.
+3. Learning objectives
+Practice event-driven system design with producers, consumers, topics, replay, dead-letter queues, idempotency, and audit trails.
+Model realistic-but-synthetic post-trade messages using FpML-inspired JSON rather than full FpML XML.
+Build a Java backend with clean service boundaries and a React frontend focused on operational workflows and dashboards.
+Design exception taxonomies, recommendation rules, and work-item linkage while leaving room for student innovation.
+Demonstrate non-functional thinking: scalability, observability, resilience, security, auditability, and performance.
+4. Scope summary
+In scope
+Simplified for MVP
+Out of scope
+Synthetic event ingestion, enrichment, validation, confirmation generation, exception capture, classification, work items, dashboards, audit/replay.
+One or two product families only; mock reference data; mock confirmation templates; mock work-item service; representative throughput tests.
+Real trading, real counterparties, real market data, legal document generation, regulatory reporting, or institution-specific workflows.
+Kafka topics and CouchDB persistence.
+Local Docker Compose deployment.
+Production cloud architecture or enterprise integration.
+FpML-inspired JSON.
+Subset of fields and simplified validation rules.
+Full FpML XML schema implementation or legal confirmation language.
+
+5. Architecture overview
+The architecture is event-driven: trades enter through the broker, services react to topic events, and the UI observes outcomes rather than creating trades directly. The diagram uses generic labels only.
+Synthetic Trade Producer / Seed Loader
+↓
+
+
+
+
+
+
+
+FpML-inspired JSON events
+→
+
+Mock Reference Data instrument / counterparty / templates
+
+Confirmation Generator
+
+
+
+Apache Kafka Event Broker
+Java Ingestion Service
+CouchDB trades + audit
+Enrichment Service
+STP Validation & Rules Engine
+OK →
+
+→
+React + TypeScript Operations UI
+Topics: trade.raw, trade.accepted, trade.enriched, stp.validated, confirmation.generated, exception.created, exception.classified, workitem.linked, manual.review.required, deadletter.trade
+
+
+
+Fail ↓
+Exception Service
+Classification & Recommendation Engine
+Work Item Linker Mock tracker
+
+
+
+
+
+
+
+
+Manual Review Queue
+↑
+Dead-letter Queue
+↔
+Replay Controls
+↔
+Observability: metrics / logs / traces
+↔
+Audit Trail immutable events
+
+
+
+
+
+
+
+
+
+
+
+Figure 1. Event-driven architecture: the MVP demonstrates the full flow on a representative subset; stretch goals expand scale, automation, self-healing, and analytics. Diagram created programmatically for this document.
+
+6. Technology selection rationale
+6.1 Messaging platform comparison
+Technology
+Open-source posture
+Fit for capstone
+Notes
+Recommendation
+Apache Kafka
+Apache License 2.0
+Excellent
+Durable event log, replay, Java client ecosystem, broad learning value.
+Primary
+Apache Pulsar
+Apache License 2.0
+Good
+Strong messaging/streaming capabilities, but more concepts and moving parts for a first capstone.
+Stretch/alternative
+RabbitMQ
+Open-source client; broker widely used
+Good
+Great queueing model; event-log replay is not the central design model.
+Alternative
+NATS JetStream
+Open source
+Good
+Very lightweight and easy to operate; fewer mainstream post-trade event-streaming examples than Kafka.
+Alternative
+ActiveMQ Artemis
+Apache License 2.0
+Good
+Multi-protocol broker and JMS support; less aligned to event-log and replay teaching goal than Kafka.
+Alternative
+Apache RocketMQ
+Apache License 2.0
+Good
+Strong messaging platform and Java SDK; less common in many university Java/Kafka curricula.
+Alternative
+Redpanda
+BSL/RCL source-available model
+Good technically
+Kafka-compatible, but not the cleanest fit where “fully open source” is a hard requirement.
+Do not use as primary
+6.2 NoSQL database comparison
+Database
+Open-source posture
+Fit for capstone
+Notes
+Recommendation
+Apache CouchDB
+Apache License 2.0
+Excellent
+JSON-native, HTTP API, simple document model, stores trades/exceptions/audit naturally.
+Primary
+MongoDB Community Server
+SSPL; not OSI-approved
+Good developer ergonomics
+Can be used in many learning settings, but avoid for a fully open-source brief.
+Not primary
+FerretDB + PostgreSQL
+Apache-licensed MongoDB-compatible alternative
+Good
+Useful if students want MongoDB driver compatibility while avoiding SSPL. Adds PostgreSQL dependency.
+Alternative
+Apache Cassandra
+Apache project
+Medium
+Excellent scale story, but query/data-model design is more complex for this capstone.
+Stretch/scale study
+ScyllaDB
+Source-available from 2025 stream; final OSS AGPL 6.2
+Medium
+Strong performance story, but license direction is not ideal for “fully open source.”
+Not primary
+Couchbase Community Edition
+Community license with restrictions
+Medium
+Useful document DB, but community license and node/feature restrictions complicate sharing.
+Not primary
+7. Functional requirements
+ID
+Requirement
+Expected student interpretation
+FR1
+Event intake
+Accept synthetic trade messages only via Kafka or equivalent broker topic. No direct UI trade creation.
+FR2
+Schema validation
+Validate JSON structure, mandatory identifiers, party references, product type, economic fields, and lifecycle event type.
+FR3
+Persistence
+Store raw message, normalized trade, processing status, event history, audit trail, confirmation output, exception records, and work-item links.
+FR4
+Enrichment
+Enrich trades from mock reference datasets: counterparty details, instrument metadata, template catalogue, product configuration, and standing data.
+FR5
+STP validation
+Determine whether a trade can proceed straight through to confirmation generation.
+FR6
+Confirmation generation
+Generate a simplified confirmation representation as HTML, text, or PDF-like output using a template selected from mock data.
+FR7
+Exception capture
+Create one or more structured exceptions for missing data, template gaps, business-rule failures, technical processing errors, or matching issues.
+FR8
+Classification
+Classify exceptions into themes and sub-themes; record confidence or reason-code evidence.
+FR9
+Recommendation
+Suggest next action, likely owner queue, difficulty, priority, and whether replay may help.
+FR10
+Work-item linking
+Create or link a generic work item for defects, enhancements, data fixes, template fixes, or manual review.
+FR11
+UI dashboards
+Provide views for trade lifecycle, exceptions, aged items, root-cause themes, STP rate, replay queue, and audit history.
+FR12
+Replay and DLQ
+Support controlled replay of failed messages and route irrecoverable messages to a dead-letter topic with diagnostic context.
+8. MVP scope
+MVP philosophy
+Keep the MVP small but end-to-end. It should prove the event-driven pattern, canonical message model, STP/exception branch, dashboard, audit, replay, and deployment story without asking students to solve every product, workflow, or AI problem.
+One product family, for example FX Option or Equity Swap-like synthetic messages.
+Three Kafka topics minimum: raw trades, processed outcomes, and dead-letter events. More topics are encouraged if useful.
+CouchDB databases/documents for trades, confirmations, exceptions, work items, reference data, and audit events.
+Rule-based enrichment and validation using mock CSV/JSON reference data.
+At least six exception categories and ten sample exception scenarios.
+Basic classification using deterministic rules; optional scoring is stretch.
+Mock work-item linking with locally generated work item IDs.
+React dashboard with summary cards, trade detail, exception list, and manual review screen.
+Audit trail and replay button for selected safe scenarios.
+Representative load test with a subset volume, plus written explanation of how the architecture scales toward the target NFRs.
+9. Stretch goals
+Multiple product families and configurable product-specific mandatory fields.
+Kafka topic partitioning strategy, consumer groups, exactly-once or effectively-once processing discussion, and idempotent writes.
+Similarity-based clustering of recurring exceptions and automated theme recommendation.
+Auto-commentary templates for recurring exception types.
+Self-healing for transient enrichment failures using retry and replay policies.
+Advanced dashboards: STP burn-down, top root causes, owner queue, SLA risk, aging, and remediation progress.
+Generic issue tracker integration using an open-source tool or mocked REST API.
+Containerized integration tests and performance tests that simulate peak-hour bursts.
+Security model with roles for operations user, supervisor, and system administrator.
+Optional PDF generation and document comparison for confirmation outputs.
+10. FpML-inspired JSON canonical message model
+Students should not implement full FpML XML. Instead, they should borrow FpML’s ideas: reusable building blocks, common naming conventions, product-specific sections, party/trade identifiers, economics, lifecycle events, and confirmation status. The goal is a teachable JSON model that remains close enough to post-trade concepts to be realistic.
+{   "messageHeader": {     "messageId": "MSG-000001",     "correlationId": "CORR-10001",     "eventType": "NEW_TRADE",     "schemaVersion": "capstone-fpml-json-1.0",     "createdTimestamp": "2026-01-15T10:30:00Z"   },   "trade": {     "tradeId": "TRD-10001",     "sourceSystemTradeId": "SRC-77881",     "productType": "FX_OPTION",     "tradeDate": "2026-01-15",     "effectiveDate": "2026-01-17",     "maturityDate": "2026-04-17",     "parties": [       { "partyRole": "BANK", "partyId": "PTY-BANK-001" },       { "partyRole": "COUNTERPARTY", "partyId": "PTY-CP-101" }     ],     "economics": {       "notionalAmount": 1000000,       "notionalCurrency": "USD",       "buySell": "BUY",       "optionType": "CALL",       "strike": 1.085,       "underlier": "EUR/USD",       "premiumAmount": 12000,       "premiumCurrency": "USD"     },     "nonEconomicTerms": {       "jurisdiction": "GENERIC",       "confirmationMethod": "ELECTRONIC",       "templateHint": "FX_OPTION_STANDARD"     }   } }
+Tip: students may add fields, but every new field should have a reason: validation, enrichment, confirmation generation, exception classification, audit, or reporting.
+11. Tips for identifying and modelling fields
+Start from the confirmation question: What would both parties need to agree on for this trade? Those fields belong in economics or non-economic terms.
+Separate identifiers from economics. Trade ID, correlation ID, message ID, party ID, and account ID are not product economics, but they are essential for traceability.
+Distinguish mandatory from optional by product type. A strike is mandatory for an option but not for every trade type.
+Record provenance. For enriched fields, store source, timestamp, and whether the value was supplied, derived, or defaulted.
+Design for exceptions. If a missing value should create a work item, it deserves a clear field name and reason code.
+Avoid overfitting to one sample. Model common fields globally, product-specific fields in a product section, and derived/temporary values separately.
+Prefer explicit units and currencies. Use amount + currency, date + convention, rate + rate type, and quantity + unit where appropriate.
+Keep schema evolution in mind. Include schemaVersion and avoid breaking existing sample messages when adding new optional fields.
+Use FpML as inspiration, not a copy. Borrow concepts such as trade header, party trade identifiers, product views, and confirmation status, but keep JSON small and student-friendly.
+12. Exception categories and recommendation logic
+Category
+Example trigger
+Likely owner queue
+Recommendation hint
+MVP?
+Missing economic data
+Strike, dividend, coupon, notional, rate, or premium missing
+Data remediation
+Find source field; replay after update
+Yes
+Missing static/reference data
+Counterparty, instrument, template eligibility, jurisdiction missing
+Reference data
+Fix reference record; retry enrichment
+Yes
+Template issue
+No valid template or product/template mismatch
+Template maintenance
+Create template work item
+Yes
+Business rule failure
+Client/product not eligible for STP
+Operations review
+Manual review or rule update
+Yes
+Technical processing failure
+Enrichment timeout, parse failure, duplicate event
+Technology support
+Retry/replay; DLQ if repeat
+Yes
+Counterparty/matching dispute
+Economic or non-economic discrepancy
+Operations review
+Compare terms; request correction
+Yes
+Legal/documentation gap
+Missing clause or bespoke wording
+Specialist review
+Route to specialist queue
+Stretch
+False-positive confirmable event
+Event incorrectly marked confirmable
+Rules owner
+Tune classification rules
+Stretch
+Recommendation logic should combine at least four inputs: operational impact, age/SLA risk, exception volume, and resolution difficulty. Students may optionally add automation potential or confidence score. The MVP can use transparent rules; stretch goals can introduce clustering, similarity search, or machine-learning-assisted classification.
+13. Non-functional requirements
+NFR
+Target
+MVP demonstration expectation
+End-to-end STP processing SLA
+10 seconds from trade intake to confirmation generated or exception recorded
+Measure on representative local dataset and show p50/p95 results.
+Daily volume design target
+1,000,000 transactions per day
+Do not need full-volume local proof; provide partitioning, consumer, persistence, and backpressure design.
+Peak hourly design target
+100,000 transactions per hour
+Demonstrate smaller burst and explain extrapolation limits.
+Scalability
+Horizontal consumer scaling and partition-aware design
+Document topic partition strategy and idempotency key.
+Resiliency
+Retry, DLQ, replay, no silent loss
+Show failed messages moving to DLQ and controlled replay.
+Auditability
+Every status transition and manual action captured
+Show audit timeline in UI or API.
+Observability
+Metrics, logs, traces/correlation IDs
+Expose basic metrics endpoint and structured logs.
+Security
+Role-aware UI/API and safe synthetic data only
+Basic authentication/authorization is sufficient for MVP.
+14. Delivery expectations
+A Git repository with clear README, architecture notes, setup instructions, and sample data.
+Docker Compose for local Kafka, CouchDB, backend services, and frontend where feasible.
+Automated unit tests for validation/classification rules and at least one integration-style test for event flow.
+A demo script showing happy path, missing data, template gap, technical failure, replay, work-item link, and dashboard summary.
+A short engineering report covering assumptions, trade-offs, MVP limitations, and stretch roadmap.
+15. Evaluation criteria
+Dimension
+Weight guidance
+What good looks like
+Architecture and event flow
+20%
+Clear event contracts, topic design, service boundaries, replay/DLQ, and idempotency.
+Backend implementation
+20%
+Clean Java services, validation, enrichment, persistence, and auditable state changes.
+Frontend and user workflow
+15%
+Useful React dashboards, filters, drilldowns, and manual review flow.
+Data modelling
+15%
+Coherent FpML-inspired JSON, field rationale, schema versioning, and exception-friendly design.
+Quality engineering
+15%
+Tests, observability, error handling, Docker setup, and representative performance evidence.
+Innovation and communication
+15%
+Thoughtful recommendations, prioritization logic, stretch goals, demo narrative, and documentation.
+16. Sample datasets
+Synthetic trades: at least 500 records for MVP; include valid, missing-field, invalid-reference, missing-template, duplicate, malformed, and delayed examples.
+Mock reference data: counterparties, instruments, product eligibility, template catalogue, and basic SLA/priority configuration.
+Expected outcomes: a small labelled dataset that states whether each sample should STP, generate an exception, or enter dead-letter handling.
+Dashboard seed data: aged exceptions, root-cause categories, work-item statuses, and replay history.
+17. Implementation guardrails
+Do not hard-code all answers; make validation and classification rules inspectable and extendable.
+Do not build a UI trade-entry screen; trade intake is event/message-driven only.
+Do not include real client, bank, trade, or proprietary system data.
+Do not overbuild workflow orchestration in MVP; keep work-item handling generic and mockable.
+Do not treat AI as a substitute for data modelling; classification must be explainable.
+18. Source notes
+The specification is generic and educational. It intentionally excludes proprietary names, internal systems, real trade data, and institution-specific operating procedures. Technology facts below are based on public project documentation.
+[1] Apache Kafka. Kafka describes itself as an open-source distributed event streaming platform and lists throughput, scalability, durable storage, and stream-processing capabilities. https://kafka.apache.org/
+[2] Apache License 2.0. Apache states that ASF packages are implicitly licensed under Apache License 2.0 unless otherwise stated. https://www.apache.org/licenses/LICENSE-2.0.html
+[3] MongoDB SSPL FAQ. MongoDB states Community Server releases after Oct. 16, 2018 use SSPL and that SSPL has not been OSI approved. https://www.mongodb.com/legal/licensing/server-side-public-license/faq
+[4] Apache CouchDB. CouchDB states it is JSON-native, uses HTTP/JSON, supports clustering, and is an open source Apache project licensed under Apache License 2.0. https://couchdb.apache.org/
+[5] FpML confirmation view overview. FpML describes reusable building blocks, shared definitions, views, and a confirmation view for precise contract details. https://www.fpml.org/spec/fpml-5-8-9-rec-2/html/confirmation/fpml-5-8-intro-2.html
+[6] FpML confirmationStatus. FpML confirmationStatus provides statuses such as matched, mismatched, unmatched, or alleged. https://www.fpml.org/spec/fpml-5-5-1-wd-1/html/confirmation/schemaDocumentation/schemas/fpml-confirmation-processes-5-5_xsd/elements/confirmationStatus.html
+[7] FpML PartyTradeIdentifier. FpML defines party trade identifiers and link identifiers for associating related trades. https://www.fpml.org/spec/fpml-5-12-4-rec-1/html/reporting/schemaDocumentation/schemas/fpml-doc-5-12_xsd/complexTypes/PartyTradeIdentifier.html
+[8] NATS documentation. NATS describes itself as an open-source data layer and includes JetStream persistence, replay, clustering, and high availability. https://docs.nats.io/
+[9] RabbitMQ Java Client. RabbitMQ Java client documentation states the client is open source and triple licensed. https://www.rabbitmq.com/client-libraries/java-client
+[10] Apache Cassandra downloads. Apache Cassandra publishes server and Java driver releases under the Apache project. https://cassandra.apache.org/_/download.html
+[11] ScyllaDB licensing update. ScyllaDB states ScyllaDB OSS AGPL 6.2 is the final OSS AGPL release and newer Enterprise release stream moves to source available. https://www.scylladb.com/2024/12/18/why-were-moving-to-a-source-available-license/
+[12] Couchbase editions. Couchbase documents Enterprise and Community editions and Community Edition deployment limitations. https://docs.couchbase.com/server/current/introduction/editions.html
+[13] Redpanda licenses. Redpanda documents BSL for core and RCL for enterprise features. https://github.com/redpanda-data/redpanda/tree/dev/licenses
+[14] Apache Artemis. Artemis documents multi-protocol messaging and Apache License 2.0. https://artemis.apache.org/
+[15] Apache RocketMQ. RocketMQ describes itself as an Apache top-level open-source asynchronous communication engine with Java SDK support. https://rocketmq.apache.org/
+[16] FerretDB. FerretDB describes itself as an open-source MongoDB alternative using PostgreSQL with DocumentDB extension. https://docs.ferretdb.io/
