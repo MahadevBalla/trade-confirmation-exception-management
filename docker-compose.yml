@@ -1,19 +1,39 @@
 # Local dev environment: Kafka (KRaft, single broker), Kafka UI, CouchDB,
 # and the five backend microservices + frontend.
 #
+# Phase 1 & 2 DevOps hardening (feat/devops-infra):
+#   - kafka:     health check added (broker API versions check)
+#   - couchdb:   health check added (_up endpoint poll)
+#   - kafka-init: one-shot container that creates all 10 topics with 3 partitions
+#   - couchdb-init: one-shot container that provisions system + app databases
+#   - All services: strict depends_on with service_healthy / service_completed_successfully
+#   - All services: Spring Actuator health check via wget
+#   - Explicit tcem-network for internal DNS resolution between containers
+#
 # Usage:
 #   docker compose up -d kafka kafka-ui couchdb      # just infra, run services from your IDE
-#   docker compose up -d --build                      # everything, containerized
-#
-# Individual services can be commented out while you're developing them
-# locally in an IDE (run against the infra containers via localhost ports).
+#   docker compose up -d --build                      # everything, containerised
 
 name: tcem
 
+networks:
+  tcem-network:
+    driver: bridge
+
+volumes:
+  couchdb_data:
+
 services:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ─────────────────────────────────────────────────────────────────────────────
+
   kafka:
     image: apache/kafka:3.8.0
     container_name: tcem-kafka
+    networks:
+      - tcem-network
     ports:
       - "9092:9092"
     environment:
@@ -26,19 +46,57 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:19093
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # Auto-create disabled: kafka-init provisions all topics explicitly with 3 partitions
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       CLUSTER_ID: "tcem-capstone-cluster-01"
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 10
+      start_period: 20s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # KAFKA TOPIC INITIALIZER (Phase 2)
+  # One-shot: creates all 10 platform topics with 3 partitions each.
+  # Exits with code 0 on success; services wait on service_completed_successfully.
+  # ─────────────────────────────────────────────────────────────────────────────
+  kafka-init:
+    image: apache/kafka:3.8.0
+    container_name: tcem-kafka-init
+    networks:
+      - tcem-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint:
+      - "/bin/bash"
+      - "-c"
+      - |
+        set -e
+        echo '=== [kafka-init] Kafka broker is healthy, provisioning topics... ==='
+        for topic in trade.raw trade.accepted trade.enriched stp.validated confirmation.generated exception.created exception.classified workitem.linked manual.review.required deadletter.trade; do
+          echo "  Creating topic: $$topic"
+          /opt/kafka/bin/kafka-topics.sh \
+            --bootstrap-server kafka:19092 \
+            --create \
+            --if-not-exists \
+            --topic "$$topic" \
+            --partitions 3 \
+            --replication-factor 1
+        done
+        echo '=== [kafka-init] All topics provisioned. Current topic list: ==='
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --list
+        echo '=== [kafka-init] Done. ==='
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: tcem-kafka-ui
+    networks:
+      - tcem-network
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     ports:
       - "${KAFKA_UI_PORT:-8080}:8080"
     environment:
@@ -48,6 +106,8 @@ services:
   couchdb:
     image: couchdb:3.3
     container_name: tcem-couchdb
+    networks:
+      - tcem-network
     ports:
       - "5984:5984"
     environment:
@@ -55,85 +115,239 @@ services:
       COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
     volumes:
       - couchdb_data:/opt/couchdb/data
+    healthcheck:
+      # Poll the CouchDB /_up endpoint which returns 200 once the node is fully initialised
+      test: ["CMD-SHELL", "curl -f -s -u ${COUCHDB_USER:-admin}:${COUCHDB_PASSWORD:-password} http://localhost:5984/_up || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # COUCHDB DATABASE INITIALIZER (Phase 2)
+  # One-shot: creates system DBs + all 7 application databases.
+  # Idempotent: 201 = created, 412 = already exists (both acceptable).
+  # ─────────────────────────────────────────────────────────────────────────────
+  couchdb-init:
+    image: curlimages/curl:8.6.0
+    container_name: tcem-couchdb-init
+    networks:
+      - tcem-network
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    environment:
+      COUCHDB_USER: ${COUCHDB_USER:-admin}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - |
+        set -e
+        AUTH="$$COUCHDB_USER:$$COUCHDB_PASSWORD"
+        BASE="http://couchdb:5984"
+        echo "=== [couchdb-init] CouchDB is healthy, provisioning databases... ==="
+        provision_db() {
+          STATUS=$$(curl -s -o /dev/null -w "%{http_code}" -u "$$AUTH" -X PUT "$$BASE/$$1")
+          case "$$STATUS" in
+            201) echo "  [CREATED] $$1" ;;
+            412) echo "  [EXISTS]  $$1" ;;
+            *)   echo "  [WARN]    $$1 returned HTTP $$STATUS" ;;
+          esac
+        }
+        echo "--- System databases ---"
+        provision_db "_users"
+        provision_db "_replicator"
+        provision_db "_global_changes"
+        echo "--- Application databases ---"
+        provision_db "trades"
+        provision_db "confirmations"
+        provision_db "exceptions"
+        provision_db "work-items"
+        provision_db "audit-events"
+        provision_db "stp-metrics"
+        provision_db "dlq-entries"
+        echo ""
+        echo "=== [couchdb-init] Provisioning complete. All databases: ==="
+        curl -s -u "$$AUTH" "$$BASE/_all_dbs"
+        echo ""
+        echo "=== [couchdb-init] Done. ==="
+
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # BACKEND MICROSERVICES
+  # All services wait for infrastructure to be fully healthy AND init containers
+  # to have completed successfully before starting.
+  # ─────────────────────────────────────────────────────────────────────────────
 
   ingestion-service:
     build:
       context: ./services
       dockerfile: ingestion-service/Dockerfile
     container_name: tcem-ingestion-service
+    networks:
+      - tcem-network
     depends_on:
-      - kafka
-      - couchdb
+      kafka:
+        condition: service_healthy
+      couchdb:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      couchdb-init:
+        condition: service_completed_successfully
     ports:
       - "${INGESTION_SERVICE_PORT:-8081}:8081"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       COUCHDB_URL: http://couchdb:5984
+      COUCHDB_USER: ${COUCHDB_USER:-admin}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
   enrichment-service:
     build:
       context: ./services
       dockerfile: enrichment-service/Dockerfile
     container_name: tcem-enrichment-service
+    networks:
+      - tcem-network
     depends_on:
-      - kafka
-      - couchdb
+      kafka:
+        condition: service_healthy
+      couchdb:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      couchdb-init:
+        condition: service_completed_successfully
     ports:
       - "${ENRICHMENT_SERVICE_PORT:-8082}:8082"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       COUCHDB_URL: http://couchdb:5984
+      COUCHDB_USER: ${COUCHDB_USER:-admin}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
   validation-service:
     build:
       context: ./services
       dockerfile: validation-service/Dockerfile
     container_name: tcem-validation-service
+    networks:
+      - tcem-network
     depends_on:
-      - kafka
-      - couchdb
+      kafka:
+        condition: service_healthy
+      couchdb:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      couchdb-init:
+        condition: service_completed_successfully
     ports:
       - "${VALIDATION_SERVICE_PORT:-8083}:8083"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       COUCHDB_URL: http://couchdb:5984
+      COUCHDB_USER: ${COUCHDB_USER:-admin}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
   exception-service:
     build:
       context: ./services
       dockerfile: exception-service/Dockerfile
     container_name: tcem-exception-service
+    networks:
+      - tcem-network
     depends_on:
-      - kafka
-      - couchdb
+      kafka:
+        condition: service_healthy
+      couchdb:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      couchdb-init:
+        condition: service_completed_successfully
     ports:
       - "${EXCEPTION_SERVICE_PORT:-8084}:8084"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       COUCHDB_URL: http://couchdb:5984
+      COUCHDB_USER: ${COUCHDB_USER:-admin}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
   workitem-service:
     build:
       context: ./services
       dockerfile: workitem-service/Dockerfile
     container_name: tcem-workitem-service
+    networks:
+      - tcem-network
     depends_on:
-      - kafka
-      - couchdb
+      kafka:
+        condition: service_healthy
+      couchdb:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      couchdb-init:
+        condition: service_completed_successfully
     ports:
       - "${WORKITEM_SERVICE_PORT:-8085}:8085"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       COUCHDB_URL: http://couchdb:5984
+      COUCHDB_USER: ${COUCHDB_USER:-admin}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # FRONTEND
+  # ─────────────────────────────────────────────────────────────────────────────
 
   frontend:
     build:
       context: ./frontend
     container_name: tcem-frontend
+    networks:
+      - tcem-network
     depends_on:
-      - ingestion-service
+      ingestion-service:
+        condition: service_healthy
     ports:
       - "${FRONTEND_PORT:-3000}:80"
-
-volumes:
-  couchdb_data:
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
