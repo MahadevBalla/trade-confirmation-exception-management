@@ -16,9 +16,8 @@
 FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
 WORKDIR /reactor
 
-COPY pom.xml pom.xml
-COPY common-lib common-lib
-COPY enrichment-service enrichment-service
+# Copy reactor workspace (all module poms are needed for Maven project discovery)
+COPY . .
 
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -B -pl common-lib,enrichment-service -am -DskipTests package
