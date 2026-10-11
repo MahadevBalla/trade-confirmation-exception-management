@@ -1,6 +1,6 @@
 # Contributing / Git Workflow
 
-Team of 6, no task assignments yet - this is the process to follow once they exist.
+Team of 6. Task ownership and responsibilities are documented in [`docs/team-roles.md`](./docs/team-roles.md) and [`docs/project-status.md`](./docs/project-status.md).
 
 ## Branching
 
@@ -10,27 +10,31 @@ Team of 6, no task assignments yet - this is the process to follow once they exi
   ```txt
   git checkout main
   git pull
-  git checkout -b <yourname>/<short-description>
-  # e.g. priya/enrichment-service-couchdb-client
-  # e.g. rahul/frontend-exception-queue-view
+  git checkout -b feat/<short-description>
+  # e.g. feat/enrichment-service-couchdb-client
+  # e.g. feat/frontend-exception-queue-view
+  # e.g. fix/validation-fingerprint-deduplication
   ```
 
+- Use descriptive, task-oriented branch names. Recommended prefixes are `feat/`, `fix/`, `test/`, `refactor/`, `docs/`, and `chore/`, depending on the type of work.
 - Keep branches scoped to one service or one concern where possible - it makes review easier and avoids stepping on teammates working in other services.
 
 ## Commits
 
-- Small, focused commits with a clear message. Conventional-commit style is encouraged but not enforced:
+- Small, focused commits with clear messages. Follow commit conventions:
 
   ```txt
-  feat(ingestion): add trade.raw consumer skeleton
-  fix(frontend): correct exception queue empty state
-  docs: update kafka topic list
+  feat(ingestion): add trade.raw consumer
+  feat(validation): implement STP rules
+  fix(validation): suppress duplicate confirmations
+  test(validation): cover confirmation fingerprinting
+  docs: update Kafka topic list
   chore(deps): bump spring-kafka version
   ```
 
 ## Pull Requests
 
-1. Push your branch, open a PR against `main`.
+1. Push your branch and open a PR against `main`.
 2. Fill in the PR template (`.github/PULL_REQUEST_TEMPLATE.md`).
 3. At least one other team member reviews before merge - doesn't have to be the Team Lead for routine changes, but cross-service changes (anything touching `common-lib` or `docker-compose.yml`) should get the Team Lead's eyes.
 4. CI (`.github/workflows/`) must pass - backend reactor build for Java changes, frontend build+lint for UI changes.
