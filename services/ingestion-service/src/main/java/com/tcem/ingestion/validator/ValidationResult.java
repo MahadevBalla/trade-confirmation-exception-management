@@ -57,6 +57,10 @@ public class ValidationResult {
                 .collect(Collectors.joining("; "));
     }
 
+    public String getSummary() {
+        return getErrorSummary();
+    }
+
     /**
      * Converts validation errors into platform-standard ExceptionRecords.
      *

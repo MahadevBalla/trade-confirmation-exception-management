@@ -10,6 +10,15 @@ spring:
       retries: 3
       properties:
         max.block.ms: 2000
+    consumer:
+      group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:ingestion-service-group}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      auto-startup: ${SPRING_KAFKA_LISTENER_AUTO_STARTUP:true}
 
 ingestion:
   seed-on-startup: ${SEED_ON_STARTUP:false}

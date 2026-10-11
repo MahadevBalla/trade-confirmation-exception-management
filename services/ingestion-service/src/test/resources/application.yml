@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: ingestion-service-test
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      auto-startup: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        max.block.ms: 1000
+    consumer:
+      group-id: ingestion-service-test-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+couchdb:
+  url: http://localhost:5984
+  username: admin
+  password: password
+  trades-database: test-trades
+  audit-events-database: test-audit-events
+  auto-create-databases: false
+  connection-timeout-ms: 1000
+  read-timeout-ms: 1000
+
+ingestion:
+  seed-on-startup: false
+  default-generate-count: 10

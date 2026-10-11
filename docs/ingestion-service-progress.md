@@ -65,19 +65,20 @@ The **Ingestion Service** is the entry gateway of the entire Trade Confirmation 
     * Non-economic terms (screening for non-STP jurisdictions and missing template hints).
     * Raw JSON parsing with automatic syntax error capture (`PARSE_FAILURE`).
   - Unit Tests: 15 passing tests in [`TradeValidatorTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/validator/TradeValidatorTest.java) covering standard STP, missing strike/notional/premium/underlier, inverted dates, invalid currencies, unparseable JSON, and ExceptionRecord generation. Total 42/42 tests green.
-- [ ] **Phase 4: Kafka Stream Processing Pipeline & Idempotency**
-  - Kafka consumer listening to `trade.raw` (`group-id: ingestion-service-group`).
-  - Idempotency verification check before processing (`IdempotencyKey` lookup in CouchDB).
-  - On Validation SUCCESS:
-    * Store raw trade document in CouchDB `trades` with status `ACCEPTED`.
-    * Append audit entry in CouchDB `audit-events`.
-    * Produce canonical `TradeEvent` to `trade.accepted` (partition key: `tradeId`).
-  - On Validation FAILURE:
-    * Store raw trade document in CouchDB `trades` with status `REJECTED`.
-    * Produce `ExceptionEvent` to `exception.created` (partition key: `tradeId`).
-    * Append audit entry in CouchDB `audit-events`.
-  - On Unparseable / Fatal JSON:
-    * Produce to `deadletter.trade` (FR12) with diagnostic context.
+- [x] **Phase 4: Kafka Stream Processing Pipeline & Idempotency** (Completed)
+  - [`TradeAcceptedProducer`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/producer/TradeAcceptedProducer.java): Kafka publisher dispatching schema-validated canonical `TradeEvent` to `trade.accepted` partitioned by `tradeId`.
+  - [`ExceptionCreatedProducer`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/producer/ExceptionCreatedProducer.java): Kafka publisher dispatching structured `ExceptionEvent` instances to `exception.created` for downstream triage.
+  - [`DeadLetterProducer`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/producer/DeadLetterProducer.java): Kafka publisher routing unparseable and fatal payloads to `deadletter.trade` (FR12) with diagnostic context (stack trace excerpt, failed service, replayable flag).
+  - [`TradeIngestionService`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/service/TradeIngestionService.java) & [`DefaultTradeIngestionService`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/service/DefaultTradeIngestionService.java):
+    * Pipeline step 1: Validates raw JSON syntax; routes fatal parsing errors to `deadletter.trade` and writes audit event.
+    * Pipeline step 2: Resolves composite `IdempotencyKey` (`tradeId:messageId:schemaVersion:eventType`).
+    * Pipeline step 3: Queries CouchDB idempotency store; deduplicates retransmitted messages, writes audit log, and emits duplicate exception to `exception.created`.
+    * Pipeline step 4: Executes `TradeValidator` (FR2) on inbound trade.
+    * Pipeline step 5 (SUCCESS): Persists `TradeDocument` (`status: ACCEPTED`), records idempotency key, records audit event (`stage: SCHEMA_VALIDATION`), and produces canonical `TradeEvent` to `trade.accepted`.
+    * Pipeline step 6 (FAILURE): Persists `TradeDocument` (`status: SCHEMA_INVALID`), records idempotency key, records audit event, generates canonical `ExceptionRecord`s, and produces `ExceptionEvent` to `exception.created`.
+  - [`TradeRawConsumer`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/consumer/TradeRawConsumer.java): `@KafkaListener` consuming messages from `trade.raw` with group `ingestion-service-group` and delegating to `TradeIngestionService`.
+  - [`IngestionResult`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/model/IngestionResult.java): Outcome model capturing processing status (`ACCEPTED`, `DUPLICATE`, `REJECTED`, `DEAD_LETTER`).
+  - Unit & Pipeline Tests: 11 passing tests across [`TradeAcceptedProducerTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/producer/TradeAcceptedProducerTest.java), [`ExceptionCreatedProducerTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/producer/ExceptionCreatedProducerTest.java), [`DeadLetterProducerTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/producer/DeadLetterProducerTest.java), [`TradeRawConsumerTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/consumer/TradeRawConsumerTest.java), and [`TradeIngestionServiceTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/service/TradeIngestionServiceTest.java). Total 53/53 tests green.
 - [ ] **Phase 5: Operations REST APIs (FR3, FR11)**
   - `GET /trades/{id}`: Fetches trade document and processing history by `tradeId`.
   - `GET /trades?status={status}&page={page}&size={size}`: Paginated search of trades.

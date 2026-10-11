@@ -21,10 +21,6 @@ import lombok.NoArgsConstructor;
  * </ul>
  * </p>
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExceptionEvent {
 
@@ -33,4 +29,50 @@ public class ExceptionEvent {
 
     /** The exception record (partially filled on creation, fully filled after classification). */
     private ExceptionRecord exception;
+
+    public ExceptionEvent() {}
+
+    public ExceptionEvent(MessageHeader messageHeader, ExceptionRecord exception) {
+        this.messageHeader = messageHeader;
+        this.exception = exception;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public MessageHeader getMessageHeader() {
+        return messageHeader;
+    }
+
+    public void setMessageHeader(MessageHeader messageHeader) {
+        this.messageHeader = messageHeader;
+    }
+
+    public ExceptionRecord getException() {
+        return exception;
+    }
+
+    public void setException(ExceptionRecord exception) {
+        this.exception = exception;
+    }
+
+    public static class Builder {
+        private MessageHeader messageHeader;
+        private ExceptionRecord exception;
+
+        public Builder messageHeader(MessageHeader messageHeader) {
+            this.messageHeader = messageHeader;
+            return this;
+        }
+
+        public Builder exception(ExceptionRecord exception) {
+            this.exception = exception;
+            return this;
+        }
+
+        public ExceptionEvent build() {
+            return new ExceptionEvent(messageHeader, exception);
+        }
+    }
 }
