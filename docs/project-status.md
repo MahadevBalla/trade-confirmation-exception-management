@@ -44,15 +44,18 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Generate recommendation hints (e.g., owner queue, resolution difficulty).
 
 ## 5. Bhavik (`workitem-service` / DevOps Engineer)
-**Role:** Work-item tracking, audit trail, DLQ/replay, and CI/CD.
+**Role:** Work-item tracking, audit trail, DLQ/replay, and DevOps / Orchestration.
 * **What is Done:** 
   * Data structures for `WorkItem`, `AuditEvent`, and `DeadLetterEvent` are established.
   * The idempotency and replay protocol is fully documented and structured within the DLQ models (tracking `replayCount` and `replayable` flags).
+  * **DevOps Infrastructure Phase 1 (Local Orchestration & Health Checks):** Implemented active health checks for Kafka (`broker-api-versions`), CouchDB (`/_up`), and Spring Boot Actuator (`wget /actuator/health`) across all containers; configured dedicated bridge network `tcem-network`.
+  * **DevOps Infrastructure Phase 2 (Automated Infrastructure Provisioning):** Added one-shot initializers `kafka-init` (idempotently creating 10 Kafka topics with 3 partitions each) and `couchdb-init` (provisioning 3 system and 7 application databases: `trades`, `confirmations`, `exceptions`, `work-items`, `audit-events`, `stp-metrics`, `dlq-entries`).
+  * **DevOps Infrastructure Phase 3 (Production Dockerfiles & Security Hardening):** Hardened all 5 backend Dockerfiles and frontend Dockerfile with multi-stage builds (`maven:3.9.9-alpine` + `eclipse-temurin:21-jre-alpine`), least-privilege non-root execution (`appuser:appgroup`), JVM container ergonomics (`-XX:MaxRAMPercentage=75.0`), dedicated port bindings (8081–8085), BuildKit cache mounts, and Maven reactor workspace discovery.
 * **What is Remaining:** 
-  * Build the `workitem-service`.
-  * Implement the storage layer for audit events, mock work items, and DLQ entries.
-  * Implement the endpoint to clear idempotency keys and re-trigger events for the replay functionality.
-  * Maintain Docker Compose and GitHub Actions pipelines.
+  * Phase 4: Nginx reverse proxy / API gateway routing on frontend.
+  * Phase 5: CI/CD automation in GitHub Actions.
+  * Phase 6: Automated developer verification and smoke testing scripts.
+  * Build the `workitem-service` (mock work items, audit event persistence, DLQ storage and replay endpoints).
 
 ## 6. Oren (`frontend` / Frontend & QA Engineer)
 **Role:** UI dashboards and cross-service test coverage.
