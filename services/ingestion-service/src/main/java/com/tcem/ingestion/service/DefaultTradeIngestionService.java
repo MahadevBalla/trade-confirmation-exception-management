@@ -52,6 +52,28 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
     private final TradeAcceptedProducer tradeAcceptedProducer;
     private final ExceptionCreatedProducer exceptionCreatedProducer;
     private final DeadLetterProducer deadLetterProducer;
+    private final IngestionMetricsService metricsService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public DefaultTradeIngestionService(ObjectMapper objectMapper,
+                                        TradeValidator tradeValidator,
+                                        TradeCouchDbRepository tradeRepository,
+                                        AuditCouchDbRepository auditRepository,
+                                        IdempotencyCouchDbRepository idempotencyRepository,
+                                        TradeAcceptedProducer tradeAcceptedProducer,
+                                        ExceptionCreatedProducer exceptionCreatedProducer,
+                                        DeadLetterProducer deadLetterProducer,
+                                        IngestionMetricsService metricsService) {
+        this.objectMapper = objectMapper;
+        this.tradeValidator = tradeValidator;
+        this.tradeRepository = tradeRepository;
+        this.auditRepository = auditRepository;
+        this.idempotencyRepository = idempotencyRepository;
+        this.tradeAcceptedProducer = tradeAcceptedProducer;
+        this.exceptionCreatedProducer = exceptionCreatedProducer;
+        this.deadLetterProducer = deadLetterProducer;
+        this.metricsService = metricsService != null ? metricsService : new IngestionMetricsService();
+    }
 
     public DefaultTradeIngestionService(ObjectMapper objectMapper,
                                         TradeValidator tradeValidator,
@@ -61,24 +83,20 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
                                         TradeAcceptedProducer tradeAcceptedProducer,
                                         ExceptionCreatedProducer exceptionCreatedProducer,
                                         DeadLetterProducer deadLetterProducer) {
-        this.objectMapper = objectMapper;
-        this.tradeValidator = tradeValidator;
-        this.tradeRepository = tradeRepository;
-        this.auditRepository = auditRepository;
-        this.idempotencyRepository = idempotencyRepository;
-        this.tradeAcceptedProducer = tradeAcceptedProducer;
-        this.exceptionCreatedProducer = exceptionCreatedProducer;
-        this.deadLetterProducer = deadLetterProducer;
+        this(objectMapper, tradeValidator, tradeRepository, auditRepository, idempotencyRepository,
+                tradeAcceptedProducer, exceptionCreatedProducer, deadLetterProducer, new IngestionMetricsService());
     }
 
     @Override
     public IngestionResult processRawTrade(String partitionKey, String rawPayload) {
+        metricsService.recordReceived();
         log.info("Processing raw trade message with key: '{}'", partitionKey);
 
         // -------------------------------------------------------------------
         // 1. Guard against null or blank payload (Dead-letter route)
         // -------------------------------------------------------------------
         if (rawPayload == null || rawPayload.trim().isEmpty()) {
+            metricsService.recordDeadLetter();
             log.error("Received null or empty raw payload for key '{}'", partitionKey);
             DeadLetterEvent dlqEvent = buildDeadLetterEvent(partitionKey, rawPayload,
                     "Payload is null or empty", "IllegalArgumentException", null, false);
@@ -95,6 +113,7 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
         try {
             tradeEvent = objectMapper.readValue(rawPayload, TradeEvent.class);
         } catch (JsonProcessingException ex) {
+            metricsService.recordDeadLetter();
             log.error("Malformed JSON received for key '{}': {}", partitionKey, ex.getMessage());
             DeadLetterEvent dlqEvent = buildDeadLetterEvent(partitionKey, rawPayload,
                     "Malformed JSON: " + ex.getMessage(), ex.getClass().getName(), getStackTraceExcerpt(ex), false);
@@ -103,6 +122,7 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
                     ProcessingStatus.DEAD_LETTER, "Fatal JSON parsing error: " + ex.getOriginalMessage());
             return IngestionResult.deadLetter(partitionKey, "Malformed JSON", ex.getMessage());
         } catch (Exception ex) {
+            metricsService.recordDeadLetter();
             log.error("Unexpected error deserializing trade payload for key '{}': {}", partitionKey, ex.getMessage());
             DeadLetterEvent dlqEvent = buildDeadLetterEvent(partitionKey, rawPayload,
                     "Unexpected deserialization failure: " + ex.getMessage(), ex.getClass().getName(), getStackTraceExcerpt(ex), true);
@@ -133,6 +153,7 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
         }
 
         if (isDuplicate) {
+            metricsService.recordDuplicate();
             log.warn("Duplicate message detected for idempotency key: {}", idKey.toStorageKey());
             String correlationId = tradeEvent.getMessageHeader() != null ? tradeEvent.getMessageHeader().getCorrelationId() : null;
 
@@ -177,6 +198,7 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
             // ===============================================================
             // Validation SUCCESS: Persist, Audit, Record Idempotency, and Publish
             // ===============================================================
+            metricsService.recordAccepted();
             log.info("Trade '{}' successfully validated against schema '{}'", tradeId, schemaVersion);
 
             TradeDocument tradeDoc = TradeDocument.builder()
@@ -207,6 +229,7 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
             // ===============================================================
             // Validation FAILURE: Persist SCHEMA_INVALID, Audit, and Publish Exceptions
             // ===============================================================
+            metricsService.recordSchemaInvalid();
             List<String> errorMessages = validationResult.getErrors().stream()
                     .map(ValidationError::getMessage)
                     .toList();
