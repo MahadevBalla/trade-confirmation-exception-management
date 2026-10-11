@@ -37,38 +37,40 @@ class TradeProducerControllerTest {
 
     @Test
     void generateTrades_returnsSuccessResponse() throws Exception {
-        when(tradeSeedService.generateAndPublish(10))
-                .thenReturn(Map.of("status", "SUCCESS", "publishedCount", 10));
+        when(tradeSeedService.generateAndPublish(10, false))
+                .thenReturn(Map.of("status", "SUCCESS", "publishedCount", 0, "publishedToKafka", false));
 
         mockMvc.perform(post("/trades/generate?count=10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.publishedCount").value(10));
+                .andExpect(jsonPath("$.publishedToKafka").value(false));
 
-        verify(tradeSeedService).generateAndPublish(10);
+        verify(tradeSeedService).generateAndPublish(10, false);
     }
 
     @Test
     void generateScenario_triggersSingleScenario() throws Exception {
-        when(tradeSeedService.generateSingleScenario(eq(TradeScenarioType.MISSING_ECONOMIC_STRIKE), eq(1)))
-                .thenReturn(Map.of("status", "SUCCESS", "scenario", "MISSING_ECONOMIC_STRIKE"));
+        when(tradeSeedService.generateSingleScenario(eq(TradeScenarioType.MISSING_ECONOMIC_STRIKE), eq(1), eq(false)))
+                .thenReturn(Map.of("status", "SUCCESS", "scenario", "MISSING_ECONOMIC_STRIKE", "publishedToKafka", false));
 
         mockMvc.perform(post("/trades/generate/scenario?scenario=MISSING_ECONOMIC_STRIKE&sequence=1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.scenario").value("MISSING_ECONOMIC_STRIKE"));
+
+        verify(tradeSeedService).generateSingleScenario(eq(TradeScenarioType.MISSING_ECONOMIC_STRIKE), eq(1), eq(false));
     }
 
     @Test
     void seedTrades_invokesLoadSeedData() throws Exception {
-        when(tradeSeedService.loadSeedData())
-                .thenReturn(Map.of("status", "SUCCESS", "publishedCount", 500));
+        when(tradeSeedService.loadSeedData(false))
+                .thenReturn(Map.of("status", "SUCCESS", "totalSeedTrades", 500, "publishedToKafka", false));
 
         mockMvc.perform(post("/trades/seed"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.publishedCount").value(500));
+                .andExpect(jsonPath("$.totalSeedTrades").value(500));
 
-        verify(tradeSeedService).loadSeedData();
+        verify(tradeSeedService).loadSeedData(false);
     }
 
     @Test

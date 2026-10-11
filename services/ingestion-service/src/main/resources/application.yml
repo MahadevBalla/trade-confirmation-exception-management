@@ -8,6 +8,8 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
       retries: 3
+      properties:
+        max.block.ms: 2000
 
 ingestion:
   seed-on-startup: ${SEED_ON_STARTUP:false}

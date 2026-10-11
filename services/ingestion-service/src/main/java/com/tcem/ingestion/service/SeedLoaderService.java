@@ -40,40 +40,66 @@ public class SeedLoaderService implements TradeSeedService {
     }
 
     @Override
-    public Map<String, Object> generateAndPublish(int count) {
+    public Map<String, Object> generateAndPublish(int count, boolean publishToKafka) {
         int targetCount = count > 0 ? count : properties.getDefaultGenerateCount();
         long startTime = System.currentTimeMillis();
 
         List<String> payloads = generator.generateBatch(targetCount);
-        int published = producer.sendBatch(payloads);
+        int published = 0;
+        if (publishToKafka) {
+            published = producer.sendBatch(payloads);
+        }
         long elapsed = System.currentTimeMillis() - startTime;
 
         Map<String, Object> result = new HashMap<>();
         result.put("status", "SUCCESS");
         result.put("requestedCount", targetCount);
+        result.put("publishedToKafka", publishToKafka);
         result.put("publishedCount", published);
         result.put("durationMs", elapsed);
         result.put("targetTopic", "trade.raw");
 
-        log.info("Completed generation and publishing of {} trades in {}ms", published, elapsed);
+        // Include preview of first generated trade
+        if (!payloads.isEmpty()) {
+            try {
+                result.put("sampleTrade", objectMapper.readTree(payloads.get(0)));
+            } catch (Exception ignored) {
+                result.put("sampleTrade", payloads.get(0));
+            }
+        }
+
+        log.info("Completed generation of {} trades (publishedToKafka={}) in {}ms",
+                targetCount, publishToKafka, elapsed);
         return result;
     }
 
     @Override
-    public Map<String, Object> generateSingleScenario(TradeScenarioType scenario, int sequence) {
+    public Map<String, Object> generateSingleScenario(TradeScenarioType scenario, int sequence, boolean publishToKafka) {
         String payload = generator.generateTradeJson(scenario, sequence > 0 ? sequence : 1);
-        producer.sendBatch(List.of(payload));
+        int published = 0;
+        if (publishToKafka) {
+            published = producer.sendBatch(List.of(payload));
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("status", "SUCCESS");
         result.put("scenario", scenario.name());
         result.put("sequence", sequence);
+        result.put("publishedToKafka", publishToKafka);
+        result.put("publishedCount", published);
         result.put("targetTopic", "trade.raw");
+
+        try {
+            result.put("tradePayload", objectMapper.readTree(payload));
+        } catch (Exception ignored) {
+            result.put("tradePayload", payload);
+        }
+
         return result;
     }
 
     @Override
-    public Map<String, Object> loadSeedData() {
+    public Map<String, Object> loadSeedData(boolean publishToKafka) {
         String resourcePath = properties.getSeedFilePath();
         try {
             ClassPathResource resource = new ClassPathResource(resourcePath);
@@ -90,12 +116,21 @@ public class SeedLoaderService implements TradeSeedService {
                             })
                             .toList();
 
-                    int published = producer.sendBatch(payloads);
-                    return Map.of(
-                            "status", "SUCCESS",
-                            "source", "file:" + resourcePath,
-                            "publishedCount", published
-                    );
+                    int published = 0;
+                    if (publishToKafka) {
+                        published = producer.sendBatch(payloads);
+                    }
+
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("status", "SUCCESS");
+                    result.put("source", "file:" + resourcePath);
+                    result.put("totalSeedTrades", payloads.size());
+                    result.put("publishedToKafka", publishToKafka);
+                    result.put("publishedCount", published);
+                    if (!rawList.isEmpty()) {
+                        result.put("sampleTrade", rawList.get(0));
+                    }
+                    return result;
                 }
             }
         } catch (Exception ex) {
@@ -104,6 +139,6 @@ public class SeedLoaderService implements TradeSeedService {
         }
 
         log.info("Generating default batch of {} trades as seed data", properties.getDefaultGenerateCount());
-        return generateAndPublish(properties.getDefaultGenerateCount());
+        return generateAndPublish(properties.getDefaultGenerateCount(), publishToKafka);
     }
 }

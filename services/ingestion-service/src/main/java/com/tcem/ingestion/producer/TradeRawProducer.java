@@ -37,18 +37,24 @@ public class TradeRawProducer {
      */
     public CompletableFuture<SendResult<String, String>> sendTradeRaw(String key, String payload) {
         log.debug("Publishing message to topic '{}' with key '{}'", TopicNames.TRADE_RAW, key);
-        return kafkaOperations.send(TopicNames.TRADE_RAW, key, payload)
-                .whenComplete((result, ex) -> {
-                    if (ex != null) {
-                        log.error("Failed to publish message to '{}' with key '{}': {}",
-                                TopicNames.TRADE_RAW, key, ex.getMessage());
-                    } else {
-                        log.debug("Successfully published message to '{}' [partition={}, offset={}]",
-                                TopicNames.TRADE_RAW,
-                                result.getRecordMetadata().partition(),
-                                result.getRecordMetadata().offset());
-                    }
-                });
+        try {
+            return kafkaOperations.send(TopicNames.TRADE_RAW, key, payload)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.warn("Failed to publish message to '{}' with key '{}': {}",
+                                    TopicNames.TRADE_RAW, key, ex.getMessage());
+                        } else {
+                            log.debug("Successfully published message to '{}' [partition={}, offset={}]",
+                                    TopicNames.TRADE_RAW,
+                                    result.getRecordMetadata().partition(),
+                                    result.getRecordMetadata().offset());
+                        }
+                    });
+        } catch (Exception ex) {
+            log.warn("Immediate exception dispatching to Kafka topic '{}' with key '{}': {}",
+                    TopicNames.TRADE_RAW, key, ex.getMessage());
+            return CompletableFuture.failedFuture(ex);
+        }
     }
 
     /**
@@ -61,8 +67,12 @@ public class TradeRawProducer {
         int count = 0;
         for (String payload : payloads) {
             String key = extractKey(payload);
-            sendTradeRaw(key, payload);
-            count++;
+            try {
+                sendTradeRaw(key, payload);
+                count++;
+            } catch (Exception ex) {
+                log.warn("Failed to initiate Kafka send for trade key '{}': {}", key, ex.getMessage());
+            }
         }
         log.info("Dispatched batch of {} trades to topic '{}'", count, TopicNames.TRADE_RAW);
         return count;

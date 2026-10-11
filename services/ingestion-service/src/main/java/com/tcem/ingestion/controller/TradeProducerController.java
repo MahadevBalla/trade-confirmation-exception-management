@@ -27,37 +27,44 @@ public class TradeProducerController {
     }
 
     /**
-     * Generates a batch of synthetic trades and publishes them to trade.raw.
+     * Generates a batch of synthetic trades and optionally publishes them to trade.raw.
      *
-     * @param count number of trades to produce (default: 500)
+     * @param count          number of trades to produce (default: 500)
+     * @param publishToKafka whether to publish to Kafka topic trade.raw (default: false for instant offline preview)
      */
     @PostMapping("/generate")
     public ResponseEntity<Map<String, Object>> generateTrades(
-            @RequestParam(name = "count", defaultValue = "500") int count) {
-        Map<String, Object> response = tradeSeedService.generateAndPublish(count);
+            @RequestParam(name = "count", defaultValue = "500") int count,
+            @RequestParam(name = "publishToKafka", defaultValue = "false") boolean publishToKafka) {
+        Map<String, Object> response = tradeSeedService.generateAndPublish(count, publishToKafka);
         return ResponseEntity.ok(response);
     }
 
     /**
      * Generates a single trade for a specific test scenario.
      *
-     * @param scenario test scenario to generate
-     * @param sequence sequence number for IDs
+     * @param scenario       test scenario to generate
+     * @param sequence       sequence number for IDs
+     * @param publishToKafka whether to publish to Kafka topic trade.raw (default: false for instant offline preview)
      */
     @PostMapping("/generate/scenario")
     public ResponseEntity<Map<String, Object>> generateScenario(
             @RequestParam(name = "scenario") TradeScenarioType scenario,
-            @RequestParam(name = "sequence", defaultValue = "1") int sequence) {
-        Map<String, Object> response = tradeSeedService.generateSingleScenario(scenario, sequence);
+            @RequestParam(name = "sequence", defaultValue = "1") int sequence,
+            @RequestParam(name = "publishToKafka", defaultValue = "false") boolean publishToKafka) {
+        Map<String, Object> response = tradeSeedService.generateSingleScenario(scenario, sequence, publishToKafka);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Loads the pre-packaged seed dataset and publishes to trade.raw.
+     * Loads the pre-packaged seed dataset and optionally publishes to trade.raw.
+     *
+     * @param publishToKafka whether to publish to Kafka topic trade.raw (default: false for instant offline preview)
      */
     @PostMapping("/seed")
-    public ResponseEntity<Map<String, Object>> seedTrades() {
-        Map<String, Object> response = tradeSeedService.loadSeedData();
+    public ResponseEntity<Map<String, Object>> seedTrades(
+            @RequestParam(name = "publishToKafka", defaultValue = "false") boolean publishToKafka) {
+        Map<String, Object> response = tradeSeedService.loadSeedData(publishToKafka);
         return ResponseEntity.ok(response);
     }
 
