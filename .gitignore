@@ -25,3 +25,4 @@ dist-ssr/
 # Agent documentation (private / uncommitted)
 .agent/
 .agent-docs/
+agent-docs/
