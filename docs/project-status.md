@@ -3,15 +3,16 @@
 This document tracks the progress of the Trade Confirmation Exception Management Platform based on the initial team roles and the work completed to date.
 
 ## 1. Mayank (Team Lead + `ingestion-service`)
-**Role:** Coordination, event contracts, and seed/ingestion logic.
-* **What is Done:** 
-  * Successfully designed and implemented the shared `common-lib` schema (FpML-inspired JSON model).
-  * Built the event envelopes (`TradeEvent`, `MessageHeader`) and canonical data models (`Trade`, `FxOptionEconomics`).
-  * Implemented the `SchemaVersionRouter` to handle version evolution.
-  * Created the `IdempotencyKey` pattern for exactly-once processing.
-* **What is Remaining:** 
-  * Implement the `ingestion-service` to accept synthetic events, run initial schema validations, and store raw payloads.
-  * Lead coordination and code reviews for the integration of other services.
+**Role:** Coordination, event contracts, synthetic seed loader, and ingestion pipeline (FR1, FR2, FR3, FR11, FR12).
+* **What is Done (100% Complete - All 6 Phases):**
+  * **Phase 1 (CouchDB Persistence):** Implemented `CouchDbClient`, `CouchDbOperations`, `CouchDbConfig`, document schemas (`TradeDocument`, `AuditDocument`, `IdempotencyDocument`), auto-initialization for `trades` and `audit-events`, and repositories with conflict retry logic.
+  * **Phase 2 (Synthetic Trade Generator & Seed Loader):** Implemented `SyntheticTradeGenerator` with 10 deterministic test scenarios, bundled 500-trade seed dataset in `sample-trades.json`, `TradeRawProducer`, `SeedLoaderService`, and REST endpoints (`POST /trades/generate`, `POST /trades/generate/scenario`, `POST /trades/seed`, `GET /trades/scenarios`).
+  * **Phase 3 (Schema Validation Engine):** Implemented `TradeValidator` validating headers, dates, parties, FX Option economics, non-economic terms, and JSON syntax; maps schema violations to structured `ExceptionRecord` entries.
+  * **Phase 4 (Kafka Pipeline & Idempotency Filter):** Implemented `TradeRawConsumer` on `trade.raw`, CouchDB-backed `IdempotencyKey` duplicate suppression filter, canonical publishing to `trade.accepted` (`TradeAcceptedProducer`), exception routing to `exception.created` (`ExceptionCreatedProducer`), and DLQ routing to `deadletter.trade` (`DeadLetterProducer`).
+  * **Phase 5 (Operations REST APIs & Health):** Implemented `TradeQueryController` (`GET /trades/{id}`, `GET /trades?status=&page=&size=`, `GET /trades/{id}/audit`, `GET /trades/metrics/summary`, `GET /metrics/stp-rate`), `IngestionMetricsService` tracking throughput and STP rates, and `WebConfig` CORS configuration.
+  * **Phase 6 (Automated Testing & Pipeline Verification):** Comprehensive test suite with 97 passing tests across unit, repository, producer, consumer, and end-to-end integration flows ([`TradeIngestionPipelineIntegrationTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/integration/TradeIngestionPipelineIntegrationTest.java)); verified full Maven reactor build.
+* **What is Remaining:**
+  * Ready for upstream consumption! Lead team PR reviews and coordinate with Gunjan (`enrichment-service`) for consuming `trade.accepted`.
 
 ## 2. Gunjan (`enrichment-service` / Business Analyst)
 **Role:** Reference data modelling and enrichment logic.

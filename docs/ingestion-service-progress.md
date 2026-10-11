@@ -90,9 +90,17 @@ The **Ingestion Service** is the entry gateway of the entire Trade Confirmation 
   - Runtime Metrics Tracker: [`IngestionMetricsService`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/service/IngestionMetricsService.java) tracking atomic runtime counters and STP rates.
   - Global CORS Configuration: [`WebConfig`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/config/WebConfig.java) allowing frontend UI on `localhost:3000` to interact with Ingestion Service on `localhost:8081`.
   - Unit & Controller Tests: 10 passing tests across [`IngestionMetricsServiceTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/service/IngestionMetricsServiceTest.java) and [`TradeQueryControllerTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/controller/TradeQueryControllerTest.java). Total 63/63 tests green across the service.
-- [ ] **Phase 6: Automated Testing & Verification**
-  - Comprehensive unit tests for `TradeValidator` across all edge cases (missing fields, invalid dates, negative notionals).
-  - Integration tests using `@EmbeddedKafka` and mock CouchDB server testing the end-to-end `trade.raw` -> `trade.accepted` pipeline.
+- [x] **Phase 6: Automated Testing & Verification**
+  - Comprehensive unit tests for `TradeValidator` across all edge cases (missing fields, invalid dates, negative notionals, ISO-8601 syntax, party validation, multi-error accumulation): 43 passing tests in [`TradeValidatorTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/validator/TradeValidatorTest.java).
+  - In-memory CouchDB test double: [`InMemoryCouchDbOperations`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/couchdb/InMemoryCouchDbOperations.java) providing fast, thread-safe, self-contained CouchDB storage, revision management, and Mango `_find` selector filtering.
+  - End-to-End Pipeline Integration Suite: [`TradeIngestionPipelineIntegrationTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/integration/TradeIngestionPipelineIntegrationTest.java) testing the complete lifecycle:
+    * Standard STP trade: `trade.raw` consumption -> validation -> CouchDB persistence (`trades` & `audit-events`) -> Kafka dispatch to `trade.accepted` -> Operations query API verification.
+    * Idempotency duplicate suppression: duplicate message detected -> suppressed from `trade.accepted` -> `DUPLICATE_MESSAGE` exception emitted to `exception.created`.
+    * Schema invalid trade handling: `SCHEMA_INVALID` document persistence -> structured `ExceptionEvent` emitted to `exception.created` with category, subtheme, and remediation hint.
+    * Dead letter queue (DLQ): fatal malformed JSON routed to `deadletter.trade` with `DeadLetterEvent` envelope and technical diagnostics.
+    * Full 10-scenario batch ingestion & metrics reporting: automated STP rate calculation and dashboard metrics verification.
+    * Seed loader preview verification: verifying 500-trade seed dataset from `sample-trades.json`.
+  - Service Test Summary: **97 / 97 passing tests** in `ingestion-service`. Full Maven reactor build passes across all 7 projects (`mvn -f services/pom.xml test`).
 
 ---
 

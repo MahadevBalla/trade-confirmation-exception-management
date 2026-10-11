@@ -119,7 +119,14 @@ public class TradeValidator {
 
             // Deserialize to canonical TradeEvent and run in-depth validations
             TradeEvent event = objectMapper.treeToValue(root, TradeEvent.class);
-            return validate(event);
+            ValidationResult eventResult = validate(event);
+            for (ValidationError err : eventResult.getErrors()) {
+                if ("VAL_HEADER_NULL".equals(err.getReasonCode()) && result.getErrors().stream().anyMatch(e -> "VAL_MISSING_HEADER".equals(e.getReasonCode()))) {
+                    continue;
+                }
+                result.addError(err);
+            }
+            return result;
 
         } catch (Exception ex) {
             log.warn("Payload failed JSON structural parse: {}", ex.getMessage());

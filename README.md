@@ -102,6 +102,24 @@ from that service's own directory rebuilds it directly.
 mvn -f services/pom.xml verify   # build + test everything (used by CI too)
 ```
 
+### Ingestion Service REST APIs & Operations (Port 8081)
+
+The `ingestion-service` exposes comprehensive REST endpoints for synthetic trade generation, seed loading, operations querying, and STP metrics:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/trades/generate?count={N}&publishToKafka={true\|false}` | POST | Generates `N` synthetic trades across all 10 scenario types (default `publishToKafka=false` for instant offline preview). |
+| `/trades/generate/scenario?scenario={TYPE}&sequence={N}&publishToKafka={true\|false}` | POST | Generates a single trade for a specific scenario type (e.g. `MISSING_ECONOMIC_STRIKE`). |
+| `/trades/seed?publishToKafka={true\|false}` | POST | Loads pre-packaged 500-trade seed dataset from `sample-trades.json`. |
+| `/trades/scenarios` | GET | Lists all 10 available synthetic trade test scenarios. |
+| `/trades/{id}` | GET | Returns trade details and complete CouchDB audit trail (FR3). |
+| `/trades?status={STATUS}&page={P}&size={S}` | GET | Returns paginated list of trades with optional status filter (`ACCEPTED`, `SCHEMA_INVALID`, `RECEIVED`). |
+| `/trades/{id}/audit` | GET | Returns chronological audit log records from CouchDB `audit-events`. |
+| `/trades/metrics/summary` | GET | Returns aggregate ingestion counters (received, accepted, rejected, duplicates, DLQ, acceptance rate). |
+| `/metrics/stp-rate` | GET | Returns Straight-Through Processing (STP) rate for React Operations UI (FR11). |
+| `/actuator/health` | GET | Spring Boot Actuator health check (includes custom CouchDB health indicator). |
+
+
 ## Frontend development
 
 ```bash
