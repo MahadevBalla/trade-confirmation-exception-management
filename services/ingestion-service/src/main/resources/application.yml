@@ -9,6 +9,13 @@ server:
 
 couchdb:
   url: ${COUCHDB_URL:http://localhost:5984}
+  username: ${COUCHDB_USER:admin}
+  password: ${COUCHDB_PASSWORD:password}
+  trades-database: ${COUCHDB_TRADES_DB:trades}
+  audit-events-database: ${COUCHDB_AUDIT_DB:audit-events}
+  auto-create-databases: ${COUCHDB_AUTO_CREATE_DB:true}
+  connection-timeout-ms: 3000
+  read-timeout-ms: 5000
 
 management:
   endpoints:
