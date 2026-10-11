@@ -53,13 +53,18 @@ The **Ingestion Service** is the entry gateway of the entire Trade Confirmation 
   - [`TradeRawProducer`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/producer/TradeRawProducer.java): Kafka publisher dispatching to `trade.raw` partitioned by `tradeId`.
   - [`TradeProducerController`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/controller/TradeProducerController.java): REST endpoints (`POST /trades/generate`, `POST /trades/generate/scenario`, `POST /trades/seed`, `GET /trades/scenarios`).
   - Unit & Controller Tests: 12 passing tests across [`SyntheticTradeGeneratorTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/generator/SyntheticTradeGeneratorTest.java), [`TradeRawProducerTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/producer/TradeRawProducerTest.java), [`TradeProducerControllerTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/controller/TradeProducerControllerTest.java). Total 27/27 tests green.
-- [ ] **Phase 3: Schema Validation Engine (FR2)**
-  - Inbound validation engine validating:
-    * Message header completeness (`messageId`, `correlationId`, `eventType`, `schemaVersion`).
-    * Trade core fields (`tradeId`, `sourceSystemTradeId`, `tradeDate`, `effectiveDate`, `maturityDate`).
-    * Party constraints (at least 2 parties: BANK and COUNTERPARTY).
-    * FX Option economics (`notionalAmount`, `notionalCurrency`, `buySell`, `optionType`, `strike`, `underlier`, `premiumAmount`, `premiumCurrency`).
-  - Granular validation error collector generating `ExceptionRecord` with appropriate `ExceptionCategory` (`MISSING_ECONOMIC_DATA`, `TECHNICAL_PROCESSING_FAILURE`) and `ExceptionSubTheme`.
+- [x] **Phase 3: Schema Validation Engine (FR2)** (Completed)
+  - [`ValidationError`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/validator/ValidationError.java): Structured validation error model capturing field name, message, `ExceptionCategory`, `ExceptionSubTheme`, and diagnostic reason code.
+  - [`ValidationResult`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/validator/ValidationResult.java): Container with error aggregation, summaries, and factory converting validation failures into platform-standard [`ExceptionRecord`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/model/exception/ExceptionRecord.java) entries (with `ownerQueue`, `recommendedAction`, `operationalImpact`, and `replayMayResolve` flags).
+  - [`TradeValidator`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/validator/TradeValidator.java): Comprehensive validation engine checking:
+    * Envelope & headers (`messageId`, `correlationId`, `eventType`, `schemaVersion` against supported versions).
+    * Core identifiers and product type (`tradeId`, `sourceSystemTradeId`, `productType`).
+    * Date constraints and chronological order (`tradeDate <= effectiveDate <= maturityDate`).
+    * Party constraints (at least 2 parties, executing `BANK` and client `COUNTERPARTY` with valid IDs).
+    * FX Option economics (`strike > 0`, `notionalAmount > 0`, ISO 4217 currencies, `CALL`/`PUT`, `BUY`/`SELL`, currency pair `underlier`, non-negative `premiumAmount`, `premiumPaymentDate >= tradeDate`).
+    * Non-economic terms (screening for non-STP jurisdictions and missing template hints).
+    * Raw JSON parsing with automatic syntax error capture (`PARSE_FAILURE`).
+  - Unit Tests: 15 passing tests in [`TradeValidatorTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/validator/TradeValidatorTest.java) covering standard STP, missing strike/notional/premium/underlier, inverted dates, invalid currencies, unparseable JSON, and ExceptionRecord generation. Total 42/42 tests green.
 - [ ] **Phase 4: Kafka Stream Processing Pipeline & Idempotency**
   - Kafka consumer listening to `trade.raw` (`group-id: ingestion-service-group`).
   - Idempotency verification check before processing (`IdempotencyKey` lookup in CouchDB).

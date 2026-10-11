@@ -1,5 +1,6 @@
 package com.tcem.common.model.trade;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,7 +31,11 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FxOptionEconomics {
+
+    /** Settlement type: CASH or PHYSICAL. */
+    private String settlementType;
 
     // -----------------------------------------------------------------------
     // Confirmable fields – both sides must agree
@@ -103,4 +108,100 @@ public class FxOptionEconomics {
      * Optional hedge/book identifier for risk systems. NOT confirmable.
      */
     private String hedgeId;
+
+    public BigDecimal getNotionalAmount() {
+        return notionalAmount;
+    }
+
+    public void setNotionalAmount(BigDecimal notionalAmount) {
+        this.notionalAmount = notionalAmount;
+    }
+
+    public String getNotionalCurrency() {
+        return notionalCurrency;
+    }
+
+    public void setNotionalCurrency(String notionalCurrency) {
+        this.notionalCurrency = notionalCurrency;
+    }
+
+    public String getBuySell() {
+        return buySell;
+    }
+
+    public void setBuySell(String buySell) {
+        this.buySell = buySell;
+    }
+
+    public String getOptionType() {
+        return optionType;
+    }
+
+    public void setOptionType(String optionType) {
+        this.optionType = optionType;
+    }
+
+    public BigDecimal getStrike() {
+        return strike;
+    }
+
+    public void setStrike(BigDecimal strike) {
+        this.strike = strike;
+    }
+
+    public String getUnderlier() {
+        return underlier;
+    }
+
+    public void setUnderlier(String underlier) {
+        this.underlier = underlier;
+    }
+
+    public BigDecimal getPremiumAmount() {
+        return premiumAmount;
+    }
+
+    public void setPremiumAmount(BigDecimal premiumAmount) {
+        this.premiumAmount = premiumAmount;
+    }
+
+    public String getPremiumCurrency() {
+        return premiumCurrency;
+    }
+
+    public void setPremiumCurrency(String premiumCurrency) {
+        this.premiumCurrency = premiumCurrency;
+    }
+
+    public String getPremiumPaymentDate() {
+        return premiumPaymentDate;
+    }
+
+    public void setPremiumPaymentDate(String premiumPaymentDate) {
+        this.premiumPaymentDate = premiumPaymentDate;
+    }
+
+    public String getInternalPricingRef() {
+        return internalPricingRef;
+    }
+
+    public void setInternalPricingRef(String internalPricingRef) {
+        this.internalPricingRef = internalPricingRef;
+    }
+
+    public String getHedgeId() {
+        return hedgeId;
+    }
+
+    public void setHedgeId(String hedgeId) {
+        this.hedgeId = hedgeId;
+    }
+
+    public String getSettlementType() {
+        return settlementType;
+    }
+
+    public void setSettlementType(String settlementType) {
+        this.settlementType = settlementType;
+    }
 }

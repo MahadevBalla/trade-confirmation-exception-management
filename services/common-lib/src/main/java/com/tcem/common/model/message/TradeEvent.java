@@ -82,4 +82,20 @@ public class TradeEvent {
      * (not a diff – always send the full trade).
      */
     private Trade trade;
+
+    public MessageHeader getMessageHeader() {
+        return messageHeader;
+    }
+
+    public void setMessageHeader(MessageHeader messageHeader) {
+        this.messageHeader = messageHeader;
+    }
+
+    public Trade getTrade() {
+        return trade;
+    }
+
+    public void setTrade(Trade trade) {
+        this.trade = trade;
+    }
 }
