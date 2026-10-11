@@ -3,6 +3,15 @@ spring:
     name: ingestion-service
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+
+ingestion:
+  seed-on-startup: ${SEED_ON_STARTUP:false}
+  default-generate-count: 500
 
 server:
   port: ${SERVER_PORT:8081}
