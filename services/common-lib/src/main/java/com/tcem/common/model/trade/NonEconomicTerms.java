@@ -77,4 +77,60 @@ public class NonEconomicTerms {
      * Internal routing code for operations queues. NOT confirmable.
      */
     private String internalRoutingCode;
+
+    public String getJurisdiction() {
+        return jurisdiction;
+    }
+
+    public void setJurisdiction(String jurisdiction) {
+        this.jurisdiction = jurisdiction;
+    }
+
+    public String getConfirmationMethod() {
+        return confirmationMethod;
+    }
+
+    public void setConfirmationMethod(String confirmationMethod) {
+        this.confirmationMethod = confirmationMethod;
+    }
+
+    public String getGoverningLaw() {
+        return governingLaw;
+    }
+
+    public void setGoverningLaw(String governingLaw) {
+        this.governingLaw = governingLaw;
+    }
+
+    public String getDocumentationVersion() {
+        return documentationVersion;
+    }
+
+    public void setDocumentationVersion(String documentationVersion) {
+        this.documentationVersion = documentationVersion;
+    }
+
+    public String getTemplateHint() {
+        return templateHint;
+    }
+
+    public void setTemplateHint(String templateHint) {
+        this.templateHint = templateHint;
+    }
+
+    public String getBusinessUnit() {
+        return businessUnit;
+    }
+
+    public void setBusinessUnit(String businessUnit) {
+        this.businessUnit = businessUnit;
+    }
+
+    public String getInternalRoutingCode() {
+        return internalRoutingCode;
+    }
+
+    public void setInternalRoutingCode(String internalRoutingCode) {
+        this.internalRoutingCode = internalRoutingCode;
+    }
 }

@@ -3,12 +3,39 @@ spring:
     name: ingestion-service
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        max.block.ms: 2000
+    consumer:
+      group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:ingestion-service-group}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      auto-startup: ${SPRING_KAFKA_LISTENER_AUTO_STARTUP:true}
+
+ingestion:
+  seed-on-startup: ${SEED_ON_STARTUP:false}
+  default-generate-count: 500
 
 server:
   port: ${SERVER_PORT:8081}
 
 couchdb:
   url: ${COUCHDB_URL:http://localhost:5984}
+  username: ${COUCHDB_USER:admin}
+  password: ${COUCHDB_PASSWORD:password}
+  trades-database: ${COUCHDB_TRADES_DB:trades}
+  audit-events-database: ${COUCHDB_AUDIT_DB:audit-events}
+  auto-create-databases: ${COUCHDB_AUTO_CREATE_DB:true}
+  connection-timeout-ms: 3000
+  read-timeout-ms: 5000
 
 management:
   endpoints:

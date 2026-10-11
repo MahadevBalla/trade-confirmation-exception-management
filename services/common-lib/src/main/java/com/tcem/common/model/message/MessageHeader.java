@@ -81,4 +81,72 @@ public class MessageHeader {
      */
     @Builder.Default
     private int replayCount = 0;
+
+    public String getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(String messageId) {
+        this.messageId = messageId;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
+    }
+
+    public void setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
+    }
+
+    public EventType getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(EventType eventType) {
+        this.eventType = eventType;
+    }
+
+    public void setEventType(String eventType) {
+        if (eventType != null) {
+            try {
+                this.eventType = EventType.valueOf(eventType.toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+                this.eventType = null;
+            }
+        } else {
+            this.eventType = null;
+        }
+    }
+
+    public String getSchemaVersion() {
+        return schemaVersion;
+    }
+
+    public void setSchemaVersion(String schemaVersion) {
+        this.schemaVersion = schemaVersion;
+    }
+
+    public Instant getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public void setCreatedTimestamp(Instant createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
+    }
+
+    public String getSourceService() {
+        return sourceService;
+    }
+
+    public void setSourceService(String sourceService) {
+        this.sourceService = sourceService;
+    }
+
+    public int getReplayCount() {
+        return replayCount;
+    }
+
+    public void setReplayCount(int replayCount) {
+        this.replayCount = replayCount;
+    }
 }

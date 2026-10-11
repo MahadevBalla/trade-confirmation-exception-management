@@ -133,4 +133,164 @@ public class ExceptionRecord {
 
     /** Work-item ID linked to this exception (FR10). Null until linked. */
     private String linkedWorkItemId;
+
+    public String getExceptionId() {
+        return exceptionId;
+    }
+
+    public void setExceptionId(String exceptionId) {
+        this.exceptionId = exceptionId;
+    }
+
+    public String getTradeId() {
+        return tradeId;
+    }
+
+    public void setTradeId(String tradeId) {
+        this.tradeId = tradeId;
+    }
+
+    public int getTradeVersion() {
+        return tradeVersion;
+    }
+
+    public void setTradeVersion(int tradeVersion) {
+        this.tradeVersion = tradeVersion;
+    }
+
+    public String getSourceMessageId() {
+        return sourceMessageId;
+    }
+
+    public void setSourceMessageId(String sourceMessageId) {
+        this.sourceMessageId = sourceMessageId;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
+    }
+
+    public void setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
+    }
+
+    public ExceptionCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(ExceptionCategory category) {
+        this.category = category;
+    }
+
+    public ExceptionSubTheme getSubTheme() {
+        return subTheme;
+    }
+
+    public void setSubTheme(ExceptionSubTheme subTheme) {
+        this.subTheme = subTheme;
+    }
+
+    public double getClassificationConfidence() {
+        return classificationConfidence;
+    }
+
+    public void setClassificationConfidence(double classificationConfidence) {
+        this.classificationConfidence = classificationConfidence;
+    }
+
+    public String getReasonCode() {
+        return reasonCode;
+    }
+
+    public void setReasonCode(String reasonCode) {
+        this.reasonCode = reasonCode;
+    }
+
+    public String getAffectedFields() {
+        return affectedFields;
+    }
+
+    public void setAffectedFields(String affectedFields) {
+        this.affectedFields = affectedFields;
+    }
+
+    public String getRecommendedAction() {
+        return recommendedAction;
+    }
+
+    public void setRecommendedAction(String recommendedAction) {
+        this.recommendedAction = recommendedAction;
+    }
+
+    public String getOwnerQueue() {
+        return ownerQueue;
+    }
+
+    public void setOwnerQueue(String ownerQueue) {
+        this.ownerQueue = ownerQueue;
+    }
+
+    public boolean isReplayMayResolve() {
+        return replayMayResolve;
+    }
+
+    public void setReplayMayResolve(boolean replayMayResolve) {
+        this.replayMayResolve = replayMayResolve;
+    }
+
+    public String getResolutionDifficulty() {
+        return resolutionDifficulty;
+    }
+
+    public void setResolutionDifficulty(String resolutionDifficulty) {
+        this.resolutionDifficulty = resolutionDifficulty;
+    }
+
+    public String getOperationalImpact() {
+        return operationalImpact;
+    }
+
+    public void setOperationalImpact(String operationalImpact) {
+        this.operationalImpact = operationalImpact;
+    }
+
+    public Instant getCapturedAt() {
+        return capturedAt;
+    }
+
+    public void setCapturedAt(Instant capturedAt) {
+        this.capturedAt = capturedAt;
+    }
+
+    public Instant getSlaDeadline() {
+        return slaDeadline;
+    }
+
+    public void setSlaDeadline(Instant slaDeadline) {
+        this.slaDeadline = slaDeadline;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Instant getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
+
+    public String getLinkedWorkItemId() {
+        return linkedWorkItemId;
+    }
+
+    public void setLinkedWorkItemId(String linkedWorkItemId) {
+        this.linkedWorkItemId = linkedWorkItemId;
+    }
 }

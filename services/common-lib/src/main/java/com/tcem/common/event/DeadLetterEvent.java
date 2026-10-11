@@ -34,10 +34,6 @@ import java.time.Instant;
  * {@code PERMANENTLY_FAILED} and a {@code HIGH} priority work item is created.
  * </p>
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DeadLetterEvent {
 
@@ -81,7 +77,6 @@ public class DeadLetterEvent {
      * Number of replay attempts made so far (copied from the message header).
      * Stops replay after a configured threshold.
      */
-    @Builder.Default
     private int replayCount = 0;
 
     /**
@@ -89,7 +84,6 @@ public class DeadLetterEvent {
      * {@code true} for transient failures (timeout, network).
      * {@code false} for permanent failures (malformed JSON, unknown schema version).
      */
-    @Builder.Default
     private boolean replayable = true;
 
     /**
@@ -97,6 +91,99 @@ public class DeadLetterEvent {
      * Values: {@code PENDING_REPLAY}, {@code REPLAYING}, {@code REPLAY_SUCCEEDED},
      * {@code PERMANENTLY_FAILED}
      */
-    @Builder.Default
     private String dlqStatus = "PENDING_REPLAY";
+
+    public DeadLetterEvent() {}
+
+    public DeadLetterEvent(MessageHeader messageHeader, MessageHeader originalMessageHeader,
+                           String originalPayload, String failedOnTopic, String failedInService,
+                           String failureReason, String exceptionClass, String stackTraceExcerpt,
+                           Instant failedAt, int replayCount, boolean replayable, String dlqStatus) {
+        this.messageHeader = messageHeader;
+        this.originalMessageHeader = originalMessageHeader;
+        this.originalPayload = originalPayload;
+        this.failedOnTopic = failedOnTopic;
+        this.failedInService = failedInService;
+        this.failureReason = failureReason;
+        this.exceptionClass = exceptionClass;
+        this.stackTraceExcerpt = stackTraceExcerpt;
+        this.failedAt = failedAt;
+        this.replayCount = replayCount;
+        this.replayable = replayable;
+        this.dlqStatus = dlqStatus != null ? dlqStatus : "PENDING_REPLAY";
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public MessageHeader getMessageHeader() { return messageHeader; }
+    public void setMessageHeader(MessageHeader messageHeader) { this.messageHeader = messageHeader; }
+
+    public MessageHeader getOriginalMessageHeader() { return originalMessageHeader; }
+    public void setOriginalMessageHeader(MessageHeader originalMessageHeader) { this.originalMessageHeader = originalMessageHeader; }
+
+    public String getOriginalPayload() { return originalPayload; }
+    public void setOriginalPayload(String originalPayload) { this.originalPayload = originalPayload; }
+
+    public String getFailedOnTopic() { return failedOnTopic; }
+    public void setFailedOnTopic(String failedOnTopic) { this.failedOnTopic = failedOnTopic; }
+
+    public String getFailedInService() { return failedInService; }
+    public void setFailedInService(String failedInService) { this.failedInService = failedInService; }
+
+    public String getFailureReason() { return failureReason; }
+    public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
+
+    public String getExceptionClass() { return exceptionClass; }
+    public void setExceptionClass(String exceptionClass) { this.exceptionClass = exceptionClass; }
+
+    public String getStackTraceExcerpt() { return stackTraceExcerpt; }
+    public void setStackTraceExcerpt(String stackTraceExcerpt) { this.stackTraceExcerpt = stackTraceExcerpt; }
+
+    public Instant getFailedAt() { return failedAt; }
+    public void setFailedAt(Instant failedAt) { this.failedAt = failedAt; }
+
+    public int getReplayCount() { return replayCount; }
+    public void setReplayCount(int replayCount) { this.replayCount = replayCount; }
+
+    public boolean isReplayable() { return replayable; }
+    public void setReplayable(boolean replayable) { this.replayable = replayable; }
+
+    public String getDlqStatus() { return dlqStatus; }
+    public void setDlqStatus(String dlqStatus) { this.dlqStatus = dlqStatus; }
+
+    public static class Builder {
+        private MessageHeader messageHeader;
+        private MessageHeader originalMessageHeader;
+        private String originalPayload;
+        private String failedOnTopic;
+        private String failedInService;
+        private String failureReason;
+        private String exceptionClass;
+        private String stackTraceExcerpt;
+        private Instant failedAt;
+        private int replayCount = 0;
+        private boolean replayable = true;
+        private String dlqStatus = "PENDING_REPLAY";
+
+        public Builder messageHeader(MessageHeader messageHeader) { this.messageHeader = messageHeader; return this; }
+        public Builder originalMessageHeader(MessageHeader originalMessageHeader) { this.originalMessageHeader = originalMessageHeader; return this; }
+        public Builder originalPayload(String originalPayload) { this.originalPayload = originalPayload; return this; }
+        public Builder failedOnTopic(String failedOnTopic) { this.failedOnTopic = failedOnTopic; return this; }
+        public Builder failedInService(String failedInService) { this.failedInService = failedInService; return this; }
+        public Builder failureReason(String failureReason) { this.failureReason = failureReason; return this; }
+        public Builder exceptionClass(String exceptionClass) { this.exceptionClass = exceptionClass; return this; }
+        public Builder stackTraceExcerpt(String stackTraceExcerpt) { this.stackTraceExcerpt = stackTraceExcerpt; return this; }
+        public Builder failedAt(Instant failedAt) { this.failedAt = failedAt; return this; }
+        public Builder replayCount(int replayCount) { this.replayCount = replayCount; return this; }
+        public Builder replayable(boolean replayable) { this.replayable = replayable; return this; }
+        public Builder dlqStatus(String dlqStatus) { this.dlqStatus = dlqStatus; return this; }
+
+        public DeadLetterEvent build() {
+            return new DeadLetterEvent(messageHeader, originalMessageHeader, originalPayload,
+                    failedOnTopic, failedInService, failureReason, exceptionClass, stackTraceExcerpt,
+                    failedAt, replayCount, replayable, dlqStatus);
+        }
+    }
 }

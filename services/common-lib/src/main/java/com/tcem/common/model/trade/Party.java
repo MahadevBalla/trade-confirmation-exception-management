@@ -1,5 +1,6 @@
 package com.tcem.common.model.trade;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Party {
 
     /**
@@ -36,6 +38,9 @@ public class Party {
      */
     private String partyId;
 
+    /** Human-readable party name in raw payload. */
+    private String partyName;
+
     // -----------------------------------------------------------------------
     // Enriched fields – populated by enrichment-service (FR4)
     // Provenance tracked in EnrichmentSource within ReferenceDataEnrichment.
@@ -52,4 +57,60 @@ public class Party {
 
     /** Account or book identifier on the house side. Optional. */
     private String accountId;
+
+    public String getPartyName() {
+        return partyName != null ? partyName : legalEntityName;
+    }
+
+    public void setPartyName(String partyName) {
+        this.partyName = partyName;
+    }
+
+    public String getPartyRole() {
+        return partyRole;
+    }
+
+    public void setPartyRole(String partyRole) {
+        this.partyRole = partyRole;
+    }
+
+    public String getPartyId() {
+        return partyId;
+    }
+
+    public void setPartyId(String partyId) {
+        this.partyId = partyId;
+    }
+
+    public String getLegalEntityName() {
+        return legalEntityName;
+    }
+
+    public void setLegalEntityName(String legalEntityName) {
+        this.legalEntityName = legalEntityName;
+    }
+
+    public String getLei() {
+        return lei;
+    }
+
+    public void setLei(String lei) {
+        this.lei = lei;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
 }

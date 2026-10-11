@@ -124,14 +124,94 @@ public class Trade {
     private com.tcem.common.model.reference.ReferenceDataEnrichment enrichmentMetadata;
 
     // -----------------------------------------------------------------------
-    // Explicit getters for compilation without Lombok
+    // Explicit getters and setters for compilation without Lombok
     // -----------------------------------------------------------------------
 
     public String getTradeId() {
         return tradeId;
     }
 
+    public void setTradeId(String tradeId) {
+        this.tradeId = tradeId;
+    }
+
+    public String getSourceSystemTradeId() {
+        return sourceSystemTradeId;
+    }
+
+    public void setSourceSystemTradeId(String sourceSystemTradeId) {
+        this.sourceSystemTradeId = sourceSystemTradeId;
+    }
+
+    public int getTradeVersion() {
+        return tradeVersion;
+    }
+
+    public void setTradeVersion(int tradeVersion) {
+        this.tradeVersion = tradeVersion;
+    }
+
     public ProductType getProductType() {
         return productType;
+    }
+
+    public void setProductType(ProductType productType) {
+        this.productType = productType;
+    }
+
+    public String getTradeDate() {
+        return tradeDate;
+    }
+
+    public void setTradeDate(String tradeDate) {
+        this.tradeDate = tradeDate;
+    }
+
+    public String getEffectiveDate() {
+        return effectiveDate;
+    }
+
+    public void setEffectiveDate(String effectiveDate) {
+        this.effectiveDate = effectiveDate;
+    }
+
+    public String getMaturityDate() {
+        return maturityDate;
+    }
+
+    public void setMaturityDate(String maturityDate) {
+        this.maturityDate = maturityDate;
+    }
+
+    public List<Party> getParties() {
+        return parties;
+    }
+
+    public void setParties(List<Party> parties) {
+        this.parties = parties;
+    }
+
+    public FxOptionEconomics getFxOptionEconomics() {
+        return fxOptionEconomics;
+    }
+
+    public void setFxOptionEconomics(FxOptionEconomics fxOptionEconomics) {
+        this.fxOptionEconomics = fxOptionEconomics;
+    }
+
+    public NonEconomicTerms getNonEconomicTerms() {
+        return nonEconomicTerms;
+    }
+
+    public void setNonEconomicTerms(NonEconomicTerms nonEconomicTerms) {
+        this.nonEconomicTerms = nonEconomicTerms;
+    }
+
+    public com.tcem.common.model.reference.ReferenceDataEnrichment getEnrichmentMetadata() {
+        return enrichmentMetadata;
+    }
+
+    public void setEnrichmentMetadata(com.tcem.common.model.reference.ReferenceDataEnrichment enrichmentMetadata) {
+        this.enrichmentMetadata = enrichmentMetadata;
     }
 }
