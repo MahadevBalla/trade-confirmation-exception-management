@@ -132,6 +132,14 @@ Spins up the complete platform including backend microservices:
 docker compose up -d --build
 ```
 
+### Workflow C: Helper Scripts (`scripts/`)
+Alternatively, use the developer automation scripts in `scripts/`:
+- **Start Stack**: `./scripts/dev-up.sh` (or `./scripts/dev-up.sh --infra-only`)
+- **Run Smoke Test**: `./scripts/smoke-test.sh`
+- **Seed Data**: `./scripts/seed-data.sh`
+- **Stop Stack**: `./scripts/dev-down.sh` (or `./scripts/dev-down.sh --reset` to clear volumes)
+
+
 ### Stack Verification Commands
 
 1. **Check Container Status**:
