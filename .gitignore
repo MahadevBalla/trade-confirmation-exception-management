@@ -21,3 +21,8 @@ dist-ssr/
 *.iml
 .vscode/
 .DS_Store
+
+# Agent documentation (private / uncommitted)
+.agent/
+.agent-docs/
+agent-docs/

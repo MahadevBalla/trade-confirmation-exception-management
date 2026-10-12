@@ -1,0 +1,58 @@
+name: e2e-smoke-test
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/**"
+      - "frontend/**"
+      - "docker-compose.yml"
+      - ".env.example"
+      - ".github/workflows/smoke-test.yml"
+
+jobs:
+  smoke-test:
+    name: Cold Boot & Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up environment
+        run: cp .env.example .env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start infrastructure and initialize it
+        run: |
+          docker compose up -d kafka couchdb kafka-ui
+          docker compose up kafka-init couchdb-init
+
+      - name: Build and start ingestion service and gateway
+        run: docker compose up -d --build ingestion-service frontend
+
+      - name: Verify service health and gateway routes
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:8081/actuator/health >/dev/null && \
+               curl -fsS http://localhost:3000/ >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              echo "Services did not become healthy in time"
+              docker compose ps
+              exit 1
+            fi
+            sleep 5
+          done
+          curl -fsS http://localhost:3000/api/trades/scenarios
+          curl -fsS http://localhost:3000/api/metrics/stp-rate
+          curl -fsS http://localhost:3000/dashboard/exceptions >/dev/null
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Clean up
+        if: always()
+        run: docker compose down -v

@@ -1,0 +1,7 @@
+**/target/
+**/.idea/
+**/*.iml
+.git/
+.agent/
+.agent-docs/
+node_modules/

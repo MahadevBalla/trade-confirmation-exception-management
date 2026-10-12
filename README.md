@@ -56,7 +56,11 @@ cp .env.example .env
 Spring Boot app from your IDE instead, pointed at these containers):
 
 ```bash
+# 1. Start core infrastructure
 docker compose up -d kafka kafka-ui couchdb
+
+# 2. Provision Kafka topics (10 topics, 3 partitions) and CouchDB databases
+docker compose up kafka-init couchdb-init
 ```
 
 - Kafka broker: `localhost:9092`
@@ -130,6 +134,8 @@ npm run dev      # Vite dev server on :5173
 
 ## Docs
 
+- [`docs/devops-guide.md`](docs/devops-guide.md) - Docker orchestration, provisioning, container security & workflow guide
+- [`docs/phase-4-5-implementation-plan.md`](docs/phase-4-5-implementation-plan.md) - Implementation plan for Phase 4 (Nginx Gateway) & Phase 5 (CI/CD)
 - [`docs/architecture.md`](docs/architecture.md) - event flow + service boundaries
 - [`docs/kafka-topics.md`](docs/kafka-topics.md) - topics, keys, open decisions
 - [`docs/team-roles.md`](docs/team-roles.md) - roles, evaluation weighting, suggested task split

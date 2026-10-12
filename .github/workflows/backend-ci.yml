@@ -2,28 +2,40 @@ name: backend-ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feat/**']
     paths:
       - "services/**"
+      - "docker-compose.yml"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     paths:
       - "services/**"
+      - "docker-compose.yml"
       - ".github/workflows/backend-ci.yml"
 
 jobs:
-  build:
+  test:
+    name: Maven Reactor Build & Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
-
-      - name: Build & test all services (reactor)
+      - name: Build & test all services
         working-directory: services
-        run: mvn -B verify
+        run: mvn -B -V verify
+
+  docker-build:
+    name: Docker Image Build Verification
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build all backend service containers
+        run: docker compose build ingestion-service enrichment-service validation-service exception-service workitem-service
