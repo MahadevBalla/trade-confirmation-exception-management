@@ -13,6 +13,10 @@ on:
       - "docker-compose.yml"
       - ".github/workflows/backend-ci.yml"
 
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Maven Reactor Build & Tests
@@ -28,6 +32,13 @@ jobs:
       - name: Build & test all services
         working-directory: services
         run: mvn -B -V verify
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: services/**/target/surefire-reports/
+          retention-days: 7
 
   docker-build:
     name: Docker Image Build Verification
