@@ -34,11 +34,11 @@ This is a starting proposal - swap names in once roles are actually assigned.
 | Person | Primary owns | Secondary role(s) |
 | --- | --- | --- |
 | Mayank | Team Lead + `ingestion-service` | Coordination, event contracts |
-| Gunjan | `enrichment-service` | Business Analyst (reference data modelling) |
+| Bhavik | `enrichment-service` | Business Analyst (reference data modelling) |
 | Mahadev | `validation-service` | Backend Engineer |
 | Kapish | `exception-service` | Data Engineer (classification/recommendation logic) |
-| Bhavik | `workitem-service` | DevOps Engineer (CI/CD, Docker Compose upkeep) |
-| Oren | `frontend` | Frontend Engineer + QA Engineer (test coverage across services) |
+| Oren | `workitem-service` | DevOps Engineer (CI/CD, Docker Compose upkeep) |
+| Gunjan | `frontend` | Frontend Engineer + QA Engineer (test coverage across services) |
 
 Things to decide as a team before assigning tasks:
 

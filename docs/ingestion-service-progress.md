@@ -15,9 +15,9 @@ The **Ingestion Service** is the entry gateway of the entire Trade Confirmation 
 2. **Validates Inbound Trade Schemas (FR2):** Consumes messages from `trade.raw`, checks header metadata, structural JSON rules, and product economics (e.g., FX Option mandatory fields).
 3. **Manages Idempotency & Persistence (FR3):** Uses `IdempotencyKey` to prevent duplicate processing, persists raw and validated trade state to Apache CouchDB (`trades` database), and writes immutable audit logs to CouchDB (`audit-events`).
 4. **Routes Outcomes Downstream:**
-   - **Valid Trades:** Publishes canonical `TradeEvent` to `trade.accepted` (consumed by Gunjan's `enrichment-service`).
+   - **Valid Trades:** Publishes canonical `TradeEvent` to `trade.accepted` (consumed by Bhavik's `enrichment-service`).
    - **Validation Failures / Duplicates:** Publishes `ExceptionEvent` to `exception.created` (consumed by Kapish's `exception-service`) or routes unparseable payloads to `deadletter.trade` (FR12).
-5. **Serves Operations REST APIs:** Provides `GET /trades/{id}` and `GET /trades?status=&page=` for Oren's React Operations UI (FR11).
+5. **Serves Operations REST APIs:** Provides `GET /trades/{id}` and `GET /trades?status=&page=` for Gunjan's React Operations UI (FR11).
 
 ---
 
@@ -142,11 +142,11 @@ If context is lost, or another engineer/agent needs to understand or resume work
 | **Phase 3** | **Validation Engine (FR2)** | `TradeValidator`, `ValidationResult`, checks for headers, dates, parties, and FX Option mandatory fields. Generates structured `ExceptionRecord` on errors. | Unit test suite testing 15+ validation failure scenarios. |
 | **Phase 4** | **Kafka Pipeline & Idempotency** | `TradeRawConsumer`, idempotency filter using CouchDB, persistence of raw trade, routing to `trade.accepted` or `exception.created` / `deadletter.trade`. | EmbeddedKafka integration test validating event flow from `trade.raw` to `trade.accepted` and CouchDB. |
 | **Phase 5** | **Operations REST APIs & Health (FR3, FR11)** | `TradeQueryController` exposing `GET /trades/{id}` and `GET /trades?status=&page=`, custom Actuator health indicator. | MockMvc tests for endpoints. |
-| **Phase 6** | **End-to-End Verification & Documentation** | Verify full workflow with Docker Compose / local test runner, update docs, prepare for Gunjan's handoff. | All reactor tests pass (`mvn verify`). |
+| **Phase 6** | **End-to-End Verification & Documentation** | Verify full workflow with Docker Compose / local test runner, update docs, prepare for Bhavik's handoff. | All reactor tests pass (`mvn verify`). |
 
 ---
 
-## 5. Teammate Communication Contract (Handoff to Gunjan)
+## 5. Teammate Communication Contract (Handoff to Bhavik)
 
 - **Topic produced:** `trade.accepted`
 - **Kafka message key:** `tradeId` (e.g., `TRD-10001`)
