@@ -18,6 +18,7 @@ export default defineConfig({
       '/api/validation': { target: 'http://localhost:8083', changeOrigin: true, rewrite: (path) => path.replace(/^\/api\/validation/, '') },
       '/api/exceptions': { target: 'http://localhost:8084', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
       '/api/workitems': { target: 'http://localhost:8085', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
+      '/api/dlq': { target: 'http://localhost:8085', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
     },
   },
 })
