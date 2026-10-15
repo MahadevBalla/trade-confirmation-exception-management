@@ -56,6 +56,9 @@ See `docs/kafka-topics.md` for the full topic list.
 
 This split is a starting point, not a contract - revisit it once the team has looked at the FpML-inspired JSON model together. If two services turn out to be trivially thin, merging them is fine; the evaluation rubric cares about clear service boundaries and event contracts, not service count.
 
-## What's NOT built yet
+## Implementation status
 
-Every service above is currently just a Spring Boot app that starts and answers `/actuator/health`. No Kafka topics are created, no CouchDB schema exists, no endpoints exist. That's intentional - implementation is per-task, assigned separately. See `docs/team-roles.md`.
+- **Built:** `ingestion-service` (FR1-FR3) and `workitem-service` (FR10, FR12: work items, manual review queue, audit trail, DLQ and replay). Their topics, payload contracts and REST APIs are documented in `docs/kafka-topics.md`, `README.md` and `services/workitem-service/README.md`.
+- **Stubs:** `enrichment-service`, `validation-service` and `exception-service` are Spring Boot apps that only answer `/actuator/health`. Until they exist, `workitem-service` is exercised with hand-published events (see its README).
+
+Per-service progress is tracked in `docs/project-status.md`.

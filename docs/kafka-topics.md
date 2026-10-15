@@ -5,15 +5,17 @@ From the capstone spec's architecture diagram (Section 5) and MVP scope (Section
 | Topic | Produced by | Consumed by | Notes |
 | --- | --- | --- | --- |
 | `trade.raw` | Producer / seed loader | ingestion-service | Raw FpML-inspired JSON as received |
-| `trade.accepted` | ingestion-service | enrichment-service | Passed schema validation (FR2) |
-| `trade.enriched` | enrichment-service | validation-service | After reference-data enrichment (FR4) |
-| `stp.validated` | validation-service | (fan-out: confirmation path) | STP decision made (FR5) |
-| `confirmation.generated` | validation-service | workitem-service (audit) | Confirmation output produced (FR6) |
-| `exception.created` | validation-service | exception-service | Raised when STP fails (FR7) |
-| `exception.classified` | exception-service | workitem-service | Theme/sub-theme + recommendation attached (FR8, FR9) |
-| `workitem.linked` | workitem-service | (audit / UI) | Work item created or linked (FR10) |
-| `manual.review.required` | exception-service | (UI / workitem-service) | Routed to manual review queue |
-| `deadletter.trade` | any service (on failure) | workitem-service (audit) / replay tool | Irrecoverable messages with diagnostic context (FR12) |
+| `trade.accepted` | ingestion-service | enrichment-service; workitem-service (replay outcome) | Passed schema validation (FR2) |
+| `trade.enriched` | enrichment-service | validation-service; workitem-service (replay outcome) | After reference-data enrichment (FR4) |
+| `stp.validated` | validation-service | (fan-out: confirmation path); workitem-service (replay outcome) | STP decision made (FR5) |
+| `confirmation.generated` | validation-service | workitem-service (audit, closes the trade's open work items) | Confirmation output produced (FR6); payload `ConfirmationEvent` |
+| `exception.created` | validation-service | exception-service; workitem-service (replay outcome) | Raised when STP fails (FR7) |
+| `exception.classified` | exception-service | workitem-service | Theme/sub-theme + recommendation attached (FR8, FR9); payload `ExceptionEvent` |
+| `workitem.linked` | workitem-service | (audit / UI) | Work item created, linked or updated (FR10); payload `WorkItemEvent` |
+| `manual.review.required` | exception-service | workitem-service (manual review queue) | Routed to manual review queue; payload `ExceptionEvent` (same envelope as `exception.classified`) |
+| `deadletter.trade` | any service (on failure); workitem-service (rejected manual reviews) | workitem-service (DLQ store + replay) | Irrecoverable messages with diagnostic context (FR12); payload `DeadLetterEvent`, key = tradeId |
+
+workitem-service watches the "replay outcome" topics only to learn whether a replayed message got past the stage it failed in. It reacts only to records marked as replays (`messageHeader.eventType=REPLAY`, `replayCount > 0`, or the `tcem.replayCount` header), so producers on those topics should preserve the incoming `messageHeader` (or at least its `eventType`/`replayCount`) and key records by tradeId.
 
 ## Decisions still open for the team
 

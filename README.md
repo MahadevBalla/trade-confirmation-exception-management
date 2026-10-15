@@ -10,9 +10,11 @@ Stack: **Apache Kafka** (event streaming) · **Apache CouchDB** (document
 store) · **Java / Spring Boot** (microservices) · **React + TypeScript**
 (operations UI) · **Docker Compose** (local orchestration).
 
-> Status: repo skeleton only. Directories, build files, and empty-but-runnable
-> apps are set up; no feature logic is implemented yet. See `docs/` for the
-> architecture and task breakdown, and `CONTRIBUTING.md` before opening a PR.
+> Status: in progress. `ingestion-service` and `workitem-service` are
+> implemented and tested; `enrichment-service`, `validation-service` and
+> `exception-service` are still runnable stubs. See
+> [`docs/project-status.md`](docs/project-status.md) for per-service progress,
+> and `CONTRIBUTING.md` before opening a PR.
 
 ## Repo layout
 
@@ -31,12 +33,12 @@ docs/
   kafka-topics.md         # Full topic list and open decisions
   team-roles.md           # Role mapping + evaluation weighting
 docker-compose.yml         # Kafka (KRaft), Kafka UI, CouchDB, all services
-.github/                   # CI workflows + PR template
+.github/                   # CI workflows (backend, frontend, e2e smoke test) + PR template
 ```
 
-Each backend service is a normal Spring Boot app right now - it starts and
-answers `/actuator/health`, nothing else. Fill in controllers, Kafka
-listeners/producers, and CouchDB access as tasks get assigned.
+Services that are not implemented yet are plain Spring Boot apps that start and
+answer `/actuator/health`. Fill in controllers, Kafka listeners/producers, and
+CouchDB access as tasks get assigned.
 
 ## Prerequisites
 
@@ -124,6 +126,25 @@ The `ingestion-service` exposes comprehensive REST endpoints for synthetic trade
 | `/actuator/health` | GET | Spring Boot Actuator health check (includes custom CouchDB health indicator). |
 
 
+### Workitem Service REST APIs (Port 8085)
+
+The `workitem-service` consumes `deadletter.trade`, `exception.classified`, `manual.review.required`, `confirmation.generated` and the pipeline progress topics, and exposes the work-item tracker, manual review queue and DLQ/replay controls (FR10, FR12). Flows, rules and contracts are in [`services/workitem-service/README.md`](services/workitem-service/README.md).
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/workitems?status=&type=&ownerQueue=&priority=&tradeId=&page=&size=` | GET | Paginated work items, newest first. |
+| `/workitems/summary` | GET | Counts by status/type, open counts by queue/priority, aged open items. |
+| `/workitems/{id}` | GET | One work item. |
+| `/workitems` | POST | Create a work item (`201`; `400` on invalid values). |
+| `/workitems/{id}` | PATCH | Update status, priority, owner queue or notes (`409` on terminal items). |
+| `/workitems/{id}/review` | POST | `APPROVE` or `REJECT` a `MANUAL_REVIEW` item; reject sends the trade to the DLQ. |
+| `/dlq?status={STATUS}&page={P}&size={S}` | GET | Dead-letter entries (`PENDING_REPLAY`, `REPLAYING`, `REPLAY_SUCCEEDED`, `PERMANENTLY_FAILED`). |
+| `/dlq/{id}` | GET | One DLQ entry, including its failure history. |
+| `/dlq/{id}/replay` | POST | Republish the original message to the topic it failed on (max 3 attempts). |
+| `/actuator/health` | GET | Health check (includes CouchDB connectivity). |
+
+Through the gateway these are `/api/workitems/...` and `/api/dlq/...`.
+
 ## Frontend development
 
 ```bash
@@ -138,5 +159,7 @@ npm run dev      # Vite dev server on :5173
 - [`docs/phase-4-5-implementation-plan.md`](docs/phase-4-5-implementation-plan.md) - Implementation plan for Phase 4 (Nginx Gateway) & Phase 5 (CI/CD)
 - [`docs/architecture.md`](docs/architecture.md) - event flow + service boundaries
 - [`docs/kafka-topics.md`](docs/kafka-topics.md) - topics, keys, open decisions
+- [`docs/project-status.md`](docs/project-status.md) - per-service progress and what remains
+- [`services/workitem-service/README.md`](services/workitem-service/README.md) - work-item, manual review and DLQ/replay flows, rules and contracts
 - [`docs/team-roles.md`](docs/team-roles.md) - roles, evaluation weighting, suggested task split
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - branching, PRs, definition of done
