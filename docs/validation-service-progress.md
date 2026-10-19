@@ -96,13 +96,19 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - [`TemplateResolutionRuleTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/TemplateResolutionRuleTest.java) — 10 tests: guard clauses, null/blank templateId → `NO_MATCHING_TEMPLATE` with hint in reason, templateId-present-version-missing → `TEMPLATE_VERSION_MISMATCH`, happy path, no double-failure when templateId is null.
   - [`StpRulesEngineTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/StpRulesEngineTest.java) — 7 tests: full pass, all-three-rules-fire accumulation, single-rule partial failures, defensive fallback on rule exception (continues remaining rules), empty rule list.
 
+- [x] **Phase 3: Decision Dispatch & Event Producers:**
+  - [`StpValidatedProducer.java`](../services/validation-service/src/main/java/com/tcem/validation/producer/StpValidatedProducer.java): Publishes `StpValidatedEvent` to `TopicNames.STP_VALIDATED`; fallback key `"UNKNOWN_TRADE"`.
+  - [`ConfirmationGeneratedProducer.java`](../services/validation-service/src/main/java/com/tcem/validation/producer/ConfirmationGeneratedProducer.java): Publishes `ConfirmationEvent` to `TopicNames.CONFIRMATION_GENERATED`; fallback key `"UNKNOWN_CONFIRMATION"`.
+  - [`ExceptionCreatedProducer.java`](../services/validation-service/src/main/java/com/tcem/validation/producer/ExceptionCreatedProducer.java): Publishes `ExceptionEvent` to `TopicNames.EXCEPTION_CREATED`; fallback key `"UNKNOWN_EXCEPTION"`.
+  - [`DeadLetterProducer.java`](../services/validation-service/src/main/java/com/tcem/validation/producer/DeadLetterProducer.java): Publishes `DeadLetterEvent` to `TopicNames.DEADLETTER_TRADE`; fallback key `"DLQ_<millis>"`.
+- [x] **Phase 3 Unit Tests — 17 new tests (71 total), all passing:**
+  - [`StpValidatedProducerTest`](../services/validation-service/src/test/java/com/tcem/validation/producer/StpValidatedProducerTest.java) — 4 tests: STP-passed dispatch, STP-failed dispatch with failure details, null-key fallback, Kafka send failure.
+  - [`ConfirmationGeneratedProducerTest`](../services/validation-service/src/test/java/com/tcem/validation/producer/ConfirmationGeneratedProducerTest.java) — 4 tests: confirmation record dispatch, null-key fallback, Kafka send failure, fingerprint in payload.
+  - [`ExceptionCreatedProducerTest`](../services/validation-service/src/test/java/com/tcem/validation/producer/ExceptionCreatedProducerTest.java) — 5 tests: missing economic data, business rule failure, template issue, null-key fallback, Kafka send failure.
+  - [`DeadLetterProducerTest`](../services/validation-service/src/test/java/com/tcem/validation/producer/DeadLetterProducerTest.java) — 4 tests: replayable event dispatch, non-replayable event, null-key `DLQ_` fallback, Kafka send failure.
+
 ### What is REMAINING (To Be Built)
 
-- [ ] **Phase 3: Decision Dispatch & Event Producers:**
-  - `StpValidatedProducer.java` (publishing `StpValidatedEvent` to `stp.validated`).
-  - `ConfirmationGeneratedProducer.java` (publishing `ConfirmationEvent` to `confirmation.generated`).
-  - `ExceptionCreatedProducer.java` (publishing `ExceptionEvent` to `exception.created`).
-  - `DeadLetterProducer.java` (publishing unrecoverable errors to `deadletter.trade`).
 - [ ] **Phase 4: Confirmation Generator & Fingerprint Engine (FR6):**
   - `PlainTextConfirmationGenerator.java` (deterministic plain-text rendering matching frontend display expectations).
   - `ConfirmationService.java` (orchestrating generation, resolving `parties[ROLE]` for `ConfirmationFingerprint`, CouchDB persistence, and duplicate suppression on `AMEND_TRADE`).
@@ -139,11 +145,12 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - [`StpRulesEngine`](../services/validation-service/src/main/java/com/tcem/validation/rules/StpRulesEngine.java): Service orchestrator running all registered rules, accumulating all violations, and guarding against uncaught rule exceptions.
   - [`StpValidatedEvent`](../services/validation-service/src/main/java/com/tcem/validation/model/StpValidatedEvent.java): Event model published to `stp.validated` with pass/fail flag, summary, and structured diagnostics.
 
-- [ ] **Phase 3: Decision Dispatch & Event Producers** (Pending)
-  - `StpValidatedProducer`: Publishes `StpValidatedEvent` to `TopicNames.STP_VALIDATED` partitioned by `tradeId`.
-  - `ConfirmationGeneratedProducer`: Publishes canonical `ConfirmationEvent` to `TopicNames.CONFIRMATION_GENERATED`.
-  - `ExceptionCreatedProducer`: Publishes canonical `ExceptionEvent` to `TopicNames.EXCEPTION_CREATED` on STP failure.
-  - `DeadLetterProducer`: Publishes unrecoverable processing failures to `deadletter.trade` (FR12).
+- [x] **Phase 3: Decision Dispatch & Event Producers** (Completed)
+  - [`StpValidatedProducer`](../services/validation-service/src/main/java/com/tcem/validation/producer/StpValidatedProducer.java): Publishes `StpValidatedEvent` to `TopicNames.STP_VALIDATED` partitioned by `tradeId`; falls back to `"UNKNOWN_TRADE"` on null key.
+  - [`ConfirmationGeneratedProducer`](../services/validation-service/src/main/java/com/tcem/validation/producer/ConfirmationGeneratedProducer.java): Publishes canonical `ConfirmationEvent` to `TopicNames.CONFIRMATION_GENERATED`; falls back to `"UNKNOWN_CONFIRMATION"` on null key.
+  - [`ExceptionCreatedProducer`](../services/validation-service/src/main/java/com/tcem/validation/producer/ExceptionCreatedProducer.java): Publishes canonical `ExceptionEvent` to `TopicNames.EXCEPTION_CREATED` on STP failure; falls back to `"UNKNOWN_EXCEPTION"` on null key.
+  - [`DeadLetterProducer`](../services/validation-service/src/main/java/com/tcem/validation/producer/DeadLetterProducer.java): Publishes unrecoverable processing failures to `deadletter.trade`; falls back to `"DLQ_<millis>"` on null key.
+  - All four producers use the established codebase pattern: `KafkaOperations<String, String>`, `ObjectMapper`, SLF4J, `try/catch` serialization guard returning `CompletableFuture.failedFuture` on error.
 
 - [ ] **Phase 4: Confirmation Generator & Fingerprint Engine (FR6)** (Pending)
   - `PlainTextConfirmationGenerator`: Renders deterministic plain-text confirmation notices based on template and trade terms, structured for monospace display in the Operations UI.
@@ -168,7 +175,7 @@ The **Validation Service** acts as the core decision-making and confirmation iss
 | --- | --- | --- | --- | --- |
 | **Phase 1** | **CouchDB Client & Persistence Layer** | `CouchDbClient`, `CouchDbConfig`, `ConfirmationDocument`, `ConfirmationCouchDbRepository`, auto-init for `confirmations` DB. | Repository unit tests with CouchDB test double; verify database initialization. | **Completed** |
 | **Phase 2** | **STP Rules Engine (FR5)** | `StpRule`, `StpValidationResult`, `EconomicFieldsRule`, `BusinessEligibilityRule`, `TemplateResolutionRule`, `StpRulesEngine`, `StpValidatedEvent`. | Unit tests covering 10+ validation pass/fail combinations; verify failure accumulation. | **Completed** |
-| **Phase 3** | **Decision Dispatch & Producers** | `StpValidatedProducer`, `ConfirmationGeneratedProducer`, `ExceptionCreatedProducer`, `DeadLetterProducer`. | Producer unit tests verifying Kafka template interactions, message keys, and headers. | **Pending** |
+| **Phase 3** | **Decision Dispatch & Producers** | `StpValidatedProducer`, `ConfirmationGeneratedProducer`, `ExceptionCreatedProducer`, `DeadLetterProducer`. | Producer unit tests verifying Kafka template interactions, message keys, and headers. | **Completed** |
 | **Phase 4** | **Confirmation Generator & Fingerprinting (FR6)** | `PlainTextConfirmationGenerator`, `ConfirmationService`, `ConfirmationFingerprint` party resolution, duplicate suppression on `AMEND_TRADE`. | Unit tests verifying plain-text template formatting, fingerprint stability, and amendment duplicate suppression. | **Pending** |
 | **Phase 5** | **Exception Routing Mapper (FR7)** | `StpExceptionMapper` mapping rule failures to `ExceptionRecord` with category, subtheme, queue, and impact. | Unit tests validating exception classification against spec §12 taxonomy. | **Pending** |
 | **Phase 6** | **Kafka Pipeline & REST APIs** | `TradeEnrichedConsumer` on `trade.enriched`, idempotency handling, `ConfirmationQueryController` (`/confirmations/{id}`, `/metrics/stp-rate`). | MockMvc tests for endpoints, consumer message processing tests. | **Pending** |
