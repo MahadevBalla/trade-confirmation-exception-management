@@ -59,4 +59,56 @@ public class ReferenceDataEnrichment {
      * Stored for audit; not used in validation logic.
      */
     private String enrichmentNotes;
+
+    // -----------------------------------------------------------------------
+    // Explicit getters and setters for compilation without Lombok
+    // -----------------------------------------------------------------------
+
+    public String getResolvedTemplateId() {
+        return resolvedTemplateId;
+    }
+
+    public void setResolvedTemplateId(String resolvedTemplateId) {
+        this.resolvedTemplateId = resolvedTemplateId;
+    }
+
+    public String getResolvedTemplateVersion() {
+        return resolvedTemplateVersion;
+    }
+
+    public void setResolvedTemplateVersion(String resolvedTemplateVersion) {
+        this.resolvedTemplateVersion = resolvedTemplateVersion;
+    }
+
+    public Boolean getCounterpartySTPEligible() {
+        return counterpartySTPEligible;
+    }
+
+    public void setCounterpartySTPEligible(Boolean counterpartySTPEligible) {
+        this.counterpartySTPEligible = counterpartySTPEligible;
+    }
+
+    public Boolean getProductSTPEligible() {
+        return productSTPEligible;
+    }
+
+    public void setProductSTPEligible(Boolean productSTPEligible) {
+        this.productSTPEligible = productSTPEligible;
+    }
+
+    public Map<String, EnrichmentSource> getFieldProvenance() {
+        return fieldProvenance;
+    }
+
+    public void setFieldProvenance(Map<String, EnrichmentSource> fieldProvenance) {
+        this.fieldProvenance = fieldProvenance;
+    }
+
+    public String getEnrichmentNotes() {
+        return enrichmentNotes;
+    }
+
+    public void setEnrichmentNotes(String enrichmentNotes) {
+        this.enrichmentNotes = enrichmentNotes;
+    }
 }

@@ -28,4 +28,24 @@ public class ConfirmationEvent {
 
     /** The confirmation that was generated. */
     private ConfirmationRecord confirmation;
+
+    // -----------------------------------------------------------------------
+    // Explicit getters and setters for compilation without Lombok
+    // -----------------------------------------------------------------------
+
+    public MessageHeader getMessageHeader() {
+        return messageHeader;
+    }
+
+    public void setMessageHeader(MessageHeader messageHeader) {
+        this.messageHeader = messageHeader;
+    }
+
+    public ConfirmationRecord getConfirmation() {
+        return confirmation;
+    }
+
+    public void setConfirmation(ConfirmationRecord confirmation) {
+        this.confirmation = confirmation;
+    }
 }

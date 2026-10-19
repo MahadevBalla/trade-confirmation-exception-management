@@ -81,4 +81,104 @@ public class ConfirmationRecord {
 
     /** Service that generated this record. */
     private String generatedBy;
+
+    // -----------------------------------------------------------------------
+    // Explicit getters and setters for compilation without Lombok
+    // -----------------------------------------------------------------------
+
+    public String getConfirmationId() {
+        return confirmationId;
+    }
+
+    public void setConfirmationId(String confirmationId) {
+        this.confirmationId = confirmationId;
+    }
+
+    public String getTradeId() {
+        return tradeId;
+    }
+
+    public void setTradeId(String tradeId) {
+        this.tradeId = tradeId;
+    }
+
+    public int getTradeVersion() {
+        return tradeVersion;
+    }
+
+    public void setTradeVersion(int tradeVersion) {
+        this.tradeVersion = tradeVersion;
+    }
+
+    public String getSourceMessageId() {
+        return sourceMessageId;
+    }
+
+    public void setSourceMessageId(String sourceMessageId) {
+        this.sourceMessageId = sourceMessageId;
+    }
+
+    public String getTemplateId() {
+        return templateId;
+    }
+
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
+    }
+
+    public String getTemplateVersion() {
+        return templateVersion;
+    }
+
+    public void setTemplateVersion(String templateVersion) {
+        this.templateVersion = templateVersion;
+    }
+
+    public ConfirmationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ConfirmationStatus status) {
+        this.status = status;
+    }
+
+    public String getConfirmationFingerprint() {
+        return confirmationFingerprint;
+    }
+
+    public void setConfirmationFingerprint(String confirmationFingerprint) {
+        this.confirmationFingerprint = confirmationFingerprint;
+    }
+
+    public String getPreviousConfirmationFingerprint() {
+        return previousConfirmationFingerprint;
+    }
+
+    public void setPreviousConfirmationFingerprint(String previousConfirmationFingerprint) {
+        this.previousConfirmationFingerprint = previousConfirmationFingerprint;
+    }
+
+    public String getConfirmationBody() {
+        return confirmationBody;
+    }
+
+    public void setConfirmationBody(String confirmationBody) {
+        this.confirmationBody = confirmationBody;
+    }
+
+    public Instant getGeneratedAt() {
+        return generatedAt;
+    }
+
+    public void setGeneratedAt(Instant generatedAt) {
+        this.generatedAt = generatedAt;
+    }
+
+    public String getGeneratedBy() {
+        return generatedBy;
+    }
+
+    public void setGeneratedBy(String generatedBy) {
+        this.generatedBy = generatedBy;
+    }
 }
