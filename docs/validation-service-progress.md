@@ -3,7 +3,6 @@
 > **Author / Owner:** Mahadev Balla (Backend Engineer)  
 > **Service:** `validation-service` (Port 8083)  
 > **Feature Branch:** `feat/validation-service` (cut from `main`)  
-> **Key Specs:** FR5 (STP Validation), FR6 (Confirmation Generation), FR7 (Exception Routing)  
 > **Key Specs:** FR5 (STP Validation), FR6 (Confirmation Generation & Duplicate Suppression), FR7 (Exception Routing)  
 > **Last Updated:** October 2026 (In Progress)
 
@@ -13,24 +12,16 @@
 
 The **Validation Service** acts as the core decision-making and confirmation issuance authority of the TCEM platform:
 
-1. **Consumes Enriched Trades (FR5):** Subscribes to `trade.enriched` topic published upstream by `enrichment-service`.
-2. **Evaluates STP Rules Engine (FR5):** Checks mandatory confirmable economic terms, counterparty and product STP eligibility flags, template applicability, date coherence, and non-economic parameters.
-3. **Publishes STP Decisions:** Publishes canonical audit outcome to `stp.validated` topic with rich validation metadata and decision status (`STP_PASSED` vs `STP_FAILED`).
-4. **Consumes Enriched Trades (FR5):** Subscribes to the `trade.enriched` topic published upstream by `enrichment-service`.
-5. **Evaluates STP Rules Engine (FR5):** Checks mandatory confirmable economic terms, counterparty and product STP eligibility flags, confirmation template applicability, and date chronology without short-circuiting.
-6. **Publishes STP Decisions:** Publishes canonical audit outcome events to `stp.validated` with validation metadata and decision status (`STP_PASSED` vs `STP_FAILED`).
-7. **Executes Confirmation Generation & Duplicate Suppression (FR6):**
-   - Renders deterministic plain-text confirmation notices based on resolved template identifiers.
-   - Computes SHA-256 fingerprint over confirmable contract terms via `ConfirmationFingerprint`.
-   - On `AMEND_TRADE`, detects if only non-confirmable metadata altered; suppresses duplicate confirmation generation and avoids redundant counterparty transmissions ("nothing changed = don't resend").
-   - Persists confirmation records into CouchDB `confirmations` database and dispatches `ConfirmationEvent` to `confirmation.generated`.
-8. **Routes STP Exceptions (FR7):** Formulates structured `ExceptionRecord` with appropriate classification category (`BUSINESS_RULE_FAILURE`, `TEMPLATE_ISSUE`, `MISSING_ECONOMIC_DATA`, etc.), sub-theme, recommended remediation action, and target queue (`OPERATIONS_REVIEW`, `DATA_REMEDIATION`), dispatching `ExceptionEvent` to `exception.created`.
-9. **Serves Operations REST APIs:** Exposes `GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, and `GET /metrics/stp-rate` for the React Operations UI via Nginx API Gateway.
+1. **Consumes Enriched Trades (FR5):** Subscribes to the `trade.enriched` topic published upstream by `enrichment-service`.
+2. **Evaluates STP Rules Engine (FR5):** Executes non-short-circuiting validation across mandatory confirmable economic terms, counterparty and product STP eligibility flags, confirmation template applicability, and date chronology (`tradeDate` <= `expiryDate` <= `settlementDate`).
+3. **Publishes STP Decisions (FR5):** Emits canonical audit outcome events to `stp.validated` with validation metadata, pass/fail status (`STP_PASSED` vs `STP_FAILED`), and failure diagnostics.
+4. **Executes Confirmation Generation & Duplicate Suppression (FR6):**
+   - Renders deterministic, monospace plain-text confirmation notices based on resolved template identifiers.
    - Computes deterministic SHA-256 fingerprint over confirmable contract terms via `ConfirmationFingerprint`.
-   - On `AMEND_TRADE`, queries CouchDB for the prior confirmation; if confirmable terms have not changed, suppresses duplicate confirmation generation and avoids redundant counterparty transmissions.
+   - On `AMEND_TRADE`, queries CouchDB for the previous confirmation; if confirmable terms are unchanged, suppresses duplicate confirmation generation and avoids redundant counterparty transmissions ("nothing changed = don't resend").
    - Persists confirmation records into the CouchDB `confirmations` database and dispatches `ConfirmationEvent` to `confirmation.generated`.
-10. **Routes STP Exceptions (FR7):** Formulates structured `ExceptionRecord` entries with appropriate classification (`BUSINESS_RULE_FAILURE`, `TEMPLATE_ISSUE`, `MISSING_ECONOMIC_DATA`), sub-theme, recommended remediation action, and target queue (`OPERATIONS_REVIEW`, `DATA_REMEDIATION`), dispatching `ExceptionEvent` to `exception.created`.
-11. **Serves Operations REST APIs:** Exposes `GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, and `GET /metrics/stp-rate` for the React Operations UI via the Nginx API Gateway.
+5. **Routes STP Exceptions (FR7):** Maps validation failures to structured `ExceptionRecord` entries with category taxonomy (`MISSING_ECONOMIC_DATA`, `BUSINESS_RULE_FAILURE`, `TEMPLATE_ISSUE`, `TECHNICAL_PROCESSING_FAILURE`), sub-themes, recommended actions, and queue routing (`DATA_REMEDIATION`, `OPERATIONS_REVIEW`, `TECHNICAL_SUPPORT`), dispatching `ExceptionEvent` to `exception.created`.
+6. **Serves Operations REST APIs (Planned — Phase 6):** Exposes `GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, and `GET /metrics/stp-rate` for the React Operations UI via the Nginx API Gateway.
 
 ---
 
@@ -106,20 +97,25 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - [`ConfirmationGeneratedProducerTest`](../services/validation-service/src/test/java/com/tcem/validation/producer/ConfirmationGeneratedProducerTest.java) — 4 tests: confirmation record dispatch, null-key fallback, Kafka send failure, fingerprint in payload.
   - [`ExceptionCreatedProducerTest`](../services/validation-service/src/test/java/com/tcem/validation/producer/ExceptionCreatedProducerTest.java) — 5 tests: missing economic data, business rule failure, template issue, null-key fallback, Kafka send failure.
   - [`DeadLetterProducerTest`](../services/validation-service/src/test/java/com/tcem/validation/producer/DeadLetterProducerTest.java) — 4 tests: replayable event dispatch, non-replayable event, null-key `DLQ_` fallback, Kafka send failure.
+- [x] **Phase 4: Confirmation Generator & Fingerprint Engine (FR6) (Completed):**
+  - [`PlainTextConfirmationGenerator.java`](../services/validation-service/src/main/java/com/tcem/validation/confirmation/PlainTextConfirmationGenerator.java): Deterministic, monospace plain-text confirmation generator with labeled trade identifiers, dates, parties, FX Option economics, non-economic terms, and template reference. Null-safe throughout with N/A fallbacks.
+  - [`ConfirmationService.java`](../services/validation-service/src/main/java/com/tcem/validation/confirmation/ConfirmationService.java): Full confirmation lifecycle orchestrator — computes `ConfirmationFingerprint`, handles `AMEND_TRADE` duplicate suppression (comparing against `findLatestForTrade()`), saves `ConfirmationDocument` in CouchDB, constructs `ConfirmationRecord` and `ConfirmationEvent`, publishes to `confirmation.generated` via `ConfirmationGeneratedProducer`.
+- [x] **Phase 5: Exception Routing Mapper (FR7) (Completed):**
+  - [`StpExceptionMapper.java`](../services/validation-service/src/main/java/com/tcem/validation/exception/StpExceptionMapper.java): Maps `StpValidationResult.Failure` items to structured `ExceptionRecord` and `ExceptionEvent` instances; routes categories to appropriate operational queues (`DATA_REMEDIATION`, `OPERATIONS_REVIEW`, `TECHNICAL_SUPPORT`); populates recommended actions, resolution difficulty, operational impact, and replay flags.
+- [x] **Phase 4 & 5 Unit Tests — 31 new tests (102 total), all passing:**
+  - [`PlainTextConfirmationGeneratorTest`](../services/validation-service/src/test/java/com/tcem/validation/confirmation/PlainTextConfirmationGeneratorTest.java) — 12 tests: trade details, dates, party details, economics, non-economic terms, template reference, null safety, deterministic output, section headers.
+  - [`ConfirmationServiceTest`](../services/validation-service/src/test/java/com/tcem/validation/confirmation/ConfirmationServiceTest.java) — 5 tests: new trade generation + persistence + publish, duplicate suppression returning empty `Optional`, amendment with changed fingerprint generating new confirmation, outbound header correlationId propagation, CouchDB document field mirroring.
+  - [`StpExceptionMapperTest`](../services/validation-service/src/test/java/com/tcem/validation/exception/StpExceptionMapperTest.java) — 14 tests: queue routing per `ExceptionCategory`, traceability field propagation, failure mapping, multi-failure generation of distinct events, `replayMayResolve` per category, outbound header propagation, classification confidence, non-blank exception ID, non-null capture timestamp.
 
 ### What is REMAINING (To Be Built)
 
-- [ ] **Phase 4: Confirmation Generator & Fingerprint Engine (FR6):**
-  - `PlainTextConfirmationGenerator.java` (deterministic plain-text rendering matching frontend display expectations).
-  - `ConfirmationService.java` (orchestrating generation, resolving `parties[ROLE]` for `ConfirmationFingerprint`, CouchDB persistence, and duplicate suppression on `AMEND_TRADE`).
-- [ ] **Phase 5: Exception Routing Mapper (FR7):**
-  - `StpExceptionMapper.java` (mapping `StpValidationResult.Failure` records to structured `ExceptionRecord` and `ExceptionEvent`).
 - [ ] **Phase 6: Kafka Consumer Pipeline & Operations REST APIs:**
   - `TradeEnrichedConsumer.java` (`@KafkaListener` consuming `trade.enriched`, performing idempotency checking, executing STP engine, and performing dual-dispatch).
   - `ConfirmationQueryController.java` (`GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, `GET /metrics/stp-rate`).
-- [ ] **Phase 7: Automated Testing & Verification:**
-  - Unit tests for rules engine, repository, confirmation generator, mapper, and producers.
-  - End-to-end integration tests verifying complete pipeline from `trade.enriched` through CouchDB persistence and Kafka outputs.
+- [ ] **Phase 7: Automated Integration Testing & Verification:**
+  - Add end-to-end integration tests covering `trade.enriched` ingestion through STP evaluation, CouchDB persistence, and outcome dual-dispatch (`stp.validated` + `confirmation.generated` or `exception.created`).
+  - Verify CouchDB persistence queries and Kafka outputs across the complete processing pipeline.
+  - Execute full Maven reactor build (`common-lib` and `validation-service`) and verify zero test regressions.
 
 ---
 
@@ -152,20 +148,30 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - [`DeadLetterProducer`](../services/validation-service/src/main/java/com/tcem/validation/producer/DeadLetterProducer.java): Publishes unrecoverable processing failures to `deadletter.trade`; falls back to `"DLQ_<millis>"` on null key.
   - All four producers use the established codebase pattern: `KafkaOperations<String, String>`, `ObjectMapper`, SLF4J, `try/catch` serialization guard returning `CompletableFuture.failedFuture` on error.
 
-- [ ] **Phase 4: Confirmation Generator & Fingerprint Engine (FR6)** (Pending)
-  - `PlainTextConfirmationGenerator`: Renders deterministic plain-text confirmation notices based on template and trade terms, structured for monospace display in the Operations UI.
-  - `ConfirmationService`: Orchestrates confirmation creation, party extraction for `ConfirmationFingerprint` (`parties[ROLE]` resolution), comparison with `previousConfirmationFingerprint` to suppress duplicate confirmations on `AMEND_TRADE`, and CouchDB persistence.
+- [x] **Phase 4: Confirmation Generator & Fingerprint Engine (FR6)** (Completed)
+  - [`PlainTextConfirmationGenerator.java`](../services/validation-service/src/main/java/com/tcem/validation/confirmation/PlainTextConfirmationGenerator.java): Deterministic, monospace plain-text confirmation generator. Renders structured sections (`TRADE DETAILS`, `PARTIES`, `FX OPTION ECONOMICS`, `NON-ECONOMIC TERMS`, `TEMPLATE REFERENCE`) matching the Operations UI layout. Fully null-safe with `N/A` fallbacks and deterministic string output.
+  - [`ConfirmationService.java`](../services/validation-service/src/main/java/com/tcem/validation/confirmation/ConfirmationService.java): Orchestrates the complete confirmation issuance lifecycle:
+    - Computes deterministic SHA-256 `ConfirmationFingerprint` over confirmable fields via `ConfirmationFingerprint.compute(trade, objectMapper)`.
+    - Duplicate suppression on `AMEND_TRADE`: queries CouchDB via `repository.findLatestForTrade()`; if the fingerprint matches the previous confirmation, suppresses duplicate issuance and returns `Optional.empty()`.
+    - Generates confirmation text body via `PlainTextConfirmationGenerator`.
+    - Persists `ConfirmationDocument` to CouchDB `confirmations` database with status `ALLEGED`, generated `CONF-` ID, fingerprint, and trade version.
+    - Constructs `ConfirmationRecord` and `ConfirmationEvent` envelope with outbound header carrying inbound `correlationId` and `SchemaVersions.CURRENT`.
+    - Publishes event to `TopicNames.CONFIRMATION_GENERATED` via `ConfirmationGeneratedProducer`.
 
-- [ ] **Phase 5: Exception Routing Mapper (FR7)** (Pending)
-  - `StpExceptionMapper`: Maps `StpValidationResult.Failure` records to structured `ExceptionRecord` and `ExceptionEvent` with categories, themes, queue routing (`DATA_REMEDIATION` vs `OPERATIONS_REVIEW`), and resolution hints.
+- [x] **Phase 5: Exception Routing Mapper (FR7)** (Completed)
+  - [`StpExceptionMapper.java`](../services/validation-service/src/main/java/com/tcem/validation/exception/StpExceptionMapper.java): Maps each `StpValidationResult.Failure` into a distinct `ExceptionEvent` containing a structured `ExceptionRecord`:
+    - **Queue Routing Strategy:** `MISSING_ECONOMIC_DATA` & `MISSING_STATIC_REFERENCE_DATA` → `DATA_REMEDIATION`; `BUSINESS_RULE_FAILURE` & `TEMPLATE_ISSUE` → `OPERATIONS_REVIEW`; `TECHNICAL_PROCESSING_FAILURE` → `TECHNICAL_SUPPORT`.
+    - **Remediation Metadata:** Assigns action guidance, `replayMayResolve` flag (true for missing data & technical errors), `resolutionDifficulty` (`LOW`/`MEDIUM`/`HIGH`), and `operationalImpact` (`HIGH`/`MEDIUM`).
+    - **Traceability & Diagnostics:** Sets `tradeId`, `tradeVersion`, `sourceMessageId`, and `correlationId`; defaults `classificationConfidence = 1.0` for deterministic rule output; populates `category`, `subTheme`, `reasonCode`, and `affectedFields`.
 
 - [ ] **Phase 6: Kafka Consumer Pipeline & Operations REST APIs** (Pending)
   - `TradeEnrichedConsumer`: `@KafkaListener` consuming `trade.enriched`, performing idempotency checking, executing STP engine, and performing dual-dispatch (`stp.validated` + outcome branch).
   - `ConfirmationQueryController`: REST controller exposing `GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, and `GET /metrics/stp-rate`.
 
-- [ ] **Phase 7: Automated Testing & Verification** (Pending)
-  - Unit tests for rules engine, repository, confirmation generator, producers, and mapper.
-  - End-to-end integration tests verifying complete pipeline from `trade.enriched` through CouchDB persistence and Kafka outputs.
+- [ ] **Phase 7: Automated Integration Testing & Verification** (Pending)
+  - End-to-end integration tests covering `trade.enriched` ingestion through STP evaluation, CouchDB persistence, and outcome dual-dispatch (`stp.validated` + `confirmation.generated` or `exception.created`).
+  - Verify CouchDB persistence queries and Kafka outputs across the complete processing pipeline.
+  - Execute full Maven reactor build (`common-lib` and `validation-service`) and verify zero test regressions.
 
 ---
 
@@ -176,10 +182,10 @@ The **Validation Service** acts as the core decision-making and confirmation iss
 | **Phase 1** | **CouchDB Client & Persistence Layer** | `CouchDbClient`, `CouchDbConfig`, `ConfirmationDocument`, `ConfirmationCouchDbRepository`, auto-init for `confirmations` DB. | Repository unit tests with CouchDB test double; verify database initialization. | **Completed** |
 | **Phase 2** | **STP Rules Engine (FR5)** | `StpRule`, `StpValidationResult`, `EconomicFieldsRule`, `BusinessEligibilityRule`, `TemplateResolutionRule`, `StpRulesEngine`, `StpValidatedEvent`. | Unit tests covering 10+ validation pass/fail combinations; verify failure accumulation. | **Completed** |
 | **Phase 3** | **Decision Dispatch & Producers** | `StpValidatedProducer`, `ConfirmationGeneratedProducer`, `ExceptionCreatedProducer`, `DeadLetterProducer`. | Producer unit tests verifying Kafka template interactions, message keys, and headers. | **Completed** |
-| **Phase 4** | **Confirmation Generator & Fingerprinting (FR6)** | `PlainTextConfirmationGenerator`, `ConfirmationService`, `ConfirmationFingerprint` party resolution, duplicate suppression on `AMEND_TRADE`. | Unit tests verifying plain-text template formatting, fingerprint stability, and amendment duplicate suppression. | **Pending** |
-| **Phase 5** | **Exception Routing Mapper (FR7)** | `StpExceptionMapper` mapping rule failures to `ExceptionRecord` with category, subtheme, queue, and impact. | Unit tests validating exception classification against spec §12 taxonomy. | **Pending** |
+| **Phase 4** | **Confirmation Generator & Fingerprinting (FR6)** | `PlainTextConfirmationGenerator`, `ConfirmationService`, `ConfirmationFingerprint` party resolution, duplicate suppression on `AMEND_TRADE`. | Unit tests verifying plain-text template formatting, fingerprint stability, and amendment duplicate suppression. | **Completed** |
+| **Phase 5** | **Exception Routing Mapper (FR7)** | `StpExceptionMapper` mapping rule failures to `ExceptionRecord` with category, subtheme, queue, and impact. | Unit tests validating exception classification against spec §12 taxonomy. | **Completed** |
 | **Phase 6** | **Kafka Pipeline & REST APIs** | `TradeEnrichedConsumer` on `trade.enriched`, idempotency handling, `ConfirmationQueryController` (`/confirmations/{id}`, `/metrics/stp-rate`). | MockMvc tests for endpoints, consumer message processing tests. | **Pending** |
-| **Phase 7** | **End-to-End Verification & Verification** | Full pipeline integration test (`trade.enriched` -> `stp.validated` + confirmation/exception), Maven reactor build check. | All unit and integration tests green; reactor builds cleanly. | **Pending** |
+| **Phase 7** | **End-to-End Integration Testing & Verification** | Complete pipeline integration test (`trade.enriched` -> `stp.validated` + confirmation/exception), CouchDB & Kafka verification, Maven reactor build. | Full pipeline integration tests green; reactor builds cleanly with 0 failures. | **Pending** |
 
 ---
 
@@ -203,10 +209,10 @@ The **Validation Service** acts as the core decision-making and confirmation iss
 - **Key:** `tradeId`
 - **Payload:** Canonical `ExceptionEvent` wrapping `ExceptionRecord`.
 - **Contract guarantees:**
-  - `category` populated with one of `ExceptionCategory` (e.g., `MISSING_ECONOMIC_DATA`, `BUSINESS_RULE_FAILURE`, `TEMPLATE_ISSUE`).
+  - `category` populated with one of `ExceptionCategory` (e.g., `MISSING_ECONOMIC_DATA`, `BUSINESS_RULE_FAILURE`, `TEMPLATE_ISSUE`, `TECHNICAL_PROCESSING_FAILURE`).
   - `subTheme` populated with corresponding `ExceptionSubTheme`.
   - `affectedFields` populated with comma-separated field names.
-  - `ownerQueue` set to `OPERATIONS_REVIEW` or `DATA_REMEDIATION`.
+  - `ownerQueue` selected according to exception category: `DATA_REMEDIATION`, `OPERATIONS_REVIEW`, or `TECHNICAL_SUPPORT`.
   - `sourceMessageId` and `correlationId` linking back to original message.
 
 ### C. Downstream: Oren (`workitem-service` — PR #4 Merged) & Frontend (`frontend` — PR #3 Merged)
