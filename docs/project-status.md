@@ -12,9 +12,9 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * **Phase 5 (Operations REST APIs & Health):** Implemented `TradeQueryController` (`GET /trades/{id}`, `GET /trades?status=&page=&size=`, `GET /trades/{id}/audit`, `GET /trades/metrics/summary`, `GET /metrics/stp-rate`), `IngestionMetricsService` tracking throughput and STP rates, and `WebConfig` CORS configuration.
   * **Phase 6 (Automated Testing & Pipeline Verification):** Comprehensive test suite with 97 passing tests across unit, repository, producer, consumer, and end-to-end integration flows ([`TradeIngestionPipelineIntegrationTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/integration/TradeIngestionPipelineIntegrationTest.java)); verified full Maven reactor build.
 * **What is Remaining:**
-  * Ready for upstream consumption! Lead team PR reviews and coordinate with Gunjan (`enrichment-service`) for consuming `trade.accepted`.
+  * Ready for upstream consumption! Lead team PR reviews and coordinate with Bhavik (`enrichment-service`) for consuming `trade.accepted`.
 
-## 2. Gunjan (`enrichment-service` / Business Analyst)
+## 2. Bhavik (`enrichment-service` / Business Analyst)
 **Role:** Reference data modelling and enrichment logic.
 * **What is Done:** 
   * The schema is prepared for reference data integration, with `ReferenceDataEnrichment` and `EnrichmentSource` models created in `common-lib` to track data provenance.
@@ -43,7 +43,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Build the deterministic rules engine (and optionally clustering/ML) to map failures to categories/themes.
   * Generate recommendation hints (e.g., owner queue, resolution difficulty).
 
-## 5. Bhavik (`workitem-service` / DevOps Engineer)
+## 5. Oren (`workitem-service` / DevOps Engineer)
 **Role:** Work-item tracking, audit trail, DLQ/replay, and DevOps / Orchestration.
 * **What is Done:** 
   * Data structures for `WorkItem`, `AuditEvent`, and `DeadLetterEvent` are established.
@@ -54,10 +54,15 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * **DevOps Infrastructure Phase 4 (Nginx API Gateway & Vite Proxy):** Configured unified reverse proxy on port 3000 in `frontend/nginx.conf` with dynamic Docker DNS resolution (`resolver 127.0.0.11`), Gzip compression, extended timeouts for batch generation, and client-side SPA fallback; configured parity proxy rules in `frontend/vite.config.ts`.
   * **DevOps Infrastructure Phase 6 (Developer Automation Tooling):** Created turnkey developer scripts in `scripts/` (`init-kafka.sh`, `init-couchdb.sh`, `smoke-test.sh`, `dev-up.sh`, `dev-down.sh`, `seed-data.sh`) with colored output, health polling, volume resetting, and documentation.
   * **DevOps Track Status:** All 6 DevOps infrastructure phases are **100% Complete**.
+* **`workitem-service` (built on `feat/workagent`):**
+  * DLQ store and replay: consumes `deadletter.trade`, persists `dlq-entries`, `POST /dlq/{id}/replay` with a 3-attempt limit, replay success and failure tracking (failed replays merge into the same entry, then escalate to `PERMANENTLY_FAILED`).
+  * Work items: created and linked from `exception.classified` (type, queue and priority rules, low-confidence routing), manual review queue from `manual.review.required` (approve / reject), closed on `confirmation.generated`, management API and summary endpoint, audit trail shared with `ingestion-service`.
+  * 80 unit and integration tests; verified live against Kafka, CouchDB and `ingestion-service`. Details in [`services/workitem-service/README.md`](../services/workitem-service/README.md).
 * **What is Remaining:** 
-  * Build the `workitem-service` (mock work items, audit event persistence, DLQ storage and replay endpoints).
+  * Agree the `manual.review.required` payload (`ExceptionEvent`) with Kapish, and that downstream services keep `messageHeader` and key by `tradeId` (see `docs/kafka-topics.md`).
+  * Replay timeout for entries stuck in `REPLAYING`, and cross-trade grouping of work items (known limitations).
 
-## 6. Oren (`frontend` / Frontend & QA Engineer)
+## 6. Gunjan (`frontend` / Frontend & QA Engineer)
 **Role:** UI dashboards and cross-service test coverage.
 * **What is Done:** 
   * The backend JSON contracts are now stable, meaning the frontend has a clear data model to build against.
@@ -68,4 +73,4 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Drive integration and E2E testing across the platform.
 
 ---
-*Last updated after completion of the `common-lib` schema initialization.*
+*Last updated after completion of the `workitem-service` (DLQ/replay, work items, manual review).*

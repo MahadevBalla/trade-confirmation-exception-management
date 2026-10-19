@@ -78,7 +78,12 @@ echo -e "\n4. Additional Backend Microservices:"
 check_optional_service "Enrichment Service (:8082)" "http://localhost:8082/actuator/health"
 check_optional_service "Validation Service (:8083)" "http://localhost:8083/actuator/health"
 check_optional_service "Exception Service (:8084)" "http://localhost:8084/actuator/health"
+
+echo -e "\n5. Workitem Microservice (Port 8085):"
 check_optional_service "Workitem Service (:8085)" "http://localhost:8085/actuator/health"
+check_optional_service "Workitem Summary API" "http://localhost:8085/workitems/summary"
+check_optional_service "Gateway -> /api/workitems/summary" "http://localhost:3000/api/workitems/summary"
+check_optional_service "Gateway -> /api/dlq" "http://localhost:3000/api/dlq"
 
 echo -e "\n------------------------------------------------------"
 if [ "$FAIL_COUNT" -eq 0 ]; then

@@ -28,13 +28,14 @@ jobs:
           docker compose up -d kafka couchdb kafka-ui
           docker compose up kafka-init couchdb-init
 
-      - name: Build and start ingestion service and gateway
-        run: docker compose up -d --build ingestion-service frontend
+      - name: Build and start ingestion service, workitem service and gateway
+        run: docker compose up -d --build ingestion-service workitem-service frontend
 
       - name: Verify service health and gateway routes
         run: |
           for attempt in $(seq 1 60); do
             if curl -fsS http://localhost:8081/actuator/health >/dev/null && \
+               curl -fsS http://localhost:8085/actuator/health >/dev/null && \
                curl -fsS http://localhost:3000/ >/dev/null; then
               break
             fi
@@ -47,7 +48,20 @@ jobs:
           done
           curl -fsS http://localhost:3000/api/trades/scenarios
           curl -fsS http://localhost:3000/api/metrics/stp-rate
+          curl -fsS http://localhost:3000/api/workitems/summary
+          curl -fsS "http://localhost:3000/api/dlq?status=PENDING_REPLAY"
           curl -fsS http://localhost:3000/dashboard/exceptions >/dev/null
+
+      - name: Exercise work-item API through the gateway
+        run: |
+          created=$(curl -fsS -X POST http://localhost:3000/api/workitems \
+            -H 'Content-Type: application/json' \
+            -d '{"tradeId":"TRD-SMOKE-1","type":"DATA_FIX","title":"Smoke test item","description":"created by CI","ownerQueue":"DATA_REMEDIATION","priority":"MEDIUM"}')
+          echo "$created"
+          id=$(echo "$created" | python3 -c 'import json,sys; print(json.load(sys.stdin)["workItemId"])')
+          curl -fsS -X PATCH "http://localhost:3000/api/workitems/$id" \
+            -H 'Content-Type: application/json' -d '{"status":"DONE","actor":"ci"}' | grep -q '"DONE"'
+          curl -fsS "http://localhost:3000/api/workitems?tradeId=TRD-SMOKE-1" | grep -q "$id"
 
       - name: Dump logs on failure
         if: failure()

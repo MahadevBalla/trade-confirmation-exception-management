@@ -7,11 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Entry point for the workitem-service.
  *
  * Work-item service: mock work-item tracker/linker, audit trail, and replay/DLQ handling (FR10, FR12).
- *
- * No business logic yet - this is intentionally a bare Spring Boot app so the
- * service builds, starts, and reports healthy via /actuator/health. Add
- * controllers, Kafka listeners/producers and CouchDB access as the assigned
- * feature work begins.
+ * Consumes 'deadletter.trade', stores DLQ entries, auto-creates DATA_FIX work items, publishes
+ * 'workitem.linked', and exposes the DLQ / work-item REST API including controlled replay.
  */
 @SpringBootApplication
 public class WorkitemServiceApplication {
