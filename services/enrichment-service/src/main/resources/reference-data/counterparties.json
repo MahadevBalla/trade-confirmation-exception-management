@@ -1,0 +1,7 @@
+[
+  {"id":"PTY-BANK-001","name":"Apex Investment Banking AG","lei":"5493006MHB84DD0ZWV18","jurisdiction":"GENERIC-DE","stpEligible":true},
+  {"id":"PTY-CP-101","name":"Meridian Capital Partners Ltd","lei":"213800B1DYX92Z5P4471","jurisdiction":"GENERIC-UK","stpEligible":true},
+  {"id":"PTY-CP-102","name":"Vanguard Global Hedging Corp","lei":"549300O8G3412B9D6142","jurisdiction":"GENERIC-US","stpEligible":true},
+  {"id":"PTY-CP-103","name":"Pacific Rim Asset Management","lei":"984500732A1BC9D8F102","jurisdiction":"GENERIC-SG","stpEligible":false},
+  {"id":"PTY-CP-104","name":"Nordic Sovereign Holdings","lei":"529900T8Z91B33CC8811","jurisdiction":"GENERIC-SE","stpEligible":true}
+]

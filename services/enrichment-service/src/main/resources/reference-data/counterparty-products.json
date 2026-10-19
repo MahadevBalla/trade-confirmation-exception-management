@@ -1,0 +1,6 @@
+[
+  {"counterpartyId":"PTY-CP-101","productType":"FX_OPTION","stpEligible":true},
+  {"counterpartyId":"PTY-CP-102","productType":"FX_OPTION","stpEligible":true},
+  {"counterpartyId":"PTY-CP-103","productType":"FX_OPTION","stpEligible":true},
+  {"counterpartyId":"PTY-CP-104","productType":"FX_OPTION","stpEligible":false}
+]
