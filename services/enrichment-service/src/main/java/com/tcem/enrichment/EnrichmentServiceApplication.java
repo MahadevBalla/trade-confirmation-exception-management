@@ -2,6 +2,7 @@ package com.tcem.enrichment;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
  * Entry point for the enrichment-service.
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * feature work begins.
  */
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class EnrichmentServiceApplication {
 
     public static void main(String[] args) {

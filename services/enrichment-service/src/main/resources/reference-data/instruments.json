@@ -1,0 +1,7 @@
+[
+  {"underlier":"EUR/USD","internalPricingRef":"FXOPT-EURUSD-V1"},
+  {"underlier":"GBP/USD","internalPricingRef":"FXOPT-GBPUSD-V1"},
+  {"underlier":"USD/JPY","internalPricingRef":"FXOPT-USDJPY-V1"},
+  {"underlier":"USD/CHF","internalPricingRef":"FXOPT-USDCHF-V1"},
+  {"underlier":"AUD/USD","internalPricingRef":"FXOPT-AUDUSD-V1"}
+]
