@@ -31,18 +31,14 @@ This document tracks the progress of the Trade Confirmation Exception Management
 
 **Role:** STP rules engine and confirmation APIs.
 
-* **What is Done (In Progress — feat/validation-service):**
-  * Configuration & CouchDB connectivity (`application.yml`, `CouchDbConfig`, `CouchDbProperties`, `WebConfig`, `CouchDbHealthIndicator`).
-  * CouchDB Persistence layer (`CouchDbClient` with conflict retry, `ConfirmationDocument`, `ConfirmationCouchDbRepository`).
-  * STP Rules Engine (`StpRule`, `StpValidationResult`, `EconomicFieldsRule`, `BusinessEligibilityRule`, `TemplateResolutionRule`, `StpRulesEngine`).
-  * STP Event model (`StpValidatedEvent` for `stp.validated` topic).
+* **What is Done (Implementation Complete — PR Pending):**
+  * Implemented CouchDB persistence, the STP rules engine, and Kafka producers for validation outcomes, confirmations, exceptions, and dead-letter routing.
+  * Implemented confirmation generation with fingerprint-based duplicate suppression and exception mapping.
+  * Implemented the `trade.enriched` consumer and confirmation query/metrics REST APIs.
+  * Added unit and embedded-Kafka integration tests: 124 tests passing. Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
 * **What is Remaining:**
-  * Event producers (`StpValidatedProducer`, `ConfirmationGeneratedProducer`, `ExceptionCreatedProducer`, `DeadLetterProducer`).
-  * Plain-text confirmation generator with `ConfirmationFingerprint` duplicate suppression on `AMEND_TRADE`.
-  * Exception mapper (`StpExceptionMapper` to `ExceptionEvent`).
-  * `TradeEnrichedConsumer` pipeline on `trade.enriched`.
-  * Confirmation query & metrics REST controllers (`/confirmations/{id}`, `/metrics/stp-rate`).
-  * Unit and integration test suite.
+  * Verify live CouchDB persistence and the complete pipeline against the Docker Compose stack.
+  * Resolve any cross-service integration issues identified during verification.
 
 ## 4. Kapish (`exception-service` / Data Engineer)
 
