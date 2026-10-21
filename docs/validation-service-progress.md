@@ -4,7 +4,7 @@
 > **Service:** `validation-service` (Port 8083)  
 > **Feature Branch:** `feat/validation-service` (cut from `main`)  
 > **Key Specs:** FR5 (STP Validation), FR6 (Confirmation Generation & Duplicate Suppression), FR7 (Exception Routing)  
-> **Last Updated:** October 2026 (In Progress)
+> **Last Updated:** October 2026 (all phases done)
 
 ---
 
@@ -20,8 +20,8 @@ The **Validation Service** acts as the core decision-making and confirmation iss
    - Computes deterministic SHA-256 fingerprint over confirmable contract terms via `ConfirmationFingerprint`.
    - On `AMEND_TRADE`, queries CouchDB for the previous confirmation; if confirmable terms are unchanged, suppresses duplicate confirmation generation and avoids redundant counterparty transmissions ("nothing changed = don't resend").
    - Persists confirmation records into the CouchDB `confirmations` database and dispatches `ConfirmationEvent` to `confirmation.generated`.
-5. **Routes STP Exceptions (FR7):** Maps validation failures to structured `ExceptionRecord` entries with category taxonomy (`MISSING_ECONOMIC_DATA`, `BUSINESS_RULE_FAILURE`, `TEMPLATE_ISSUE`, `TECHNICAL_PROCESSING_FAILURE`), sub-themes, recommended actions, and queue routing (`DATA_REMEDIATION`, `OPERATIONS_REVIEW`, `TECHNICAL_SUPPORT`), dispatching `ExceptionEvent` to `exception.created`.
-6. **Serves Operations REST APIs (Planned — Phase 6):** Exposes `GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, and `GET /metrics/stp-rate` for the React Operations UI via the Nginx API Gateway.
+5. **Routes STP Exceptions (FR7):** Maps validation failures to structured `ExceptionRecord` entries with category taxonomy (`MISSING_ECONOMIC_DATA`, `MISSING_STATIC_REFERENCE_DATA`, `BUSINESS_RULE_FAILURE`, `TEMPLATE_ISSUE`, `TECHNICAL_PROCESSING_FAILURE`), sub-themes, recommended actions, and queue routing (`DATA_REMEDIATION`, `OPERATIONS_REVIEW`, `TECHNICAL_SUPPORT`), dispatching `ExceptionEvent` to `exception.created`.
+6. **Serves Operations REST APIs (Phase 6):** Exposes `GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmations`, `GET /trades/{tradeId}/confirmation`, and `GET /metrics/stp-rate` for the React Operations UI via the Nginx API Gateway.
 
 ---
 
@@ -80,9 +80,9 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - Added explicit getters/setters to `ConfirmationRecord.java` (needed by Phase 3/4).
   - Added explicit getters/setters to `ConfirmationEvent.java` (needed by Phase 3/4).
   - Pattern consistent with `Trade`, `Party`, `FxOptionEconomics`, `ExceptionRecord`, `MessageHeader`, `TradeEvent`.
-- [x] **Phase 2 Unit Tests — 54 tests, all passing:**
+- [x] **Phase 2 Unit Tests — 53 tests, all passing:**
   - [`StpValidationResultTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/StpValidationResultTest.java) — 9 tests: pass/fail flag, multi-failure accumulation, `summarize()`, immutable list contract.
-  - [`EconomicFieldsRuleTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/EconomicFieldsRuleTest.java) — 17 tests: null trade, null economics block, each confirmable field missing/blank, all three date fields, multi-field non-short-circuit aggregation.
+  - [`EconomicFieldsRuleTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/EconomicFieldsRuleTest.java) — 16 tests: null trade, null economics block, each confirmable field missing/blank, all three date fields, multi-field non-short-circuit aggregation.
   - [`BusinessEligibilityRuleTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/BusinessEligibilityRuleTest.java) — 11 tests: null trade guard, null/missing counterparty party, null enrichment metadata, `counterpartySTPEligible` false/null, `productSTPEligible` false/null, both-ineligible producing two failures, case-insensitive role match.
   - [`TemplateResolutionRuleTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/TemplateResolutionRuleTest.java) — 10 tests: guard clauses, null/blank templateId → `NO_MATCHING_TEMPLATE` with hint in reason, templateId-present-version-missing → `TEMPLATE_VERSION_MISMATCH`, happy path, no double-failure when templateId is null.
   - [`StpRulesEngineTest`](../services/validation-service/src/test/java/com/tcem/validation/rules/StpRulesEngineTest.java) — 7 tests: full pass, all-three-rules-fire accumulation, single-rule partial failures, defensive fallback on rule exception (continues remaining rules), empty rule list.
@@ -107,15 +107,33 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - [`ConfirmationServiceTest`](../services/validation-service/src/test/java/com/tcem/validation/confirmation/ConfirmationServiceTest.java) — 5 tests: new trade generation + persistence + publish, duplicate suppression returning empty `Optional`, amendment with changed fingerprint generating new confirmation, outbound header correlationId propagation, CouchDB document field mirroring.
   - [`StpExceptionMapperTest`](../services/validation-service/src/test/java/com/tcem/validation/exception/StpExceptionMapperTest.java) — 14 tests: queue routing per `ExceptionCategory`, traceability field propagation, failure mapping, multi-failure generation of distinct events, `replayMayResolve` per category, outbound header propagation, classification confidence, non-blank exception ID, non-null capture timestamp.
 
+- [x] **Phase 6: Kafka Consumer Pipeline & Operations REST APIs (Completed):**
+  - [`TradeEnrichedConsumer.java`](../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java): `@KafkaListener` on `trade.enriched` (group `validation-service-group`). Full processing pipeline: deserialise `TradeEvent`, guard `CANCEL_TRADE` (skip with log), idempotency check via `findLatestForTrade()` (skip if same `tradeId + tradeVersion` already confirmed — bypassed for `REPLAY` events), execute `StpRulesEngine`, always publish STP decision to `stp.validated`, then branch: STP pass → `ConfirmationService.processConfirmation()`; STP fail → `StpExceptionMapper` + `ExceptionCreatedProducer` per failure. Irrecoverable errors routed to DLQ via `DeadLetterProducer`.
+  - [`ConfirmationQueryController.java`](../services/validation-service/src/main/java/com/tcem/validation/controller/ConfirmationQueryController.java): Operations REST API exposing four endpoints: `GET /confirmations/{id}` (single by ID), `GET /trades/{tradeId}/confirmations` (all versions, newest-first), `GET /trades/{tradeId}/confirmation` (latest), `GET /metrics/stp-rate` (total confirmation count).
+- [x] **Phase 6 Unit Tests — 17 new tests (119 total), all passing:**
+  - [`TradeEnrichedConsumerTest`](../services/validation-service/src/test/java/com/tcem/validation/consumer/TradeEnrichedConsumerTest.java) — 9 tests: NEW_TRADE STP-passed happy path, NEW_TRADE STP-failed exception dispatch, CANCEL_TRADE skip, idempotency guard skip, REPLAY bypasses idempotency, malformed JSON → DLQ, null trade → DLQ, multiple STP failures dispatched individually, AMEND_TRADE different version allowed through.
+  - [`ConfirmationQueryControllerTest`](../services/validation-service/src/test/java/com/tcem/validation/controller/ConfirmationQueryControllerTest.java) — 8 tests: `GET /confirmations/{id}` found/not-found, `GET /trades/{tradeId}/confirmations` multiple/empty, `GET /trades/{tradeId}/confirmation` found/not-found, `GET /metrics/stp-rate` non-zero/zero.
+
+- [x] **Phase 7: Automated Integration Testing & Verification (Completed):**
+  - [`TradeEnrichedPipelineIntegrationTest`](../services/validation-service/src/test/java/com/tcem/validation/integration/TradeEnrichedPipelineIntegrationTest.java) — 5 tests. `@SpringBootTest` + `@EmbeddedKafka` with a real `@KafkaListener` and real producers; CouchDB is replaced by `@MockBean` on `ConfirmationCouchDbRepository` and `CouchDbClient`, so the consumer, rules engine, `ConfirmationService`, mapper and all Kafka producers run for real:
+    - Valid `NEW_TRADE` → `STP_PASSED` on `stp.validated`, confirmation persisted, event on `confirmation.generated`.
+    - `NEW_TRADE` with missing strike → `STP_FAILED` on `stp.validated`, event on `exception.created`, no confirmation.
+    - Consumer-level idempotency: same `tradeId + tradeVersion` already confirmed → nothing published on any topic.
+    - `AMEND_TRADE` with unchanged fingerprint → `STP_PASSED` published, confirmation suppressed.
+    - `REPLAY` → bypasses version idempotency and re-runs STP, but fingerprint dedup still suppresses the confirmation.
+  - [`IntegrationTestConsumer`](../services/validation-service/src/test/java/com/tcem/validation/integration/IntegrationTestConsumer.java): test helper reading output topics via manual partition assignment.
+  - **Verified:** `mvn clean test -pl common-lib,validation-service` → `BUILD SUCCESS`; **124 tests, 0 failures, 0 errors, 0 skipped** (119 unit + 5 integration; includes `ValidationServiceApplicationTests` context-load test).
+  - **Scope note:** CouchDB is mocked in the integration suite, so CouchDB persistence queries (Mango `_find`, conflict retry) are not exercised against a real CouchDB. They are covered by the Phase 1 unit tests and need a live-stack check during cross-service integration.
+
 ### What is REMAINING (To Be Built)
 
-- [ ] **Phase 6: Kafka Consumer Pipeline & Operations REST APIs:**
-  - `TradeEnrichedConsumer.java` (`@KafkaListener` consuming `trade.enriched`, performing idempotency checking, executing STP engine, and performing dual-dispatch).
-  - `ConfirmationQueryController.java` (`GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, `GET /metrics/stp-rate`).
-- [ ] **Phase 7: Automated Integration Testing & Verification:**
-  - Add end-to-end integration tests covering `trade.enriched` ingestion through STP evaluation, CouchDB persistence, and outcome dual-dispatch (`stp.validated` + `confirmation.generated` or `exception.created`).
-  - Verify CouchDB persistence queries and Kafka outputs across the complete processing pipeline.
-  - Execute full Maven reactor build (`common-lib` and `validation-service`) and verify zero test regressions.
+- Nothing within validation-service scope. All seven phases are complete; remaining work is cross-service verification against the real docker-compose stack once all services are merged.
+
+### Known Limitations (documented, not blocking)
+
+- **Idempotency does not cover STP-failed trades:** the consumer-level guard compares against `findLatestForTrade()`, which only returns persisted *confirmations*. A trade that failed STP never produces one, so a redelivered `trade.enriched` message for the same `tradeId + tradeVersion` re-runs STP and re-emits `stp.validated` and `exception.created`.
+- **Fire-and-forget producers:** Kafka send failures are logged but do not propagate to the listener (see Phase 6), so events can be lost without a consumer retry. External monitoring is required.
+- **`GET /metrics/stp-rate`** returns a total confirmation count, not a pass/fail ratio.
 
 ---
 
@@ -164,14 +182,18 @@ The **Validation Service** acts as the core decision-making and confirmation iss
     - **Remediation Metadata:** Assigns action guidance, `replayMayResolve` flag (true for missing data & technical errors), `resolutionDifficulty` (`LOW`/`MEDIUM`/`HIGH`), and `operationalImpact` (`HIGH`/`MEDIUM`).
     - **Traceability & Diagnostics:** Sets `tradeId`, `tradeVersion`, `sourceMessageId`, and `correlationId`; defaults `classificationConfidence = 1.0` for deterministic rule output; populates `category`, `subTheme`, `reasonCode`, and `affectedFields`.
 
-- [ ] **Phase 6: Kafka Consumer Pipeline & Operations REST APIs** (Pending)
-  - `TradeEnrichedConsumer`: `@KafkaListener` consuming `trade.enriched`, performing idempotency checking, executing STP engine, and performing dual-dispatch (`stp.validated` + outcome branch).
-  - `ConfirmationQueryController`: REST controller exposing `GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmation`, and `GET /metrics/stp-rate`.
+- [x] **Phase 6: Kafka Consumer Pipeline & Operations REST APIs** (Completed)
+  - [`TradeEnrichedConsumer`](../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java): `@KafkaListener` on `trade.enriched` (group `validation-service-group`). Full pipeline: deserialise `TradeEvent`, guard `CANCEL_TRADE` (log and skip — no STP, no confirmation), idempotency check via `confirmationRepository.findLatestForTrade()` — skips if `tradeId + tradeVersion` already confirmed (bypassed for `REPLAY`). Runs `StpRulesEngine`, publishes STP decision to `stp.validated`, then branches: STP pass → `ConfirmationService.processConfirmation()`; STP fail → `StpExceptionMapper` + `ExceptionCreatedProducer` per failure. Irrecoverable parse/processing errors routed to DLQ via `DeadLetterProducer`.
+  - [`ConfirmationQueryController`](../services/validation-service/src/main/java/com/tcem/validation/controller/ConfirmationQueryController.java): `GET /confirmations/{id}` (by ID, 404 if absent), `GET /trades/{tradeId}/confirmations` (all versions newest-first), `GET /trades/{tradeId}/confirmation` (latest, 404 if none), `GET /metrics/stp-rate` (total confirmation count).
+  - **Idempotency vs. Fingerprint Deduplication:** Two independent, complementary mechanisms:
+    - *Consumer-level idempotency* (in `TradeEnrichedConsumer`): Prevents the same `tradeId + tradeVersion` from entering the STP pipeline more than once. Bypassed for `REPLAY` event type so operators can force reprocessing after a data fix.
+    - *Business-level fingerprint dedup* (in `ConfirmationService`): Prevents re-emitting a `confirmation.generated` event when an amendment (`AMEND_TRADE`) or replayed trade has identical confirmable fields. Compares SHA-256 fingerprints; returns `Optional.empty()` when suppressed. Not bypassed by `REPLAY` — a replay of an unchanged trade still avoids duplicate confirmation emission.
+  - **Kafka producer failure semantics (fire-and-forget):** All four producers (`StpValidatedProducer`, `ConfirmationGeneratedProducer`, `ExceptionCreatedProducer`, `DeadLetterProducer`) use `kafkaOperations.send().whenComplete(...)`. Kafka broker failures are logged as warnings but do **not** propagate back to the consumer listener — events are silently lost. Serialisation errors return `CompletableFuture.failedFuture(ex)` and are also fire-and-forget. External monitoring/alerting is required to detect dropped events.
 
-- [ ] **Phase 7: Automated Integration Testing & Verification** (Pending)
-  - End-to-end integration tests covering `trade.enriched` ingestion through STP evaluation, CouchDB persistence, and outcome dual-dispatch (`stp.validated` + `confirmation.generated` or `exception.created`).
-  - Verify CouchDB persistence queries and Kafka outputs across the complete processing pipeline.
-  - Execute full Maven reactor build (`common-lib` and `validation-service`) and verify zero test regressions.
+- [x] **Phase 7: Automated Integration Testing & Verification** (Completed)
+  - [`TradeEnrichedPipelineIntegrationTest`](../services/validation-service/src/test/java/com/tcem/validation/integration/TradeEnrichedPipelineIntegrationTest.java) + [`IntegrationTestConsumer`](../services/validation-service/src/test/java/com/tcem/validation/integration/IntegrationTestConsumer.java): embedded-Kafka end-to-end tests of `trade.enriched` → STP evaluation → `stp.validated` + (`confirmation.generated` | `exception.created`), with CouchDB mocked at the repository/client boundary.
+  - Covers: STP pass + confirmation, STP fail + exception (no confirmation), consumer-level idempotency skip, amendment fingerprint suppression, and REPLAY bypass with fingerprint suppression.
+  - Full reactor build verified: 124 tests, 0 failures, 0 errors.
 
 ---
 
@@ -184,8 +206,8 @@ The **Validation Service** acts as the core decision-making and confirmation iss
 | **Phase 3** | **Decision Dispatch & Producers** | `StpValidatedProducer`, `ConfirmationGeneratedProducer`, `ExceptionCreatedProducer`, `DeadLetterProducer`. | Producer unit tests verifying Kafka template interactions, message keys, and headers. | **Completed** |
 | **Phase 4** | **Confirmation Generator & Fingerprinting (FR6)** | `PlainTextConfirmationGenerator`, `ConfirmationService`, `ConfirmationFingerprint` party resolution, duplicate suppression on `AMEND_TRADE`. | Unit tests verifying plain-text template formatting, fingerprint stability, and amendment duplicate suppression. | **Completed** |
 | **Phase 5** | **Exception Routing Mapper (FR7)** | `StpExceptionMapper` mapping rule failures to `ExceptionRecord` with category, subtheme, queue, and impact. | Unit tests validating exception classification against spec §12 taxonomy. | **Completed** |
-| **Phase 6** | **Kafka Pipeline & REST APIs** | `TradeEnrichedConsumer` on `trade.enriched`, idempotency handling, `ConfirmationQueryController` (`/confirmations/{id}`, `/metrics/stp-rate`). | MockMvc tests for endpoints, consumer message processing tests. | **Pending** |
-| **Phase 7** | **End-to-End Integration Testing & Verification** | Complete pipeline integration test (`trade.enriched` -> `stp.validated` + confirmation/exception), CouchDB & Kafka verification, Maven reactor build. | Full pipeline integration tests green; reactor builds cleanly with 0 failures. | **Pending** |
+| **Phase 6** | **Kafka Pipeline & REST APIs** | `TradeEnrichedConsumer` on `trade.enriched`, idempotency guard, STP evaluation, dual-dispatch, DLQ; `ConfirmationQueryController` (`GET /confirmations/{id}`, `GET /trades/{tradeId}/confirmations`, `GET /trades/{tradeId}/confirmation`, `GET /metrics/stp-rate`). | 9 consumer unit tests + 8 MockMvc controller tests (17 total). Full suite at the time: 119 tests passing. | **Completed** |
+| **Phase 7** | **End-to-End Integration Testing & Verification** | Complete pipeline integration test (`trade.enriched` -> `stp.validated` + confirmation/exception), CouchDB & Kafka verification, Maven reactor build. | 5 embedded-Kafka integration tests green; reactor builds cleanly — 124 tests, 0 failures. | **Completed** |
 
 ---
 
@@ -220,10 +242,11 @@ The **Validation Service** acts as the core decision-making and confirmation iss
 - **Topics Produced:** `stp.validated` and `confirmation.generated`
 - **Database:** CouchDB `confirmations`
 - **Key:** `tradeId`
-- **REST Endpoints Exposed:**
-  - `GET /confirmations/{id}`: Returns confirmation details by confirmation ID.
-  - `GET /trades/{tradeId}/confirmation`: Returns latest confirmation for a given trade.
-  - `GET /metrics/stp-rate`: Returns aggregate STP rate metrics for dashboard display.
+- **REST Endpoints Exposed (Phase 6 — Live):**
+  - `GET /confirmations/{id}`: Returns a single confirmation by `confirmationId`; 404 if not found.
+  - `GET /trades/{tradeId}/confirmations`: Returns all confirmation versions for a trade, ordered newest-first.
+  - `GET /trades/{tradeId}/confirmation`: Returns the latest confirmation for a trade; 404 if none.
+  - `GET /metrics/stp-rate`: Returns `{ "totalConfirmations": <count> }` — total count of persisted confirmations, used as a simple STP throughput proxy for the Operations dashboard. Not a ratio; named for UI alignment with FR11 "STP rate" dashboard card.
 
 ---
 
