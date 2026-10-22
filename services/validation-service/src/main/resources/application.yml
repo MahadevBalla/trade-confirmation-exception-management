@@ -1,20 +1,43 @@
 spring:
   application:
     name: validation-service
+
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:validation-service-group}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: record
+      auto-startup: ${KAFKA_LISTENER_AUTO_STARTUP:true}
 
 server:
   port: ${SERVER_PORT:8083}
 
 couchdb:
   url: ${COUCHDB_URL:http://localhost:5984}
+  username: ${COUCHDB_USER:admin}
+  password: ${COUCHDB_PASSWORD:password}
+  confirmations-database: confirmations
+  auto-create-databases: true
+  connection-timeout-ms: 3000
+  read-timeout-ms: 5000
+
+validation:
+  input-topic: ${VALIDATION_INPUT_TOPIC:trade.enriched}
+  service-name: validation-service
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
   endpoint:
     health:
       show-details: always

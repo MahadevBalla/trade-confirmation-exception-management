@@ -3,7 +3,9 @@
 This document tracks the progress of the Trade Confirmation Exception Management Platform based on the initial team roles and the work completed to date.
 
 ## 1. Mayank (Team Lead + `ingestion-service`)
+
 **Role:** Coordination, event contracts, synthetic seed loader, and ingestion pipeline (FR1, FR2, FR3, FR11, FR12).
+
 * **What is Done (100% Complete - All 6 Phases):**
   * **Phase 1 (CouchDB Persistence):** Implemented `CouchDbClient`, `CouchDbOperations`, `CouchDbConfig`, document schemas (`TradeDocument`, `AuditDocument`, `IdempotencyDocument`), auto-initialization for `trades` and `audit-events`, and repositories with conflict retry logic.
   * **Phase 2 (Synthetic Trade Generator & Seed Loader):** Implemented `SyntheticTradeGenerator` with 10 deterministic test scenarios, bundled 500-trade seed dataset in `sample-trades.json`, `TradeRawProducer`, `SeedLoaderService`, and REST endpoints (`POST /trades/generate`, `POST /trades/generate/scenario`, `POST /trades/seed`, `GET /trades/scenarios`).
@@ -15,37 +17,46 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Ready for upstream consumption! Lead team PR reviews and coordinate with Bhavik (`enrichment-service`) for consuming `trade.accepted`.
 
 ## 2. Bhavik (`enrichment-service` / Business Analyst)
+
 **Role:** Reference data modelling and enrichment logic.
-* **What is Done:** 
-  * The schema is prepared for reference data integration, with `ReferenceDataEnrichment` and `EnrichmentSource` models created in `common-lib` to track data provenance.
-* **What is Remaining:** 
-  * Build the `enrichment-service`.
-  * Model and implement the mock reference datasets (counterparty, instrument, template catalogue).
-  * Integrate reference lookups to populate the `trade.enriched` topic.
+
+* **What is Done (100% Complete — PR #5 Merged):**
+  * Implemented `TradeEnricher` enriching FX Option trades against reference JSON datasets (`counterparties.json`, `instruments.json`, `templates.json`, `counterparty-products.json`).
+  * Implemented `TradeAcceptedConsumer` (consuming `trade.accepted`), idempotency filtering with `EnrichmentIdempotencyRepository`, and publishing to `trade.enriched` (`TradeEnrichedProducer`) with DLQ routing.
+  * In-place party enrichment (`legalEntityName`, `lei`, `country`) and template resolution.
+* **What is Remaining:**
+  * Ready for downstream validation consumption.
 
 ## 3. Mahadev (`validation-service` / Backend Engineer)
+
 **Role:** STP rules engine and confirmation APIs.
-* **What is Done:** 
-  * `common-lib` is equipped with `ConfirmableFieldRegistry` and `ConfirmationFingerprint` utilities. This solves the complex "not every attribute is confirmable" and duplicate suppression ("nothing changed") rules.
-  * `ConfirmationRecord` and `ConfirmationEvent` models are ready.
-* **What is Remaining:** 
-  * Build the `validation-service`.
-  * Implement the STP rules to evaluate enriched trades.
-  * Connect the fingerprinting logic to suppress redundant confirmation generations.
+
+* **What is Done (Implementation Complete — PR Pending):**
+  * Implemented CouchDB persistence, the STP rules engine, and Kafka producers for validation outcomes, confirmations, exceptions, and dead-letter routing.
+  * Implemented confirmation generation with fingerprint-based duplicate suppression and exception mapping.
+  * Implemented the `trade.enriched` consumer and confirmation query/metrics REST APIs.
+  * Added unit and embedded-Kafka integration tests: 124 tests passing. Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
+* **What is Remaining:**
+  * Verify live CouchDB persistence and the complete pipeline against the Docker Compose stack.
+  * Resolve any cross-service integration issues identified during verification.
 
 ## 4. Kapish (`exception-service` / Data Engineer)
+
 **Role:** Exception capture, classification, and recommendation logic.
-* **What is Done:** 
+
+* **What is Done:**
   * The exception taxonomy (`ExceptionCategory` and `ExceptionSubTheme`) is fully defined in `common-lib` matching the capstone spec.
   * `ExceptionRecord` and `ExceptionEvent` models are structured to support confidence scoring, SLA deadlines, and resolution metadata.
-* **What is Remaining:** 
+* **What is Remaining:**
   * Implement the `exception-service`.
   * Build the deterministic rules engine (and optionally clustering/ML) to map failures to categories/themes.
   * Generate recommendation hints (e.g., owner queue, resolution difficulty).
 
 ## 5. Oren (`workitem-service` / DevOps Engineer)
+
 **Role:** Work-item tracking, audit trail, DLQ/replay, and DevOps / Orchestration.
-* **What is Done:** 
+
+* **What is Done:**
   * Data structures for `WorkItem`, `AuditEvent`, and `DeadLetterEvent` are established.
   * The idempotency and replay protocol is fully documented and structured within the DLQ models (tracking `replayCount` and `replayable` flags).
   * **DevOps Infrastructure Phase 1 (Local Orchestration & Health Checks):** Implemented active health checks for Kafka (`broker-api-versions`), CouchDB (`/_up`), and Spring Boot Actuator (`wget /actuator/health`) across all containers; configured dedicated bridge network `tcem-network`.
@@ -58,15 +69,17 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * DLQ store and replay: consumes `deadletter.trade`, persists `dlq-entries`, `POST /dlq/{id}/replay` with a 3-attempt limit, replay success and failure tracking (failed replays merge into the same entry, then escalate to `PERMANENTLY_FAILED`).
   * Work items: created and linked from `exception.classified` (type, queue and priority rules, low-confidence routing), manual review queue from `manual.review.required` (approve / reject), closed on `confirmation.generated`, management API and summary endpoint, audit trail shared with `ingestion-service`.
   * 80 unit and integration tests; verified live against Kafka, CouchDB and `ingestion-service`. Details in [`services/workitem-service/README.md`](../services/workitem-service/README.md).
-* **What is Remaining:** 
+* **What is Remaining:**
   * Agree the `manual.review.required` payload (`ExceptionEvent`) with Kapish, and that downstream services keep `messageHeader` and key by `tradeId` (see `docs/kafka-topics.md`).
   * Replay timeout for entries stuck in `REPLAYING`, and cross-trade grouping of work items (known limitations).
 
 ## 6. Gunjan (`frontend` / Frontend & QA Engineer)
+
 **Role:** UI dashboards and cross-service test coverage.
-* **What is Done:** 
+
+* **What is Done:**
   * The backend JSON contracts are now stable, meaning the frontend has a clear data model to build against.
-* **What is Remaining:** 
+* **What is Remaining:**
   * Build the React + TypeScript frontend application.
   * Develop dashboards for trade lifecycle, exception queues, aged items, and root-cause analysis.
   * Implement the manual review screen and connect to the DLQ replay controls.
