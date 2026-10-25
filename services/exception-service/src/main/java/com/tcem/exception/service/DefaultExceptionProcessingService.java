@@ -238,7 +238,7 @@ public class DefaultExceptionProcessingService implements ExceptionProcessingSer
         // ------------------------------------------------------------------
         safePersistException(record, idKey.toStorageKey());
         safeSaveAudit(tradeId, correlationId, eventType.name(), "CLASSIFICATION",
-                ProcessingStatus.PROCESSED,
+                ProcessingStatus.EXCEPTION_CAPTURED,
                 "Exception classified: category=" + record.getCategory()
                         + ", confidence=" + record.getClassificationConfidence()
                         + ", exceptionId=" + record.getExceptionId());
@@ -261,13 +261,13 @@ public class DefaultExceptionProcessingService implements ExceptionProcessingSer
                     record.getExceptionId(), record.getClassificationConfidence());
             manualReviewProducer.sendManualReviewRequired(tradeId, outboundEvent);
             safeSaveAudit(tradeId, correlationId, eventType.name(), "ROUTING",
-                    ProcessingStatus.PROCESSED,
+                    ProcessingStatus.MANUAL_REVIEW,
                     "Routed to manual.review.required; confidence=" + record.getClassificationConfidence());
             finalResult = ExceptionProcessingResult.MANUAL_REVIEW;
         } else {
             exceptionClassifiedProducer.sendExceptionClassified(tradeId, outboundEvent);
             safeSaveAudit(tradeId, correlationId, eventType.name(), "ROUTING",
-                    ProcessingStatus.PROCESSED,
+                    ProcessingStatus.EXCEPTION_CAPTURED,
                     "Routed to exception.classified; confidence=" + record.getClassificationConfidence());
             finalResult = ExceptionProcessingResult.CLASSIFIED;
         }

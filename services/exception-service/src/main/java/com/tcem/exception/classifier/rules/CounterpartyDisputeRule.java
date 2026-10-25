@@ -36,16 +36,20 @@ public class CounterpartyDisputeRule implements ClassificationRule {
 
         ExceptionSubTheme inboundSubTheme = record.getSubTheme();
 
+        // Counterparty disputes ALWAYS require manual human review (business rule FR8).
+        // Confidence is intentionally capped at 0.5 so the routing engine routes all
+        // counterparty disputes to manual.review.required, regardless of sub-theme clarity.
         if (inboundSubTheme != null && VALID_SUB_THEMES.contains(inboundSubTheme)) {
             result.confirmedSubTheme(inboundSubTheme)
-                    .withConfidence(1.0);
+                    .withConfidence(0.5)
+                    .withDiagnosticNote("Counterparty dispute requires manual review (confidence capped at 0.5)");
         } else if (inboundSubTheme == ExceptionSubTheme.UNKNOWN || inboundSubTheme == null) {
             result.confirmedSubTheme(ExceptionSubTheme.UNKNOWN)
-                    .withConfidence(0.8)
+                    .withConfidence(0.3)
                     .withDiagnosticNote("Counterparty dispute confirmed but mismatch type is UNKNOWN");
         } else {
             result.confirmedSubTheme(inboundSubTheme)
-                    .withConfidence(0.5)
+                    .withConfidence(0.3)
                     .withDiagnosticNote("subTheme " + inboundSubTheme + " not in COUNTERPARTY_MATCHING_DISPUTE family");
         }
     }

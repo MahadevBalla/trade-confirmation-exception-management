@@ -11,6 +11,12 @@ import com.tcem.common.event.ExceptionEvent;
 import com.tcem.common.model.exception.ExceptionRecord;
 import com.tcem.common.model.message.MessageHeader;
 import com.tcem.exception.classifier.ClassificationRulesEngine;
+import com.tcem.exception.classifier.rules.BusinessRuleFailureRule;
+import com.tcem.exception.classifier.rules.CounterpartyDisputeRule;
+import com.tcem.exception.classifier.rules.MissingEconomicDataRule;
+import com.tcem.exception.classifier.rules.MissingReferenceDataRule;
+import com.tcem.exception.classifier.rules.TechnicalFailureRule;
+import com.tcem.exception.classifier.rules.TemplateIssueRule;
 import com.tcem.exception.config.CouchDbProperties;
 import com.tcem.exception.consumer.ExceptionCreatedConsumer;
 import com.tcem.exception.controller.ExceptionQueryController;
@@ -141,7 +147,14 @@ class ExceptionServicePipelineIntegrationTest {
 
         processingService = new DefaultExceptionProcessingService(
                 objectMapper,
-                new ClassificationRulesEngine(),
+                new ClassificationRulesEngine(List.of(
+                        new MissingEconomicDataRule(),
+                        new MissingReferenceDataRule(),
+                        new TemplateIssueRule(),
+                        new BusinessRuleFailureRule(),
+                        new TechnicalFailureRule(),
+                        new CounterpartyDisputeRule()
+                )),
                 new RecommendationEngine(),
                 new SlaCalculator(),
                 new ExceptionIdGenerator(),
@@ -215,7 +228,7 @@ class ExceptionServicePipelineIntegrationTest {
     void counterpartyDispute_routedToManualReview() throws Exception {
         String tradeId = "TRD-E2E-002";
         String payload = buildPayload(tradeId, ExceptionCategory.COUNTERPARTY_MATCHING_DISPUTE,
-                ExceptionSubTheme.COUNTERPARTY_ID_MISMATCH, EventType.NEW_TRADE, null);
+                ExceptionSubTheme.ECONOMIC_TERM_MISMATCH, EventType.NEW_TRADE, null);
 
         consumer.onMessage(new ConsumerRecord<>(TopicNames.EXCEPTION_CREATED, 0, 2L, tradeId, payload));
 
@@ -347,7 +360,7 @@ class ExceptionServicePipelineIntegrationTest {
         String tradeId     = "TRD-E2E-007";
         String existingId  = "EXC-PRESERVED-999";
         String payload     = buildPayloadWithExceptionId(tradeId, ExceptionCategory.TEMPLATE_ISSUE,
-                ExceptionSubTheme.NO_TEMPLATE_FOUND, EventType.NEW_TRADE, existingId);
+                ExceptionSubTheme.NO_MATCHING_TEMPLATE, EventType.NEW_TRADE, existingId);
 
         consumer.onMessage(new ConsumerRecord<>(TopicNames.EXCEPTION_CREATED, 0, 9L, tradeId, payload));
 

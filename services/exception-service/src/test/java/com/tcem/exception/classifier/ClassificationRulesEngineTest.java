@@ -115,7 +115,7 @@ class ClassificationRulesEngineTest {
     }
 
     @Test
-    void counterpartyDispute_fullConfidence_forEconomicTermMismatch() {
+    void counterpartyDispute_alwaysManualReview_forEconomicTermMismatch() {
         ExceptionRecord record = ExceptionRecord.builder()
                 .tradeId("TRD-10001")
                 .category(ExceptionCategory.COUNTERPARTY_MATCHING_DISPUTE)
@@ -126,7 +126,9 @@ class ClassificationRulesEngineTest {
 
         assertThat(result.getConfirmedCategory()).isEqualTo(ExceptionCategory.COUNTERPARTY_MATCHING_DISPUTE);
         assertThat(result.getConfirmedSubTheme()).isEqualTo(ExceptionSubTheme.ECONOMIC_TERM_MISMATCH);
-        assertThat(result.getClassificationConfidence()).isEqualTo(1.0);
+        // Counterparty disputes always cap at 0.5 → always routed to manual review (FR8)
+        assertThat(result.getClassificationConfidence()).isEqualTo(0.5);
+        assertThat(result.requiresManualReview()).isTrue();
     }
 
     // -----------------------------------------------------------------------

@@ -80,13 +80,14 @@ class ManualReviewProducerTest {
     }
 
     @Test
-    void send_serializationFailure_returnsFailedFuture() {
-        ObjectMapper brokenMapper = mock(ObjectMapper.class);
+    void send_serializationFailure_returnsFailedFuture() throws Exception {
+        ObjectMapper brokenMapper = new ObjectMapper() {
+            @Override
+            public String writeValueAsString(Object value) throws com.fasterxml.jackson.core.JsonProcessingException {
+                throw new com.fasterxml.jackson.core.JsonProcessingException("ser-error") {};
+            }
+        };
         ManualReviewProducer brokenProducer = new ManualReviewProducer(kafkaOperations, brokenMapper);
-
-        try {
-            when(brokenMapper.writeValueAsString(any())).thenThrow(new RuntimeException("ser-error"));
-        } catch (Exception ignored) {}
 
         CompletableFuture<SendResult<String, String>> result =
                 brokenProducer.sendManualReviewRequired("TRD-002", buildEvent("TRD-002"));

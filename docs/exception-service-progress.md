@@ -365,7 +365,10 @@ If session context is lost, read these files in order to resume:
 | **Phase 5** | **Operations REST APIs & Health (FR11)** | ✅ Completed | 22 tests |
 | **Phase 6** | **End-to-End Testing & Verification** | ✅ Completed | 10 tests |
 
-**Total: ~131 tests across all phases.**
+**Total: 129 tests across all phases — all green.**
+
+> **Build verified:** `mvn -f services/pom.xml -pl common-lib,exception-service -am test`
+> Result: **BUILD SUCCESS** — Tests run: 129, Failures: 0, Errors: 0, Skipped: 0 _(2026-10-25)_
 
 **Status legend:** `⬜ Not Started` → `🟡 In Progress` → `✅ Completed`
 
@@ -377,6 +380,7 @@ If session context is lost, read these files in order to resume:
 2. **Idempotency key format:** `idempotency:{tradeId}:{messageId}:{schemaVersion}:{eventType}` per `IdempotencyKey.toStorageKey()`.
 3. **REPLAY bypass:** When `messageHeader.eventType == REPLAY`, skip idempotency check (Step 4).
 4. **Manual review threshold:** `classificationConfidence < 0.6` → `manual.review.required`. Matches `workitem-service` threshold.
+5. **`COUNTERPARTY_MATCHING_DISPUTE` always routes to manual review (FR8):** `CounterpartyDisputeRule` intentionally caps confidence at ≤ 0.5 even when the sub-theme is fully identified — counterparty disputes require a human to adjudicate, regardless of classification certainty.
 5. **SLA deadlines:** CRITICAL=+4h, HIGH=+24h, MEDIUM=+72h, LOW=+7d from `capturedAt`.
 6. **ExceptionId preservation:** If inbound `ExceptionRecord.exceptionId` is non-null and non-blank, preserve it; otherwise generate via `ExceptionIdGenerator` (starts at EXC-30001).
 7. **Fire-and-forget producers:** Kafka send failures logged as warnings but not propagated to caller.
@@ -387,4 +391,4 @@ If session context is lost, read these files in order to resume:
 
 ---
 
-*Last updated: October 2026 — All 6 phases completed. Exception service implementation is DONE.*
+*Last updated: October 2026 — All 6 phases completed. Build verified green (129/129 tests). Exception service implementation is DONE and ready for PR.*

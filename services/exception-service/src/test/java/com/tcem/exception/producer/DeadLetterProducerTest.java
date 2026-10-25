@@ -85,13 +85,14 @@ class DeadLetterProducerTest {
     }
 
     @Test
-    void send_serializationFailure_returnsFailedFuture() {
-        ObjectMapper brokenMapper = mock(ObjectMapper.class);
+    void send_serializationFailure_returnsFailedFuture() throws Exception {
+        ObjectMapper brokenMapper = new ObjectMapper() {
+            @Override
+            public String writeValueAsString(Object value) throws com.fasterxml.jackson.core.JsonProcessingException {
+                throw new com.fasterxml.jackson.core.JsonProcessingException("ser-error") {};
+            }
+        };
         DeadLetterProducer brokenProducer = new DeadLetterProducer(kafkaOperations, brokenMapper);
-
-        try {
-            when(brokenMapper.writeValueAsString(any())).thenThrow(new RuntimeException("ser-error"));
-        } catch (Exception ignored) {}
 
         CompletableFuture<SendResult<String, String>> result =
                 brokenProducer.sendDeadLetter("TRD-001", buildEvent());

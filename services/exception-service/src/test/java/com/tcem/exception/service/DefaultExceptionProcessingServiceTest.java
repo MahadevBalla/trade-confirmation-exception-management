@@ -10,6 +10,12 @@ import com.tcem.common.event.ExceptionEvent;
 import com.tcem.common.model.exception.ExceptionRecord;
 import com.tcem.common.model.message.MessageHeader;
 import com.tcem.exception.classifier.ClassificationRulesEngine;
+import com.tcem.exception.classifier.rules.BusinessRuleFailureRule;
+import com.tcem.exception.classifier.rules.CounterpartyDisputeRule;
+import com.tcem.exception.classifier.rules.MissingEconomicDataRule;
+import com.tcem.exception.classifier.rules.MissingReferenceDataRule;
+import com.tcem.exception.classifier.rules.TechnicalFailureRule;
+import com.tcem.exception.classifier.rules.TemplateIssueRule;
 import com.tcem.exception.config.CouchDbProperties;
 import com.tcem.exception.couchdb.CouchDbOperations;
 import com.tcem.exception.model.ExceptionProcessingResult;
@@ -34,6 +40,7 @@ import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.support.SendResult;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -77,7 +84,14 @@ class DefaultExceptionProcessingServiceTest {
         ManualReviewProducer manualReviewProducer = new ManualReviewProducer(kafkaOperations, objectMapper);
         DeadLetterProducer deadLetterProducer = new DeadLetterProducer(kafkaOperations, objectMapper);
 
-        ClassificationRulesEngine classificationEngine = new ClassificationRulesEngine();
+        ClassificationRulesEngine classificationEngine = new ClassificationRulesEngine(List.of(
+                new MissingEconomicDataRule(),
+                new MissingReferenceDataRule(),
+                new TemplateIssueRule(),
+                new BusinessRuleFailureRule(),
+                new TechnicalFailureRule(),
+                new CounterpartyDisputeRule()
+        ));
         RecommendationEngine recommendationEngine = new RecommendationEngine();
         SlaCalculator slaCalculator = new SlaCalculator();
         ExceptionIdGenerator idGenerator = new ExceptionIdGenerator();
@@ -240,7 +254,7 @@ class DefaultExceptionProcessingServiceTest {
         stubKafkaSend(TopicNames.EXCEPTION_CLASSIFIED);
 
         ExceptionRecord rec = buildRecord("TRD-PRE", ExceptionCategory.TEMPLATE_ISSUE,
-                ExceptionSubTheme.NO_TEMPLATE_FOUND, EventType.NEW_TRADE);
+                ExceptionSubTheme.NO_MATCHING_TEMPLATE, EventType.NEW_TRADE);
         rec.setExceptionId("EXC-EXISTING-001");
         String payload = objectMapper.writeValueAsString(buildEvent(rec, EventType.NEW_TRADE));
 

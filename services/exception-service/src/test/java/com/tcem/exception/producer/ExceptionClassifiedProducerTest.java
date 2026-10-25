@@ -84,15 +84,16 @@ class ExceptionClassifiedProducerTest {
     }
 
     @Test
-    void send_serializationFailure_returnsFailedFuture() {
-        // Use a broken ObjectMapper that always fails serialization
-        ObjectMapper brokenMapper = mock(ObjectMapper.class);
+    void send_serializationFailure_returnsFailedFuture() throws Exception {
+        // Use a broken ObjectMapper subclass (avoids Mockito mocking issues on JDK 26+)
+        ObjectMapper brokenMapper = new ObjectMapper() {
+            @Override
+            public String writeValueAsString(Object value) throws com.fasterxml.jackson.core.JsonProcessingException {
+                throw new com.fasterxml.jackson.core.JsonProcessingException("ser-error") {};
+            }
+        };
         ExceptionClassifiedProducer brokenProducer =
                 new ExceptionClassifiedProducer(kafkaOperations, brokenMapper);
-
-        try {
-            when(brokenMapper.writeValueAsString(any())).thenThrow(new RuntimeException("ser-error"));
-        } catch (Exception ignored) {}
 
         CompletableFuture<SendResult<String, String>> result =
                 brokenProducer.sendExceptionClassified("TRD-001", buildEvent("TRD-001"));
