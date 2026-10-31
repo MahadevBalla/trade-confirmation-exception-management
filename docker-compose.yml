@@ -22,6 +22,7 @@ networks:
 
 volumes:
   couchdb_data:
+  kafka_data:
 
 services:
 
@@ -32,6 +33,8 @@ services:
   kafka:
     image: apache/kafka:3.8.0
     container_name: tcem-kafka
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     networks:
       - tcem-network
     ports:
