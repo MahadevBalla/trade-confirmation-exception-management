@@ -2,7 +2,8 @@
 
 **Author:** Mayank Chauhan (Team Lead)  
 **Target Deadline:** 3 Days to Presentation / Evaluation  
-**Status:** Actionable Minimum Remediation Plan  
+**Status:** ✅ ALL 7 URGENT FIXES COMPLETED & COMMITTED (Branch `fix/code-consistency`)  
+**Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Related Report:** [`code_consistency_report.md`](./code_consistency_report.md)  
 
 ---
@@ -36,7 +37,7 @@ These 7 items are strictly required to ensure that containers build cleanly, the
 
 ---
 
-### Fix 1: Add `frontend/.dockerignore` (Audit Issue C5-01)
+### Fix 1: Add `frontend/.dockerignore` (Audit Issue C5-01) — ✅ [COMPLETED: `ef23e52`]
 * **Severity:** 🔴 Critical / Blocker
 * **File to Create:** `frontend/.dockerignore`
 * **Why It's Urgent:** On macOS developer machines, `npm run build` or `npm install` creates Darwin ARM64 native binaries in `frontend/node_modules`. Without `.dockerignore`, `COPY . .` in `frontend/Dockerfile` copies host binaries into the Alpine Linux container, causing `docker compose up --build` or `./scripts/dev-up.sh` to fail with `exec format error`.
@@ -51,7 +52,7 @@ dist
 
 ---
 
-### Fix 2: Mount Kafka Data Volume in Docker Compose (Audit Issue C5-02)
+### Fix 2: Mount Kafka Data Volume in Docker Compose (Audit Issue C5-02) — ✅ [COMPLETED: `e181b58`]
 * **Severity:** 🔴 Critical / State Corruption
 * **File to Edit:** `docker-compose.yml`
 * **Why It's Urgent:** CouchDB persists its state in `couchdb_data`, but Kafka currently has no volume. Whenever containers are restarted, Kafka wipes all topic offsets, while CouchDB retains previous trades and idempotency keys. This causes pipeline desynchronization and consumer stalls.
@@ -75,7 +76,7 @@ volumes:
 
 ---
 
-### Fix 3: Fix Confirmation Metrics Cap of 25 (Audit Issue C2-02)
+### Fix 3: Fix Confirmation Metrics Cap of 25 (Audit Issue C2-02) — ✅ [COMPLETED: `2c4b3aa`]
 * **Severity:** 🔴 Critical / High Visibility Defect
 * **File to Edit:** `services/validation-service/src/main/java/com/tcem/validation/repository/ConfirmationCouchDbRepository.java`
 * **Why It's Urgent:** CouchDB Mango `_find` queries default to a limit of 25 records if unspecified. Calling `.size()` on the returned list means `GET /metrics/stp-rate` and dashboard counters will never exceed 25, even if 500 trades were ingested.
@@ -94,7 +95,7 @@ volumes:
 
 ---
 
-### Fix 4: Align TypeScript Enums with Backend (Audit Issue C1-02)
+### Fix 4: Align TypeScript Enums with Backend (Audit Issue C1-02) — ✅ [COMPLETED: `c43263d`]
 * **Severity:** 🔴 Critical / UI Filtering Failure
 * **File to Edit:** `frontend/src/types/tcem.ts`
 * **Why It's Urgent:** Backend microservices produce `IRS`, `NOVATION`, and `COMPRESSION`. Frontend only defined `IR_SWAP` and lacked the event types, causing filter mismatches and deserialization gaps.
@@ -114,7 +115,7 @@ export type EventType =
 
 ---
 
-### Fix 5: Support Dual ID/Status Field Names on DLQ Entries (Audit Issue C4-02)
+### Fix 5: Support Dual ID/Status Field Names on DLQ Entries (Audit Issue C4-02) — ✅ [COMPLETED: `370fa98`]
 * **Severity:** 🔴 Critical / UI Runtime Crash
 * **File to Edit:** `frontend/src/types/tcem.ts`
 * **Why It's Urgent:** Backend `DlqController` serializes fields as `id` and `dlqStatus`. Frontend `DeadLetterEvent` expected `dlqId` and `status`. Navigating to the DLQ tab or triggering a replay will pass `undefined` and throw an error.
@@ -142,7 +143,7 @@ export interface DeadLetterEvent {
 
 ---
 
-### Fix 6: Display Enriched Counterparty Legal Entity Name (Audit Issue C4-03)
+### Fix 6: Display Enriched Counterparty Legal Entity Name (Audit Issue C4-03) — ✅ [COMPLETED: `d00ccb6`]
 * **Severity:** 🟠 High / Demo Quality
 * **File to Edit:** `frontend/src/components/trades/TradeDetailModal.tsx`
 * **Why It's Urgent:** Reference Data Enrichment (FR4) is a core selling point of the platform. However, the trade detail modal was reading `p.partyName`, causing it to fall back to raw party IDs like `PTY-CP-101` instead of `Goldman Sachs International`.
@@ -153,7 +154,7 @@ export interface DeadLetterEvent {
 
 ---
 
-### Fix 7: Provision `enrichment-idempotency` Database (Audit Issues C3-06 & C5-07)
+### Fix 7: Provision `enrichment-idempotency` Database (Audit Issues C3-06 & C5-07) — ✅ [COMPLETED: `d30e283`]
 * **Severity:** 🟡 Low-Medium / Startup Warning
 * **Files to Edit:** `scripts/init-couchdb.sh` and `docker-compose.yml`
 * **Why It's Urgent:** `enrichment-service` utilizes an isolated `enrichment-idempotency` CouchDB database. If missing, startup logs throw warnings or require elevated auto-create permissions.
