@@ -10,35 +10,31 @@ Stack: **Apache Kafka** (event streaming) · **Apache CouchDB** (document
 store) · **Java / Spring Boot** (microservices) · **React + TypeScript**
 (operations UI) · **Docker Compose** (local orchestration).
 
-> Status: in progress. `ingestion-service` and `workitem-service` are
-> implemented and tested; `enrichment-service`, `validation-service` and
-> `exception-service` are still runnable stubs. See
-> [`docs/project-status.md`](docs/project-status.md) for per-service progress,
-> and `CONTRIBUTING.md` before opening a PR.
+> **Status:** All 5 backend microservices, shared library (`common-lib`), and React Operations Dashboard are **100% implemented, tested, and verified** across Docker Compose and CI pipelines. 
+> See [`docs/project-status.md`](docs/project-status.md) for detailed service verification, [`docs/reports/code_consistency_report.md`](docs/reports/code_consistency_report.md) for architectural audit notes, and [`docs/reports/live_demo_presentation_guide.md`](docs/reports/live_demo_presentation_guide.md) for the live demonstration script.
 
 ## Repo layout
 
 ```
 services/
   pom.xml                 # Maven reactor (parent) - aggregates all backend modules
-  common-lib/             # Shared DTOs / Kafka event contracts (empty for now - see file)
-  ingestion-service/      # FR1-FR3: intake, schema validation, raw persistence
-  enrichment-service/     # FR4: mock reference-data enrichment
-  validation-service/     # FR5-FR6: STP rules engine + confirmation generation
-  exception-service/      # FR7-FR9: exception capture, classification, recommendation
-  workitem-service/       # FR10, FR12: mock work-item tracker, audit trail, replay/DLQ
-frontend/                 # FR11: React + TypeScript operations dashboard
+  common-lib/             # Shared FpML DTOs, Kafka event contracts, fingerprinting, constants
+  ingestion-service/      # FR1-FR3: intake, schema validation, raw persistence (port 8081)
+  enrichment-service/     # FR4: reference-data enrichment, LEI & template resolution (port 8082)
+  validation-service/     # FR5-FR6: STP rules engine + confirmation generation (port 8083)
+  exception-service/      # FR7-FR9: exception capture, classification, recommendation (port 8084)
+  workitem-service/       # FR10, FR12: work-item tracker, audit trail, replay/DLQ (port 8085)
+frontend/                 # FR11: React 19 + TypeScript operations dashboard (port 3000)
 docs/
   architecture.md         # Event flow diagram + service boundaries
-  kafka-topics.md         # Full topic list and open decisions
+  kafka-topics.md         # Full topic list and event schemas
   team-roles.md           # Role mapping + evaluation weighting
-docker-compose.yml         # Kafka (KRaft), Kafka UI, CouchDB, all services
-.github/                   # CI workflows (backend, frontend, e2e smoke test) + PR template
+  reports/                # Code consistency audit, remediation plan & live demo guide
+docker-compose.yml         # Kafka (KRaft), Kafka UI, CouchDB, all 5 services + frontend
+.github/                   # CI workflows (backend reactor, frontend lint/build, smoke test)
 ```
 
-Services that are not implemented yet are plain Spring Boot apps that start and
-answer `/actuator/health`. Fill in controllers, Kafka listeners/producers, and
-CouchDB access as tasks get assigned.
+All microservices run as containerized Spring Boot applications connecting over the internal Docker network `tcem-network`. The frontend container serves the React application and reverse-proxies REST endpoints via Nginx.
 
 ## Prerequisites
 

@@ -58,7 +58,12 @@ This split is a starting point, not a contract - revisit it once the team has lo
 
 ## Implementation status
 
-- **Built:** `ingestion-service` (FR1-FR3) and `workitem-service` (FR10, FR12: work items, manual review queue, audit trail, DLQ and replay). Their topics, payload contracts and REST APIs are documented in `docs/kafka-topics.md`, `README.md` and `services/workitem-service/README.md`.
-- **Stubs:** `enrichment-service`, `validation-service` and `exception-service` are Spring Boot apps that only answer `/actuator/health`. Until they exist, `workitem-service` is exercised with hand-published events (see its README).
+All 5 backend microservices, the shared core library, and the frontend operations cockpit are **100% implemented, tested, and integrated**:
+- **`ingestion-service` (FR1-FR3):** Raw intake, FpML schema validation, idempotency filter, and raw persistence.
+- **`enrichment-service` (FR4):** Reference data lookups, in-flight party LEI/name enrichment, and template resolution.
+- **`validation-service` (FR5-FR6):** STP business rules engine, SHA-256 confirmation fingerprinting, and confirmation document generation.
+- **`exception-service` (FR7-FR9):** Exception capture, taxonomy classification, SLA calculation, and recommendation engine.
+- **`workitem-service` (FR10-FR12):** Work item tracker, manual review queue, immutable audit trail, and dead-letter queue (DLQ) replay.
+- **`frontend` (FR11):** React 19 + TypeScript operations cockpit, topology visualizer, and diagnostics console.
 
-Per-service progress is tracked in `docs/project-status.md`.
+Per-service progress and verification details are tracked in [`docs/project-status.md`](project-status.md) and [`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md).

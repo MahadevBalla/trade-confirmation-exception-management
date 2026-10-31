@@ -231,3 +231,4 @@ When evaluators ask technical architectural questions, use these senior engineer
 │ 14:00   │ All Team          │ Q&A Defense                              │
 └─────────┴───────────────────┴──────────────────────────────────────────┘
 ```
+
