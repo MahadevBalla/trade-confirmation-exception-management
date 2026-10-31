@@ -106,7 +106,7 @@ export const ManualReviewQueue: React.FC = () => {
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-400 mt-1 truncate">
-                      {cp?.partyName || cp?.partyId}
+                      {cp?.legalEntityName || cp?.partyName || cp?.partyId}
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 font-mono">
                       <span>{t.productType}</span>

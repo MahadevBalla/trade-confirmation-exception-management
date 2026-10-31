@@ -17,6 +17,7 @@ export const TradeList: React.FC = () => {
         t.parties.some(
           (p) =>
             p.partyId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (p.legalEntityName && p.legalEntityName.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (p.partyName && p.partyName.toLowerCase().includes(searchTerm.toLowerCase()))
         ) ||
         (t.fxOptionEconomics?.notionalCurrency &&
@@ -116,7 +117,7 @@ export const TradeList: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="font-medium text-slate-200">{cp?.partyName || cp?.partyId}</div>
+                        <div className="font-medium text-slate-200">{cp?.legalEntityName || cp?.partyName || cp?.partyId}</div>
                         <div className="text-[11px] text-slate-500 font-mono">{cp?.partyId}</div>
                       </td>
 

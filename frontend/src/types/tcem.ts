@@ -132,6 +132,9 @@ export interface Party {
   partyRole: 'BANK' | 'COUNTERPARTY' | 'BROKER' | 'CLEARING_HOUSE';
   partyId: string;
   partyName?: string;
+  legalEntityName?: string;
+  lei?: string;
+  country?: string;
 }
 
 export interface FxOptionEconomics {
