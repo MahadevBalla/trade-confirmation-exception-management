@@ -24,6 +24,7 @@ APP_DBS=(
   "audit-events"
   "stp-metrics"
   "dlq-entries"
+  "enrichment-idempotency"
 )
 
 echo "=== [init-couchdb] Verifying CouchDB at $COUCHDB_URL ==="
