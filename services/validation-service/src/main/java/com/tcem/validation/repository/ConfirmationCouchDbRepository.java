@@ -97,7 +97,7 @@ public class ConfirmationCouchDbRepository {
     public long countAll() {
         Map<String, Object> selector = new HashMap<>();
         selector.put("docType", "CONFIRMATION");
-        FindQueryRequest query = new FindQueryRequest(selector);
+        FindQueryRequest query = new FindQueryRequest(selector, 10000, null);
         return couchDb.find(database, query, ConfirmationDocument.class).size();
     }
 }
