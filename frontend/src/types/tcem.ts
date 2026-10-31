@@ -7,13 +7,15 @@
 // Constants & Taxonomy
 // ---------------------------------------------------------------------------
 
-export type ProductType = 'FX_OPTION' | 'EQUITY_SWAP' | 'IR_SWAP';
+export type ProductType = 'FX_OPTION' | 'EQUITY_SWAP' | 'IR_SWAP' | 'IRS' | 'FX_FORWARD' | 'UNKNOWN';
 
 export type EventType =
   | 'NEW_TRADE'
   | 'AMEND_TRADE'
   | 'CANCEL_TRADE'
   | 'REPLAY'
+  | 'NOVATION'
+  | 'COMPRESSION'
   | 'HEARTBEAT';
 
 export type ProcessingStatus =
