@@ -279,7 +279,10 @@ export interface AuditEvent {
 // ---------------------------------------------------------------------------
 
 export interface DeadLetterEvent {
-  dlqId: string;
+  id?: string;
+  dlqId?: string;
+  dlqStatus?: string;
+  status?: 'PENDING_REPLAY' | 'REPLAYING' | 'REPLAY_SUCCEEDED' | 'PERMANENTLY_FAILED';
   messageHeader: MessageHeader;
   originalMessageHeader: MessageHeader;
   originalPayload: string;
@@ -291,7 +294,6 @@ export interface DeadLetterEvent {
   failedAt: string;
   replayCount: number;
   replayable: boolean;
-  status: 'PENDING_REPLAY' | 'REPLAYING' | 'REPLAY_SUCCEEDED' | 'PERMANENTLY_FAILED';
   tradeId: string;
 }
 

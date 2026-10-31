@@ -48,13 +48,15 @@ export const DeadLetterQueue: React.FC = () => {
       <div className="space-y-3">
         {dlqEntries.length > 0 ? (
           dlqEntries.map((entry) => {
-            const isExpanded = expandedDlqId === entry.dlqId;
-            const isReplaying = replayingId === entry.dlqId;
-            const isSucceeded = entry.status === 'REPLAY_SUCCEEDED';
+            const effectiveId = entry.dlqId || entry.id || '';
+            const effectiveStatus = entry.status || entry.dlqStatus || '';
+            const isExpanded = expandedDlqId === effectiveId;
+            const isReplaying = replayingId === effectiveId;
+            const isSucceeded = effectiveStatus === 'REPLAY_SUCCEEDED';
 
             return (
               <div
-                key={entry.dlqId}
+                key={effectiveId}
                 className={`rounded-2xl border transition-all ${
                   isSucceeded
                     ? 'border-emerald-500/30 bg-emerald-950/10'
@@ -69,7 +71,7 @@ export const DeadLetterQueue: React.FC = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-white text-xs">{entry.dlqId}</span>
+                        <span className="font-bold text-white text-xs">{effectiveId}</span>
                         <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                           Failed on: {entry.failedOnTopic}
                         </span>
@@ -83,7 +85,7 @@ export const DeadLetterQueue: React.FC = () => {
                               : 'bg-red-500/20 text-red-400 border border-red-500/30'
                           }`}
                         >
-                          {entry.status}
+                          {effectiveStatus}
                         </span>
                       </div>
 
@@ -116,7 +118,7 @@ export const DeadLetterQueue: React.FC = () => {
                   <div className="flex items-center gap-2 self-end md:self-center shrink-0">
                     {entry.replayable && !isSucceeded && (
                       <button
-                        onClick={() => handleReplayClick(entry.dlqId)}
+                        onClick={() => handleReplayClick(effectiveId)}
                         disabled={isReplaying}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md shadow-red-600/20 transition-all disabled:opacity-50"
                       >
@@ -133,7 +135,7 @@ export const DeadLetterQueue: React.FC = () => {
                     )}
 
                     <button
-                      onClick={() => setExpandedDlqId(isExpanded ? null : entry.dlqId)}
+                      onClick={() => setExpandedDlqId(isExpanded ? null : effectiveId)}
                       className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
                       title={isExpanded ? 'Collapse Diagnostics' : 'Expand Diagnostics'}
                     >

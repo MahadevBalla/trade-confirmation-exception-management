@@ -100,7 +100,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Controlled Replay (FR12)
   const replayDLQ = useCallback((dlqId: string) => {
-    const dlq = dlqEntries.find((d) => d.dlqId === dlqId);
+    const dlq = dlqEntries.find((d) => (d.dlqId || d.id) === dlqId);
     if (!dlq) return;
 
     const newReplayCount = dlq.replayCount + 1;
@@ -109,7 +109,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 1. Update DLQ Entry
     setDlqEntries((prev) =>
       prev.map((d) =>
-        d.dlqId === dlqId
+        (d.dlqId || d.id) === dlqId
           ? {
               ...d,
               replayCount: newReplayCount,
