@@ -105,10 +105,17 @@ public class SeedLoaderService implements TradeSeedService {
             ClassPathResource resource = new ClassPathResource(resourcePath);
             if (resource.exists()) {
                 try (InputStream inputStream = resource.getInputStream()) {
-                    List<Object> rawList = objectMapper.readValue(inputStream, new TypeReference<>() {});
+                    List<Map<String, Object>> rawList = objectMapper.readValue(inputStream, new TypeReference<>() {});
                     List<String> payloads = rawList.stream()
                             .map(item -> {
                                 try {
+                                    Map<String, Object> trade = (Map<String, Object>) item.get("trade");
+                                    if (trade != null) {
+                                        Map<String, Object> eco = (Map<String, Object>) trade.get("fxOptionEconomics");
+                                        if (eco != null && !eco.containsKey("premiumPaymentDate") && trade.containsKey("effectiveDate")) {
+                                            eco.put("premiumPaymentDate", trade.get("effectiveDate"));
+                                        }
+                                    }
                                     return objectMapper.writeValueAsString(item);
                                 } catch (Exception e) {
                                     return item.toString();

@@ -38,6 +38,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -87,6 +88,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -136,6 +138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -185,6 +188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -234,6 +238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -283,6 +288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -332,6 +338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -381,6 +388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -430,6 +438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -479,6 +488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -528,6 +538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -577,6 +588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -626,6 +638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -675,6 +688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -724,6 +738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -773,6 +788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -822,6 +838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -871,6 +888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -920,6 +938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -969,6 +988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1018,6 +1038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1067,6 +1088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1116,6 +1138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1165,6 +1188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1214,6 +1238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1263,6 +1288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1312,6 +1338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1361,6 +1388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1410,6 +1438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1459,6 +1488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1508,6 +1538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1557,6 +1588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1606,6 +1638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1655,6 +1688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1704,6 +1738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1753,6 +1788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1802,6 +1838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1851,6 +1888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1900,6 +1938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1949,6 +1988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -1998,6 +2038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2047,6 +2088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2096,6 +2138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2145,6 +2188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2194,6 +2238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2243,6 +2288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2292,6 +2338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2341,6 +2388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2390,6 +2438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2439,6 +2488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2488,6 +2538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2537,6 +2588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2586,6 +2638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2635,6 +2688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2684,6 +2738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2733,6 +2788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2782,6 +2838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2831,6 +2888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2880,6 +2938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2929,6 +2988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -2978,6 +3038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3027,6 +3088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3076,6 +3138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3125,6 +3188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3174,6 +3238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3223,6 +3288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3272,6 +3338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3321,6 +3388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3370,6 +3438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3419,6 +3488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3468,6 +3538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3517,6 +3588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3566,6 +3638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3615,6 +3688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3664,6 +3738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3713,6 +3788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3762,6 +3838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3811,6 +3888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3860,6 +3938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3909,6 +3988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -3958,6 +4038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4007,6 +4088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4056,6 +4138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4105,6 +4188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4154,6 +4238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4203,6 +4288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4252,6 +4338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4301,6 +4388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4350,6 +4438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4399,6 +4488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4448,6 +4538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4497,6 +4588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4546,6 +4638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4595,6 +4688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4644,6 +4738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4693,6 +4788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4742,6 +4838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4791,6 +4888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4840,6 +4938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4889,6 +4988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4938,6 +5038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -4987,6 +5088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5036,6 +5138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5085,6 +5188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5134,6 +5238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5183,6 +5288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5232,6 +5338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5281,6 +5388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5330,6 +5438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5379,6 +5488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5428,6 +5538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5477,6 +5588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5526,6 +5638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5575,6 +5688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5624,6 +5738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5673,6 +5788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5722,6 +5838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5771,6 +5888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5820,6 +5938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5869,6 +5988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5918,6 +6038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -5967,6 +6088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6016,6 +6138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6065,6 +6188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6114,6 +6238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6163,6 +6288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6212,6 +6338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6261,6 +6388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6310,6 +6438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6359,6 +6488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6408,6 +6538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6457,6 +6588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6506,6 +6638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6555,6 +6688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6604,6 +6738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6653,6 +6788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6702,6 +6838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6751,6 +6888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6800,6 +6938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6849,6 +6988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6898,6 +7038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6947,6 +7088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -6996,6 +7138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7045,6 +7188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7094,6 +7238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7143,6 +7288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7192,6 +7338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7241,6 +7388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7290,6 +7438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7339,6 +7488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7388,6 +7538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7437,6 +7588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7486,6 +7638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7535,6 +7688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7584,6 +7738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7633,6 +7788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7682,6 +7838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7731,6 +7888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7780,6 +7938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7829,6 +7988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7878,6 +8038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7927,6 +8088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -7976,6 +8138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8025,6 +8188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8074,6 +8238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8123,6 +8288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8172,6 +8338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8221,6 +8388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8270,6 +8438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8319,6 +8488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8368,6 +8538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8417,6 +8588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8466,6 +8638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8515,6 +8688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8564,6 +8738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8613,6 +8788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8662,6 +8838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8711,6 +8888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8760,6 +8938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8809,6 +8988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8858,6 +9038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8907,6 +9088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -8956,6 +9138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9005,6 +9188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9054,6 +9238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9103,6 +9288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9152,6 +9338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9201,6 +9388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9250,6 +9438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9299,6 +9488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9348,6 +9538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9397,6 +9588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9446,6 +9638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9495,6 +9688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9544,6 +9738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9593,6 +9788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9642,6 +9838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9691,6 +9888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9740,6 +9938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9789,6 +9988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9838,6 +10038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9887,6 +10088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9936,6 +10138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -9985,6 +10188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10034,6 +10238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10083,6 +10288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10132,6 +10338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10181,6 +10388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10230,6 +10438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10279,6 +10488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10328,6 +10538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10377,6 +10588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10426,6 +10638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10475,6 +10688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10524,6 +10738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10573,6 +10788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10622,6 +10838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10671,6 +10888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10720,6 +10938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10769,6 +10988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10818,6 +11038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10867,6 +11088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10916,6 +11138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -10965,6 +11188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11014,6 +11238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11063,6 +11288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11112,6 +11338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11161,6 +11388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11210,6 +11438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11259,6 +11488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11308,6 +11538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11357,6 +11588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11406,6 +11638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11455,6 +11688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11504,6 +11738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11553,6 +11788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11602,6 +11838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11651,6 +11888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11700,6 +11938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11749,6 +11988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11798,6 +12038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11847,6 +12088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11896,6 +12138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11945,6 +12188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -11994,6 +12238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12043,6 +12288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12092,6 +12338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12141,6 +12388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12190,6 +12438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12239,6 +12488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12288,6 +12538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12337,6 +12588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12386,6 +12638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12435,6 +12688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12484,6 +12738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12533,6 +12788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12582,6 +12838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12631,6 +12888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12680,6 +12938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12729,6 +12988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12778,6 +13038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12827,6 +13088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12876,6 +13138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12925,6 +13188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -12974,6 +13238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13023,6 +13288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13072,6 +13338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13121,6 +13388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13170,6 +13438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13219,6 +13488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13268,6 +13538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13317,6 +13588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13366,6 +13638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13415,6 +13688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13464,6 +13738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13513,6 +13788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13562,6 +13838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13611,6 +13888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13660,6 +13938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13709,6 +13988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13758,6 +14038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13807,6 +14088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13856,6 +14138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13905,6 +14188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -13954,6 +14238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14003,6 +14288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14052,6 +14338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14101,6 +14388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14150,6 +14438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14199,6 +14488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14248,6 +14538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14297,6 +14588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14346,6 +14638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14395,6 +14688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14444,6 +14738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14493,6 +14788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14542,6 +14838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14591,6 +14888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14640,6 +14938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14689,6 +14988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14738,6 +15038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14787,6 +15088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14836,6 +15138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14885,6 +15188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14934,6 +15238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -14983,6 +15288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15032,6 +15338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15081,6 +15388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15130,6 +15438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15179,6 +15488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15228,6 +15538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15277,6 +15588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15326,6 +15638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15375,6 +15688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15424,6 +15738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15473,6 +15788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15522,6 +15838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15571,6 +15888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15620,6 +15938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15669,6 +15988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15718,6 +16038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15767,6 +16088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15816,6 +16138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15865,6 +16188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15914,6 +16238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -15963,6 +16288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16012,6 +16338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16061,6 +16388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16110,6 +16438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16159,6 +16488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16208,6 +16538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16257,6 +16588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16306,6 +16638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16355,6 +16688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16404,6 +16738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16453,6 +16788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16502,6 +16838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16551,6 +16888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16600,6 +16938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16649,6 +16988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16698,6 +17038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16747,6 +17088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16796,6 +17138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16845,6 +17188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16894,6 +17238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16943,6 +17288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -16992,6 +17338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17041,6 +17388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17090,6 +17438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17139,6 +17488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17188,6 +17538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17237,6 +17588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17286,6 +17638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17335,6 +17688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17384,6 +17738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17433,6 +17788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17482,6 +17838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17531,6 +17888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17580,6 +17938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17629,6 +17988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17678,6 +18038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17727,6 +18088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17776,6 +18138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17825,6 +18188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17874,6 +18238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17923,6 +18288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -17972,6 +18338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18021,6 +18388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18070,6 +18438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18119,6 +18488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18168,6 +18538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18217,6 +18588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18266,6 +18638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18315,6 +18688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18364,6 +18738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18413,6 +18788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18462,6 +18838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18511,6 +18888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18560,6 +18938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18609,6 +18988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18658,6 +19038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18707,6 +19088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18756,6 +19138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18805,6 +19188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18854,6 +19238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18903,6 +19288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -18952,6 +19338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19001,6 +19388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19050,6 +19438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19099,6 +19488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19148,6 +19538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19197,6 +19588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19246,6 +19638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19295,6 +19688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19344,6 +19738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19393,6 +19788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19442,6 +19838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19491,6 +19888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19540,6 +19938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19589,6 +19988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19638,6 +20038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19687,6 +20088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19736,6 +20138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19785,6 +20188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19834,6 +20238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19883,6 +20288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19932,6 +20338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -19981,6 +20388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20030,6 +20438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20079,6 +20488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20128,6 +20538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20177,6 +20588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20226,6 +20638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20275,6 +20688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20324,6 +20738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20373,6 +20788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20422,6 +20838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20471,6 +20888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20520,6 +20938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20569,6 +20988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20618,6 +21038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20667,6 +21088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20716,6 +21138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20765,6 +21188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20814,6 +21238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20863,6 +21288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20912,6 +21338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -20961,6 +21388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21010,6 +21438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21059,6 +21488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21108,6 +21538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21157,6 +21588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21206,6 +21638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21255,6 +21688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21304,6 +21738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21353,6 +21788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21402,6 +21838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21451,6 +21888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21500,6 +21938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21549,6 +21988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21598,6 +22038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21647,6 +22088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21696,6 +22138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21745,6 +22188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21794,6 +22238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21843,6 +22288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21892,6 +22338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21941,6 +22388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -21990,6 +22438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22039,6 +22488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22088,6 +22538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22137,6 +22588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22186,6 +22638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22235,6 +22688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22284,6 +22738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22333,6 +22788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22382,6 +22838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22431,6 +22888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22480,6 +22938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22529,6 +22988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22578,6 +23038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22627,6 +23088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22676,6 +23138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22725,6 +23188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22774,6 +23238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22823,6 +23288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22872,6 +23338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22921,6 +23388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -22970,6 +23438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23019,6 +23488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23068,6 +23538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23117,6 +23588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23166,6 +23638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23215,6 +23688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23264,6 +23738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23313,6 +23788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23362,6 +23838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23411,6 +23888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23460,6 +23938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23509,6 +23988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23558,6 +24038,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23607,6 +24088,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23656,6 +24138,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23705,6 +24188,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23754,6 +24238,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23803,6 +24288,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23852,6 +24338,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 33000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23901,6 +24388,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23950,6 +24438,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -23999,6 +24488,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24048,6 +24538,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 15000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24097,6 +24588,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": 18000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24146,6 +24638,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 21000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24195,6 +24688,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 24000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24244,6 +24738,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 27000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24293,6 +24788,7 @@
         "underlier": "EUR/USD",
         "premiumAmount": 30000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24342,6 +24838,7 @@
         "underlier": "GBP/USD",
         "premiumAmount": null,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24391,6 +24888,7 @@
         "underlier": "USD/JPY",
         "premiumAmount": 36000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24440,6 +24938,7 @@
         "underlier": "USD/CHF",
         "premiumAmount": 39000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
@@ -24489,6 +24988,7 @@
         "underlier": "AUD/USD",
         "premiumAmount": 12000.0,
         "premiumCurrency": "USD",
+        "premiumPaymentDate": "2026-01-17",
         "settlementType": "CASH"
       },
       "nonEconomicTerms": {
