@@ -171,6 +171,7 @@ services:
         provision_db "stp-metrics"
         provision_db "dlq-entries"
         provision_db "enrichment-idempotency"
+        provision_db "validation-idempotency"
         echo ""
         echo "=== [couchdb-init] Provisioning complete. All databases: ==="
         curl -s -u "$$AUTH" "$$BASE/_all_dbs"
