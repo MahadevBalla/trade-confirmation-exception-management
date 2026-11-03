@@ -5,7 +5,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tcem.common.constants.EventType;
 import com.tcem.common.constants.ExceptionCategory;
 import com.tcem.common.constants.ExceptionSubTheme;
+import com.tcem.common.event.DeadLetterEvent;
 import com.tcem.common.event.ExceptionEvent;
+import com.tcem.common.idempotency.IdempotencyKey;
 import com.tcem.common.model.message.MessageHeader;
 import com.tcem.common.model.message.SchemaVersions;
 import com.tcem.common.model.message.TradeEvent;
@@ -13,6 +15,7 @@ import com.tcem.common.model.trade.Trade;
 import com.tcem.validation.config.ValidationProperties;
 import com.tcem.validation.confirmation.ConfirmationService;
 import com.tcem.validation.exception.StpExceptionMapper;
+import com.tcem.validation.idempotency.ValidationIdempotencyRepository;
 import com.tcem.validation.model.StpValidatedEvent;
 import com.tcem.validation.producer.DeadLetterProducer;
 import com.tcem.validation.producer.ExceptionCreatedProducer;
@@ -57,6 +60,7 @@ class TradeEnrichedConsumerTest {
     @Mock private ExceptionCreatedProducer exceptionCreatedProducer;
     @Mock private DeadLetterProducer deadLetterProducer;
     @Mock private ConfirmationCouchDbRepository confirmationRepository;
+    @Mock private ValidationIdempotencyRepository idempotencyRepository;
 
     private ObjectMapper objectMapper;
     private ValidationProperties validationProperties;
@@ -72,7 +76,7 @@ class TradeEnrichedConsumerTest {
                 objectMapper, stpRulesEngine, stpValidatedProducer,
                 confirmationService, stpExceptionMapper,
                 exceptionCreatedProducer, deadLetterProducer,
-                confirmationRepository, validationProperties);
+                confirmationRepository, idempotencyRepository, validationProperties);
 
         // Lenient stubs: these are "safety nets" so the async send methods don't NPE.
         // Not every test exercises every producer path, so lenient avoids false
@@ -313,5 +317,130 @@ class TradeEnrichedConsumerTest {
         verify(stpRulesEngine).evaluate(any(TradeEvent.class));
         verify(stpValidatedProducer).sendStpValidated(eq("TRD-007"), any());
         verify(confirmationService).processConfirmation(any(), any());
+    }
+
+    // -----------------------------------------------------------------------
+    // Audit C1-03: durable IdempotencyKey guard (duplicate exception storms)
+    // -----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("Idempotency key: duplicate delivery of an STP-failed trade publishes exceptions only once")
+    void duplicateDelivery_stpFailed_publishesExceptionsOnce() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-020", 1, EventType.NEW_TRADE);
+        when(confirmationRepository.findLatestForTrade("TRD-020")).thenReturn(Optional.empty());
+        when(stpRulesEngine.evaluate(any())).thenReturn(failedResult());
+        ExceptionEvent mockException = new ExceptionEvent(new MessageHeader(), null);
+        when(stpExceptionMapper.mapToExceptionEvents(any(), any(), any())).thenReturn(List.of(mockException));
+        // 1st delivery: not seen before; 2nd delivery (Kafka redelivery): key already recorded
+        when(idempotencyRepository.isProcessed(any(IdempotencyKey.class))).thenReturn(false, true);
+
+        String payload = toJson(event);
+        consumer.onMessage(payload);
+        consumer.onMessage(payload);
+
+        verify(stpRulesEngine, times(1)).evaluate(any(TradeEvent.class));
+        verify(exceptionCreatedProducer, times(1)).sendExceptionCreated(eq("TRD-020"), eq(mockException));
+        verify(idempotencyRepository, times(1)).record(any(IdempotencyKey.class));
+    }
+
+    @Test
+    @DisplayName("Idempotency key: already-recorded message is skipped before STP runs")
+    void idempotencyKeyAlreadyRecorded_skips() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-021", 1, EventType.NEW_TRADE);
+        when(idempotencyRepository.isProcessed(any(IdempotencyKey.class))).thenReturn(true);
+
+        consumer.onMessage(toJson(event));
+
+        verify(idempotencyRepository, never()).record(any());
+        verifyNoInteractions(stpRulesEngine, stpValidatedProducer, confirmationService,
+                stpExceptionMapper, exceptionCreatedProducer, deadLetterProducer);
+    }
+
+    @Test
+    @DisplayName("Idempotency key: recorded with the message's own identity after successful processing")
+    void successfulProcessing_recordsKeyForThisMessage() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-022", 1, EventType.NEW_TRADE);
+        when(confirmationRepository.findLatestForTrade("TRD-022")).thenReturn(Optional.empty());
+        when(stpRulesEngine.evaluate(any())).thenReturn(passedResult());
+
+        consumer.onMessage(toJson(event));
+
+        ArgumentCaptor<IdempotencyKey> captor = ArgumentCaptor.forClass(IdempotencyKey.class);
+        verify(idempotencyRepository).record(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(
+                IdempotencyKey.of("TRD-022", "MSG-001", SchemaVersions.CURRENT, EventType.NEW_TRADE));
+    }
+
+    @Test
+    @DisplayName("Idempotency key: NOT recorded when processing fails, so redelivery/replay can retry")
+    void processingFailure_doesNotRecordKey() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-023", 1, EventType.NEW_TRADE);
+        when(confirmationRepository.findLatestForTrade("TRD-023")).thenReturn(Optional.empty());
+        when(stpRulesEngine.evaluate(any())).thenThrow(new IllegalStateException("boom"));
+
+        consumer.onMessage(toJson(event));
+
+        verify(idempotencyRepository, never()).record(any());
+        verify(deadLetterProducer).sendDeadLetter(any(), any(DeadLetterEvent.class));
+    }
+
+    @Test
+    @DisplayName("Idempotency key: REPLAY bypasses the key check")
+    void replay_bypassesIdempotencyKeyCheck() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-024", 1, EventType.REPLAY);
+        when(stpRulesEngine.evaluate(any())).thenReturn(passedResult());
+
+        consumer.onMessage(toJson(event));
+
+        verify(idempotencyRepository, never()).isProcessed(any());
+        verify(stpRulesEngine).evaluate(any(TradeEvent.class));
+    }
+
+    @Test
+    @DisplayName("Missing messageId: routed to DLQ (cannot build an idempotency key)")
+    void missingMessageId_routesToDeadLetter() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-025", 1, EventType.NEW_TRADE);
+        event.getMessageHeader().setMessageId(null);
+
+        consumer.onMessage(toJson(event));
+
+        verify(deadLetterProducer).sendDeadLetter(any(), any(DeadLetterEvent.class));
+        verifyNoInteractions(stpRulesEngine, stpValidatedProducer, confirmationService,
+                stpExceptionMapper, exceptionCreatedProducer, idempotencyRepository);
+    }
+
+    // -----------------------------------------------------------------------
+    // Audit C1-04: SchemaVersionRouter is used for deserialisation
+    // -----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("Unsupported schemaVersion: DLQ with SCHEMA_VERSION_UNSUPPORTED, non-replayable, no processing")
+    void unsupportedSchemaVersion_routesToDeadLetter() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-030", 1, EventType.NEW_TRADE);
+        event.getMessageHeader().setSchemaVersion("capstone-fpml-json-9.9");
+
+        consumer.onMessage(toJson(event));
+
+        ArgumentCaptor<DeadLetterEvent> captor = ArgumentCaptor.forClass(DeadLetterEvent.class);
+        verify(deadLetterProducer).sendDeadLetter(any(), captor.capture());
+        assertThat(captor.getValue().getFailureReason()).startsWith("SCHEMA_VERSION_UNSUPPORTED");
+        assertThat(captor.getValue().isReplayable()).isFalse();
+        assertThat(captor.getValue().getOriginalMessageHeader()).isNotNull();
+        verifyNoInteractions(stpRulesEngine, stpValidatedProducer, confirmationService,
+                stpExceptionMapper, exceptionCreatedProducer, confirmationRepository, idempotencyRepository);
+    }
+
+    @Test
+    @DisplayName("Schema v1.1 (reserved migration path) is accepted and processed")
+    void schemaV1_1_isRoutedAndProcessed() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-031", 1, EventType.NEW_TRADE);
+        event.getMessageHeader().setSchemaVersion(SchemaVersions.V1_1);
+        when(confirmationRepository.findLatestForTrade("TRD-031")).thenReturn(Optional.empty());
+        when(stpRulesEngine.evaluate(any())).thenReturn(passedResult());
+
+        consumer.onMessage(toJson(event));
+
+        verify(stpRulesEngine).evaluate(any(TradeEvent.class));
+        verifyNoInteractions(deadLetterProducer);
     }
 }

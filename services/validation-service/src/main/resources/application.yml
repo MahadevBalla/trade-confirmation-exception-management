@@ -25,6 +25,7 @@ couchdb:
   username: ${COUCHDB_USER:admin}
   password: ${COUCHDB_PASSWORD:password}
   confirmations-database: confirmations
+  idempotency-database: ${COUCHDB_VALIDATION_IDEMPOTENCY_DB:validation-idempotency}
   auto-create-databases: true
   connection-timeout-ms: 3000
   read-timeout-ms: 5000

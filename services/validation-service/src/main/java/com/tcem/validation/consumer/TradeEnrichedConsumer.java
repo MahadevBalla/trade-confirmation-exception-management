@@ -1,17 +1,30 @@
 package com.tcem.validation.consumer;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tcem.common.constants.EventType;
-import com.tcem.common.model.message.SchemaVersions;
 import com.tcem.common.constants.TopicNames;
 import com.tcem.common.event.DeadLetterEvent;
 import com.tcem.common.event.ExceptionEvent;
+import com.tcem.common.idempotency.IdempotencyKey;
 import com.tcem.common.model.message.MessageHeader;
+import com.tcem.common.model.message.SchemaVersions;
 import com.tcem.common.model.message.TradeEvent;
 import com.tcem.common.model.trade.Trade;
+import com.tcem.common.routing.SchemaVersionRouter;
 import com.tcem.validation.config.ValidationProperties;
 import com.tcem.validation.confirmation.ConfirmationService;
 import com.tcem.validation.exception.StpExceptionMapper;
+import com.tcem.validation.idempotency.ValidationIdempotencyRepository;
 import com.tcem.validation.model.StpValidatedEvent;
 import com.tcem.validation.producer.DeadLetterProducer;
 import com.tcem.validation.producer.ExceptionCreatedProducer;
@@ -20,15 +33,6 @@ import com.tcem.validation.repository.ConfirmationCouchDbRepository;
 import com.tcem.validation.repository.ConfirmationDocument;
 import com.tcem.validation.rules.StpRulesEngine;
 import com.tcem.validation.rules.StpValidationResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Kafka consumer for the {@code trade.enriched} topic — entry point for the full
@@ -36,10 +40,14 @@ import java.util.UUID;
  *
  * <h3>Processing flow</h3>
  * <ol>
- *   <li>Deserialise the incoming JSON payload to a {@link TradeEvent}.</li>
- *   <li>Extract the {@link MessageHeader} and {@link Trade}.</li>
- *   <li>Idempotency guard: if the trade version has already been confirmed, skip
- *       reprocessing (unless the event type is {@code REPLAY}).</li>
+ *   <li>Deserialise the incoming JSON payload to a {@link TradeEvent} through the
+ *       {@link SchemaVersionRouter}; unsupported schema versions are dead-lettered with
+ *       reason {@code SCHEMA_VERSION_UNSUPPORTED} (non-replayable).</li>
+ *   <li>Extract the {@link MessageHeader} and {@link Trade}; messages missing an identity
+ *       field (tradeId, messageId, schemaVersion, eventType) are dead-lettered.</li>
+ *   <li>Idempotency guard (unless the event type is {@code REPLAY}): skip the message if its
+ *       {@link IdempotencyKey} is already recorded, or if the trade version has already
+ *       been confirmed.</li>
  *   <li>Handle {@code CANCEL_TRADE}: log and skip — no STP, no confirmation.</li>
  *   <li>Run the {@link StpRulesEngine} against the full {@link TradeEvent}.</li>
  *   <li>Always publish the STP decision to {@code stp.validated}.</li>
@@ -47,15 +55,19 @@ import java.util.UUID;
  *       persistence, confirmation.generated).</li>
  *   <li>On STP fail: map each failure to an {@link ExceptionEvent} via
  *       {@link StpExceptionMapper} and publish each to {@code exception.created}.</li>
+ *   <li>Record the {@link IdempotencyKey} once every downstream publish has succeeded.</li>
  *   <li>On irrecoverable parse / unexpected error: publish to {@code deadletter.trade}
- *       via {@link DeadLetterProducer}.</li>
+ *       via {@link DeadLetterProducer} (the key is NOT recorded, so redelivery/replay retries).</li>
  * </ol>
  *
  * <h3>Idempotency</h3>
- * For {@code NEW_TRADE} and {@code AMEND_TRADE} events the consumer checks whether a
- * {@link ConfirmationDocument} already exists for the exact {@code tradeId + tradeVersion}
- * combination. If found, the message is skipped to prevent duplicate confirmations.
- * {@code REPLAY} events bypass this guard so an operator can force reprocessing after
+ * Like the other services, validation uses the shared {@link IdempotencyKey}
+ * ({@code tradeId + messageId + schemaVersion + eventType}) persisted in the
+ * {@code validation-idempotency} CouchDB database. This is what stops a redelivered message
+ * for a trade that failed STP (which has no {@link ConfirmationDocument}) from emitting a
+ * second {@code exception.created}. The older "confirmation already exists for this
+ * tradeVersion" check is kept as a second line of defence.
+ * {@code REPLAY} events bypass both guards so an operator can force reprocessing after
  * a data fix.
  *
  * <h3>Thread safety</h3>
@@ -67,7 +79,11 @@ public class TradeEnrichedConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(TradeEnrichedConsumer.class);
 
+    /** DLQ failure-reason prefix for payloads whose schemaVersion has no registered migration path. */
+    static final String SCHEMA_VERSION_UNSUPPORTED = "SCHEMA_VERSION_UNSUPPORTED";
+
     private final ObjectMapper objectMapper;
+    private final SchemaVersionRouter schemaVersionRouter;
     private final StpRulesEngine stpRulesEngine;
     private final StpValidatedProducer stpValidatedProducer;
     private final ConfirmationService confirmationService;
@@ -75,6 +91,7 @@ public class TradeEnrichedConsumer {
     private final ExceptionCreatedProducer exceptionCreatedProducer;
     private final DeadLetterProducer deadLetterProducer;
     private final ConfirmationCouchDbRepository confirmationRepository;
+    private final ValidationIdempotencyRepository idempotencyRepository;
     private final ValidationProperties validationProperties;
 
     public TradeEnrichedConsumer(ObjectMapper objectMapper,
@@ -85,8 +102,10 @@ public class TradeEnrichedConsumer {
                                  ExceptionCreatedProducer exceptionCreatedProducer,
                                  DeadLetterProducer deadLetterProducer,
                                  ConfirmationCouchDbRepository confirmationRepository,
+                                 ValidationIdempotencyRepository idempotencyRepository,
                                  ValidationProperties validationProperties) {
         this.objectMapper = objectMapper;
+        this.schemaVersionRouter = new SchemaVersionRouter(objectMapper);
         this.stpRulesEngine = stpRulesEngine;
         this.stpValidatedProducer = stpValidatedProducer;
         this.confirmationService = confirmationService;
@@ -94,6 +113,7 @@ public class TradeEnrichedConsumer {
         this.exceptionCreatedProducer = exceptionCreatedProducer;
         this.deadLetterProducer = deadLetterProducer;
         this.confirmationRepository = confirmationRepository;
+        this.idempotencyRepository = idempotencyRepository;
         this.validationProperties = validationProperties;
     }
 
@@ -112,7 +132,12 @@ public class TradeEnrichedConsumer {
         // -----------------------------------------------------------------------
         TradeEvent tradeEvent;
         try {
-            tradeEvent = objectMapper.readValue(payload, TradeEvent.class);
+            tradeEvent = schemaVersionRouter.route(payload);
+        } catch (SchemaVersionRouter.UnsupportedSchemaVersionException ex) {
+            log.warn("Unsupported schemaVersion on trade.enriched — routing to DLQ: {}", ex.getMessage());
+            sendToDeadLetter(extractHeader(payload), payload, ex,
+                    SCHEMA_VERSION_UNSUPPORTED + ": " + ex.getMessage(), false);
+            return;
         } catch (Exception ex) {
             log.error("Failed to deserialise trade.enriched payload — routing to DLQ: {}", ex.getMessage());
             sendToDeadLetter(null, payload, ex, "Deserialization failure");
@@ -125,6 +150,14 @@ public class TradeEnrichedConsumer {
         if (header == null || trade == null) {
             log.error("Received trade.enriched message with null header or trade — routing to DLQ");
             sendToDeadLetter(null, payload, null, "Null header or trade in TradeEvent");
+            return;
+        }
+
+        if (isBlank(trade.getTradeId()) || isBlank(header.getMessageId())
+                || isBlank(header.getSchemaVersion()) || header.getEventType() == null) {
+            log.error("Received trade.enriched message missing a required identity field — routing to DLQ");
+            sendToDeadLetter(header, payload, null,
+                    "trade.enriched event is missing a required identity field", false);
             return;
         }
 
@@ -150,7 +183,15 @@ public class TradeEnrichedConsumer {
             //         REPLAY events always bypass this check so operators can force
             //         reprocessing after a data fix.
             // -----------------------------------------------------------------------
+            IdempotencyKey idempotencyKey = IdempotencyKey.of(
+                    tradeId, header.getMessageId(), header.getSchemaVersion(), eventType);
+
             if (EventType.REPLAY != eventType) {
+                if (idempotencyRepository.isProcessed(idempotencyKey)) {
+                    log.info("Idempotency: duplicate message [tradeId={}, messageId={}] — skipping",
+                            tradeId, header.getMessageId());
+                    return;
+                }
                 Optional<ConfirmationDocument> existing =
                         confirmationRepository.findLatestForTrade(tradeId);
                 if (existing.isPresent()
@@ -195,6 +236,13 @@ public class TradeEnrichedConsumer {
                 }
             }
 
+            // -----------------------------------------------------------------------
+            // Step 7: Mark this message as processed (only after every publish above
+            //         succeeded; a failure falls through to the DLQ catch below and the
+            //         key is left unrecorded so a redelivery / replay can retry).
+            // -----------------------------------------------------------------------
+            idempotencyRepository.record(idempotencyKey);
+
         } catch (Exception ex) {
             log.error("Unexpected error processing tradeId={}, version={} — routing to DLQ: {}",
                     tradeId, tradeVersion, ex.getMessage(), ex);
@@ -205,6 +253,19 @@ public class TradeEnrichedConsumer {
     // -----------------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------------
+
+    /** Best-effort header extraction for DLQ context when the full payload cannot be routed. */
+    private MessageHeader extractHeader(String payload) {
+        try {
+            return objectMapper.readValue(payload, TradeEvent.class).getMessageHeader();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
 
     /**
      * Builds a fresh outbound {@link MessageHeader} for events produced by this service.
@@ -231,6 +292,19 @@ public class TradeEnrichedConsumer {
                                   String originalPayload,
                                   Exception ex,
                                   String failureReason) {
+        sendToDeadLetter(originalHeader, originalPayload, ex, failureReason,
+                ex == null || !(ex instanceof com.fasterxml.jackson.core.JsonParseException));
+    }
+
+    /**
+     * Same as above, with an explicit {@code replayable} flag (e.g. {@code false} for
+     * unsupported schema versions, where a replay would fail again).
+     */
+    private void sendToDeadLetter(MessageHeader originalHeader,
+                                  String originalPayload,
+                                  Exception ex,
+                                  String failureReason,
+                                  boolean replayable) {
         try {
             String dlqKey = originalHeader != null && originalHeader.getCorrelationId() != null
                     ? originalHeader.getCorrelationId()
@@ -261,7 +335,7 @@ public class TradeEnrichedConsumer {
                     .exceptionClass(exceptionClass)
                     .stackTraceExcerpt(stackTrace)
                     .failedAt(Instant.now())
-                    .replayable(ex == null || !(ex instanceof com.fasterxml.jackson.core.JsonParseException))
+                    .replayable(replayable)
                     .build();
 
             deadLetterProducer.sendDeadLetter(dlqKey, dlqEvent);

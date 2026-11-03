@@ -37,7 +37,7 @@ public class CouchDbConfig {
     }
 
     /**
-     * Ensures the {@code confirmations} CouchDB database exists on startup.
+     * Ensures the {@code confirmations} and {@code validation-idempotency} CouchDB databases exist on startup.
      * Logs a warning (never throws) when CouchDB is offline — allows IDE runs
      * without a live CouchDB.
      */
@@ -55,7 +55,9 @@ public class CouchDbConfig {
                 return;
             }
             couchDbClient.ensureDatabaseExists(properties.getConfirmationsDatabase());
-            log.info("CouchDB initialization complete – database '{}'", properties.getConfirmationsDatabase());
+            couchDbClient.ensureDatabaseExists(properties.getIdempotencyDatabase());
+            log.info("CouchDB initialization complete – databases '{}', '{}'",
+                    properties.getConfirmationsDatabase(), properties.getIdempotencyDatabase());
         };
     }
 }
