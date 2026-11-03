@@ -35,7 +35,7 @@
 ### Phase 1 Findings: Shared Core Library, Kafka Topics & Event Contracts
 
 ### 1. 🔴 BREAKS THE SYSTEM: Algorithmic Failure in `ConfirmationFingerprint` for Counterparty/Bank Party Changes
-- **Location:** [ConfirmationFingerprint.java:L106-L125](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/registry/ConfirmationFingerprint.java#L106-L125) and [ConfirmableFieldRegistry.java:L72-L73](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/registry/ConfirmableFieldRegistry.java#L72-L73).
+- **Location:** [ConfirmationFingerprint.java:L106-L125](../../services/common-lib/src/main/java/com/tcem/common/registry/ConfirmationFingerprint.java#L106-L125) and [ConfirmableFieldRegistry.java:L72-L73](../../services/common-lib/src/main/java/com/tcem/common/registry/ConfirmableFieldRegistry.java#L72-L73).
 - **Issue:** 
   `ConfirmableFieldRegistry` registers `"parties[COUNTERPARTY].partyId"` and `"parties[BANK].partyId"` as confirmable fields. However, `ConfirmationFingerprint.extractValue()` parses paths only by dot-separation (`String[] parts = dotPath.split("\\.")`) and executes `root.get(part)`. Because `parties` is a JSON Array (`List<Party>`), `root.get("parties[COUNTERPARTY]")` returns `null`. 
 - **System Impact:**
@@ -46,19 +46,19 @@
 ---
 
 ### 2. 🔴 BREAKS THE SYSTEM: Enum Contract Mismatch Between Backend (`common-lib`) and Frontend (`tcem.ts`) — ✅ [RESOLVED in `fix/code-consistency`: Commit `c43263d`]
-- **Location:** [ProductType.java:L23](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/constants/ProductType.java#L23) vs [frontend/src/types/tcem.ts:L10](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/types/tcem.ts#L10) and [EventType.java:L28-L34](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/constants/EventType.java#L28-L34) vs [frontend/src/types/tcem.ts:L12-L17](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/types/tcem.ts#L12-L17).
+- **Location:** [ProductType.java:L23](../../services/common-lib/src/main/java/com/tcem/common/constants/ProductType.java#L23) vs [frontend/src/types/tcem.ts:L10](../../frontend/src/types/tcem.ts#L10) and [EventType.java:L28-L34](../../services/common-lib/src/main/java/com/tcem/common/constants/EventType.java#L28-L34) vs [frontend/src/types/tcem.ts:L12-L17](../../frontend/src/types/tcem.ts#L12-L17).
 - **Issues:**
   1. `ProductType`: Backend defines `IRS`, `FX_FORWARD`, `UNKNOWN`. Frontend defines `IR_SWAP` (mismatched name with `IRS`) and omits `FX_FORWARD` and `UNKNOWN`. Any IRS payload will fail frontend deserialization/filtering.
   2. `EventType`: Backend defines `NOVATION` and `COMPRESSION`. Frontend omits both and introduces `HEARTBEAT` (which is nonexistent in the backend).
 - **System Impact:**
   TypeScript runtime / UI render errors, filter breakage, and API payload rejection when communicating between the frontend and Spring Boot microservices.
 - **Recommended Remediation:**
-  Align [frontend/src/types/tcem.ts](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/types/tcem.ts) with the canonical Java enum values.
+  Align [frontend/src/types/tcem.ts](../../frontend/src/types/tcem.ts) with the canonical Java enum values.
 
 ---
 
 ### 3. 🔴 BREAKS THE SYSTEM: Flawed Idempotency Architecture in `validation-service` Causing Duplicate Exception Storms
-- **Location:** [TradeEnrichedConsumer.java:L149-L163](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L149-L163).
+- **Location:** [TradeEnrichedConsumer.java:L149-L163](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L149-L163).
 - **Issue:**
   While `ingestion-service`, `enrichment-service`, and `exception-service` consistently utilize `IdempotencyKey` and persist keys to CouchDB (`idempotency:{tradeId}:{messageId}:{schemaVersion}:{eventType}`), `validation-service` skips `IdempotencyKey` entirely. Instead, it checks `Optional<ConfirmationDocument> existing = confirmationRepository.findLatestForTrade(tradeId)`.
 - **System Impact:**
@@ -69,7 +69,7 @@
 ---
 
 ### 4. 🟠 HIGH / MODERATE RISK: Bypassing `SchemaVersionRouter` in `validation-service`
-- **Location:** [TradeEnrichedConsumer.java:L114-L115](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L114-L115).
+- **Location:** [TradeEnrichedConsumer.java:L114-L115](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L114-L115).
 - **Issue:**
   `common-lib` provides `SchemaVersionRouter` to enforce backward compatibility, schema version validation, and migration of legacy payloads. While `enrichment-service` properly routes incoming payloads through `SchemaVersionRouter(objectMapper).route(record.value())`, `validation-service` directly calls `objectMapper.readValue(payload, TradeEvent.class)`.
 - **System Impact:**
@@ -91,7 +91,7 @@
 ---
 
 ### 6. 🟡 LOW RISK / INCONSISTENCY: Discrepancy Between YAML Configuration and `@KafkaListener` Topic Declarations
-- **Location:** [services/validation-service/src/main/resources/application.yml:L33](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/resources/application.yml#L33) vs [TradeEnrichedConsumer.java:L106](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L106).
+- **Location:** [services/validation-service/src/main/resources/application.yml:L33](../../services/validation-service/src/main/resources/application.yml#L33) vs [TradeEnrichedConsumer.java:L106](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L106).
 - **Issue:**
   `application.yml` defines `validation.input-topic: ${VALIDATION_INPUT_TOPIC:trade.enriched}`, but `TradeEnrichedConsumer` uses the compile-time constant `TopicNames.TRADE_ENRICHED`. Conversely, `TradeAcceptedConsumer` in `enrichment-service` uses `@KafkaListener(topics = "${enrichment.input-topic:trade.accepted}", ...)`.
 - **System Impact:**
@@ -102,7 +102,7 @@
 ---
 
 ### 7. 🟢 NOT BREAKING / COSMETIC: Documentation Drift in `docs/architecture.md`
-- **Location:** [docs/architecture.md:L61-L63](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docs/architecture.md#L61-L63).
+- **Location:** [docs/architecture.md:L61-L63](../../docs/architecture.md#L61-L63).
 - **Issue:**
   Line 62 states that `enrichment-service`, `validation-service`, and `exception-service` are merely "stubs answering only `/actuator/health`". In reality, all three services are fully implemented with business logic, CouchDB persistence, and Kafka pipelines.
 - **System Impact:**
@@ -115,7 +115,7 @@
 ### Phase 2 Findings: Ingestion & Validation Pipeline
 
 ### 8. 🔴 BREAKS THE SYSTEM: Lost Replay Context & Event Type in `validation-service` Breaking DLQ Resolution
-- **Location:** [ConfirmationService.java:L158-L164](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/confirmation/ConfirmationService.java#L158-L164) and [StpExceptionMapper.java:L111-L118](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/exception/StpExceptionMapper.java#L111-L118).
+- **Location:** [ConfirmationService.java:L158-L164](../../services/validation-service/src/main/java/com/tcem/validation/confirmation/ConfirmationService.java#L158-L164) and [StpExceptionMapper.java:L111-L118](../../services/validation-service/src/main/java/com/tcem/validation/exception/StpExceptionMapper.java#L111-L118).
 - **Issue:**
   When `validation-service` builds outbound `MessageHeader`s for `confirmation.generated` or `exception.created`, `outboundHeader.setEventType(...)` is omitted (remaining `null`), and `inboundHeader.getReplayCount()` is never propagated. In addition, neither producer sets the Kafka record header `tcem.replayCount`.
 - **System Impact:**
@@ -126,7 +126,7 @@
 ---
 
 ### 9. 🔴 BREAKS THE SYSTEM: Hardcoded Default Mango Limit in `ConfirmationCouchDbRepository.countAll()` Caps Metrics at 25 — ✅ [RESOLVED in `fix/code-consistency`: Commit `2c4b3aa`]
-- **Location:** [ConfirmationCouchDbRepository.java:L97-L102](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/repository/ConfirmationCouchDbRepository.java#L97-L102).
+- **Location:** [ConfirmationCouchDbRepository.java:L97-L102](../../services/validation-service/src/main/java/com/tcem/validation/repository/ConfirmationCouchDbRepository.java#L97-L102).
 - **Issue:**
   `countAll()` constructs a `FindQueryRequest(selector)` where `limit` is `null`. CouchDB defaults Mango `_find` queries without a limit to **25 records**. Calling `.size()` on the returned list will therefore never exceed 25.
 - **System Impact:**
@@ -137,7 +137,7 @@
 ---
 
 ### 10. 🟠 HIGH / MODERATE RISK: Functional Duplication & Dead Rule Between `TradeValidator` and `EconomicFieldsRule`
-- **Location:** [TradeValidator.java:L389-L440](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/validator/TradeValidator.java#L389-L440) vs [EconomicFieldsRule.java:L42-L60](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/rules/EconomicFieldsRule.java#L42-L60).
+- **Location:** [TradeValidator.java:L389-L440](../../services/ingestion-service/src/main/java/com/tcem/ingestion/validator/TradeValidator.java#L389-L440) vs [EconomicFieldsRule.java:L42-L60](../../services/validation-service/src/main/java/com/tcem/validation/rules/EconomicFieldsRule.java#L42-L60).
 - **Issue:**
   `TradeValidator` in `ingestion-service` strictly validates economic completeness (`strike`, `notionalAmount`, `optionType`, `premiumAmount`) and marks incomplete trades as `SCHEMA_INVALID`, routing them directly to `exception.created` without forwarding to `trade.accepted`.
 - **System Impact:**
@@ -148,7 +148,7 @@
 ---
 
 ### 11. 🟠 HIGH / MODERATE RISK: Silent Dropping of `CANCEL_TRADE` Events in `validation-service`
-- **Location:** [TradeEnrichedConsumer.java:L142-L146](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L142-L146).
+- **Location:** [TradeEnrichedConsumer.java:L142-L146](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L142-L146).
 - **Issue:**
   When `EventType.CANCEL_TRADE` is received on `trade.enriched`, `TradeEnrichedConsumer` simply logs and returns early.
 - **System Impact:**
@@ -159,7 +159,7 @@
 ---
 
 ### 12. 🟡 LOW RISK / INCONSISTENCY: Route Collision and Payload Discrepancy on `GET /metrics/stp-rate`
-- **Location:** [TradeQueryController.java:L140](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/controller/TradeQueryController.java#L140) vs [ConfirmationQueryController.java:L113](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/src/main/java/com/tcem/validation/controller/ConfirmationQueryController.java#L113).
+- **Location:** [TradeQueryController.java:L140](../../services/ingestion-service/src/main/java/com/tcem/ingestion/controller/TradeQueryController.java#L140) vs [ConfirmationQueryController.java:L113](../../services/validation-service/src/main/java/com/tcem/validation/controller/ConfirmationQueryController.java#L113).
 - **Issue:**
   Both `ingestion-service:8081` and `validation-service:8083` define `GET /metrics/stp-rate`, but return completely different JSON payloads:
   - `ingestion-service`: `{"stpRate": 0.85, "acceptedTrades": 420, "totalTrades": 500}`
@@ -172,7 +172,7 @@
 ---
 
 ### 13. 🟢 NOT BREAKING / COSMETIC: Documentation Inaccuracy in `ingestion-service/README.md`
-- **Location:** [ingestion-service/README.md:L188](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/README.md#L188).
+- **Location:** [ingestion-service/README.md:L188](../../services/ingestion-service/README.md#L188).
 - **Issue:**
   Lists `TERMINATE_TRADE` as an allowed value for `eventType`. However, `EventType.java` in `common-lib` does not contain `TERMINATE_TRADE`.
 - **System Impact:**
@@ -185,7 +185,7 @@
 ### Phase 3 Findings: Enrichment, Exception Processing & Work Items
 
 ### 14. 🔴 BREAKS THE SYSTEM: Manual Review "APPROVE" Action is an Architectural Dead End (Trade Stranded)
-- **Location:** [ManualReviewService.java:L22-L25](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/service/ManualReviewService.java#L22-L25), [WorkItemService.java:L206-L213](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/service/WorkItemService.java#L206-L213), and [WorkItemLinkedProducer.java:L20-L30](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/producer/WorkItemLinkedProducer.java#L20-L30).
+- **Location:** [ManualReviewService.java:L22-L25](../../services/workitem-service/src/main/java/com/tcem/workitem/service/ManualReviewService.java#L22-L25), [WorkItemService.java:L206-L213](../../services/workitem-service/src/main/java/com/tcem/workitem/service/WorkItemService.java#L206-L213), and [WorkItemLinkedProducer.java:L20-L30](../../services/workitem-service/src/main/java/com/tcem/workitem/producer/WorkItemLinkedProducer.java#L20-L30).
 - **Issue:**
   When an operations specialist reviews an exception on the manual review queue and submits an `APPROVE` decision, `ManualReviewService.decide()` closes the work item as `DONE` and publishes a `WorkItemEvent` to `workitem.linked`. The service documentation states: *"Generating the confirmation stays with validation-service, which can react to the closed item on workitem.linked"*. However, `validation-service` **only listens to `trade.enriched`**! Across all microservices, **no component listens to `workitem.linked`**.
 - **System Impact:**
@@ -196,7 +196,7 @@
 ---
 
 ### 15. 🔴 BREAKS THE SYSTEM: End-to-End Replay Acknowledgment Failure Across Services (DLQ Stuck in `REPLAYING`)
-- **Location:** [DefaultExceptionProcessingService.java:L314-L323](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java#L314-L323), [ExceptionClassifiedProducer.java:L43-L60](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/exception-service/src/main/java/com/tcem/exception/producer/ExceptionClassifiedProducer.java#L43-L60), and [ReplayOutcomeService.java:L75-L81](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/service/ReplayOutcomeService.java#L75-L81).
+- **Location:** [DefaultExceptionProcessingService.java:L314-L323](../../services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java#L314-L323), [ExceptionClassifiedProducer.java:L43-L60](../../services/exception-service/src/main/java/com/tcem/exception/producer/ExceptionClassifiedProducer.java#L43-L60), and [ReplayOutcomeService.java:L75-L81](../../services/workitem-service/src/main/java/com/tcem/workitem/service/ReplayOutcomeService.java#L75-L81).
 - **Issue:**
   `ReplayOutcomeService` in `workitem-service` monitors downstream pipeline topics to detect replay success. It considers a replay successful only when either `ConsumerRecords.hasReplayHeader(record)` (Kafka header `tcem.replayCount > 0`) or `hasReplayMarker(value)` (`eventType == REPLAY || replayCount > 0`) is true.
   In `exception-service`, `buildOutboundHeader()` unconditionally sets `header.setEventType(EventType.NEW_TRADE)` and leaves `replayCount` at `0`. In addition, `ExceptionClassifiedProducer` does not forward Kafka headers.
@@ -208,7 +208,7 @@
 ---
 
 ### 16. 🔴 BREAKS THE SYSTEM: Multi-Attempt Replay Suppression in `TradeAcceptedConsumer` (Attempt > 1 Dropped)
-- **Location:** [TradeAcceptedConsumer.java:L55-L61](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/enrichment-service/src/main/java/com/tcem/enrichment/consumer/TradeAcceptedConsumer.java#L55-L61), [ReplayService.java:L139-L155](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/service/ReplayService.java#L139-L155), and [IdempotencyKey.java:L40-L51](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/idempotency/IdempotencyKey.java#L40-L51).
+- **Location:** [TradeAcceptedConsumer.java:L55-L61](../../services/enrichment-service/src/main/java/com/tcem/enrichment/consumer/TradeAcceptedConsumer.java#L55-L61), [ReplayService.java:L139-L155](../../services/workitem-service/src/main/java/com/tcem/workitem/service/ReplayService.java#L139-L155), and [IdempotencyKey.java:L40-L51](../../services/common-lib/src/main/java/com/tcem/common/idempotency/IdempotencyKey.java#L40-L51).
 - **Issue:**
   When `ReplayService` republishes a dead-lettered trade to `trade.accepted`, it rewrites `eventType` to `REPLAY`. On replay attempt 1, `TradeAcceptedConsumer` processes the message and stores the key `idempotency:{tradeId}:{messageId}:{version}:REPLAY`. If downstream fails and the operator initiates a 2nd replay attempt (`replayCount=2`), `TradeAcceptedConsumer` calculates the exact same `IdempotencyKey` because `IdempotencyKey` does **not** include `replayCount`. `idempotencyRepository.isProcessed(key)` returns `true`.
 - **System Impact:**
@@ -219,7 +219,7 @@
 ---
 
 ### 17. 🟠 HIGH / MODERATE RISK: Discarding Refined Classification Results in `DefaultExceptionProcessingService`
-- **Location:** [DefaultExceptionProcessingService.java:L203-L210](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java#L203-L210).
+- **Location:** [DefaultExceptionProcessingService.java:L203-L210](../../services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java#L203-L210).
 - **Issue:**
   `classificationRulesEngine.classify(record)` evaluates the exception record and returns a `ClassificationResult` containing `confirmedCategory` and `confirmedSubTheme`. However, `DefaultExceptionProcessingService` only calls `record.setClassificationConfidence(classificationResult.getClassificationConfidence())`. It forgets to call `record.setCategory(...)` and `record.setSubTheme(...)`.
 - **System Impact:**
@@ -230,7 +230,7 @@
 ---
 
 ### 18. 🟠 HIGH / MODERATE RISK: Synchronous Blocking Kafka Publishing in Event-Driven Consumer Threads
-- **Location:** [TradeEnrichedProducer.java:L34-L39](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/enrichment-service/src/main/java/com/tcem/enrichment/producer/TradeEnrichedProducer.java#L34-L39) and [DeadLetterProducer.java:L34](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/enrichment-service/src/main/java/com/tcem/enrichment/producer/DeadLetterProducer.java#L34).
+- **Location:** [TradeEnrichedProducer.java:L34-L39](../../services/enrichment-service/src/main/java/com/tcem/enrichment/producer/TradeEnrichedProducer.java#L34-L39) and [DeadLetterProducer.java:L34](../../services/enrichment-service/src/main/java/com/tcem/enrichment/producer/DeadLetterProducer.java#L34).
 - **Issue:**
   In `enrichment-service`, both `TradeEnrichedProducer.publish()` and `DeadLetterProducer.publish()` call `.join()` on Kafka `CompletableFuture<SendResult>`.
 - **System Impact:**
@@ -241,7 +241,7 @@
 ---
 
 ### 19. 🟡 LOW RISK / INCONSISTENCY: Missing Database in `scripts/init-couchdb.sh` (`enrichment-idempotency`) — ✅ [RESOLVED in `fix/code-consistency`: Commit `d30e283`]
-- **Location:** [scripts/init-couchdb.sh:L19-L27](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/scripts/init-couchdb.sh#L19-L27) and [application.yml:L26-L27](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/enrichment-service/src/main/resources/application.yml#L26-L27).
+- **Location:** [scripts/init-couchdb.sh:L19-L27](../../scripts/init-couchdb.sh#L19-L27) and [application.yml:L26-L27](../../services/enrichment-service/src/main/resources/application.yml#L26-L27).
 - **Issue:**
   `scripts/init-couchdb.sh` provisions `trades`, `confirmations`, `exceptions`, `work-items`, `audit-events`, `stp-metrics`, `dlq-entries`, but omits `enrichment-idempotency`.
 - **System Impact:**
@@ -252,7 +252,7 @@
 ---
 
 ### 20. 🟡 LOW RISK / INCONSISTENCY: Inconsistent Hardcoded Pagination Limit (1000) for Aggregate Exception Counters
-- **Location:** [ExceptionCouchDbRepository.java:L118-L128](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/exception-service/src/main/java/com/tcem/exception/repository/ExceptionCouchDbRepository.java#L118-L128).
+- **Location:** [ExceptionCouchDbRepository.java:L118-L128](../../services/exception-service/src/main/java/com/tcem/exception/repository/ExceptionCouchDbRepository.java#L118-L128).
 - **Issue:**
   `countAll()` and `countByStatus()` execute Mango queries fetching up to 1,000 complete documents into memory and calculate `.size()`.
 - **System Impact:**
@@ -263,7 +263,7 @@
 ---
 
 ### 21. 🟡 LOW RISK / INCONSISTENCY: Build Failure on Modern JDKs without ByteBuddy Experimental Flag
-- **Location:** [services/pom.xml](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/pom.xml).
+- **Location:** [services/pom.xml](../../services/pom.xml).
 - **Issue:**
   Running `mvn test` on Java 25/26 throws `java.lang.IllegalArgumentException: Java 26 (70) is not supported by the current version of Byte Buddy` during Mockito inline mock initialization in `enrichment-service`.
 - **System Impact:**
@@ -274,7 +274,7 @@
 ---
 
 ### 22. 🟢 NOT BREAKING / COSMETIC: Stale Documentation Regarding Idempotency Cleanup
-- **Location:** [IdempotencyKey.java:L28-L34](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/idempotency/IdempotencyKey.java#L28-L34).
+- **Location:** [IdempotencyKey.java:L28-L34](../../services/common-lib/src/main/java/com/tcem/common/idempotency/IdempotencyKey.java#L28-L34).
 - **Issue:**
   Javadoc claims that services must manually clear their CouchDB idempotency store before DLQ replay is initiated. In practice, `ReplayService` relies on mutating `eventType=REPLAY` in the envelope.
 - **System Impact:**
@@ -287,7 +287,7 @@
 ### Phase 4 Findings: Frontend UI Alignment, State Management & API Integration
 
 ### 23. 🔴 BREAKS THE SYSTEM: Frontend Operates in 100% In-Memory Mock Isolation Without Backend API Wiring
-- **Location:** [AppContext.tsx:L1-L786](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/context/AppContext.tsx#L1-L786), [vite.config.ts:L14-L22](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/vite.config.ts#L14-L22), and [nginx.conf:L11-L82](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/nginx.conf#L11-L82).
+- **Location:** [AppContext.tsx:L1-L786](../../frontend/src/context/AppContext.tsx#L1-L786), [vite.config.ts:L14-L22](../../frontend/vite.config.ts#L14-L22), and [nginx.conf:L11-L82](../../frontend/nginx.conf#L11-L82).
 - **Issue:**
   Both `vite.config.ts` and `nginx.conf` define detailed proxy rules for `/api/trades`, `/api/metrics`, `/api/enrichment`, `/api/validation`, `/api/exceptions`, `/api/workitems`, and `/api/dlq`. However, the React frontend contains **zero network calls** (`fetch`, `axios`, `WebSocket`, or `EventSource`). All data collections (`trades`, `exceptions`, `workItems`, `confirmations`, `dlqEntries`, `auditTrail`) are initialized from `mockData.ts`. User mutations (DLQ replay, manual review sign-off, work item status update, exception resolution) mutate only local component state in `AppContext.tsx`.
 - **System Impact:**
@@ -298,18 +298,18 @@
 ---
 
 ### 24. 🔴 BREAKS THE SYSTEM: DTO Contract Mismatch in `DeadLetterEvent` / `DlqEntryDocument` — ✅ [RESOLVED in `fix/code-consistency`: Commit `370fa98`]
-- **Location:** [types/tcem.ts:L279-L294](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/types/tcem.ts#L279-L294) vs [DlqEntryDocument.java](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/model/document/DlqEntryDocument.java) & [DlqController.java:L43](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/controller/DlqController.java#L43).
+- **Location:** [types/tcem.ts:L279-L294](../../frontend/src/types/tcem.ts#L279-L294) vs [DlqEntryDocument.java](../../services/workitem-service/src/main/java/com/tcem/workitem/model/document/DlqEntryDocument.java) & [DlqController.java:L43](../../services/workitem-service/src/main/java/com/tcem/workitem/controller/DlqController.java#L43).
 - **Issue:**
   When `DlqController.java` serves `GET /dlq`, it serializes `DlqEntryDocument` objects whose primary key is `id` and status field is `dlqStatus`. In contrast, the frontend `DeadLetterEvent` type expects `dlqId` and `status`.
 - **System Impact:**
   Connecting the frontend to the backend `/api/dlq` endpoint results in `entry.dlqId` and `entry.status` being `undefined`. Status badges fail to render, and `handleReplayClick(entry.dlqId)` passes `undefined` to the replay endpoint, causing runtime errors.
 - **Recommended Remediation:**
-  Update `DeadLetterEvent` in [types/tcem.ts](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/types/tcem.ts) to accept `id?: string; dlqId?: string; dlqStatus?: string; status?: string;` or map attributes upon ingestion.
+  Update `DeadLetterEvent` in [types/tcem.ts](../../frontend/src/types/tcem.ts) to accept `id?: string; dlqId?: string; dlqStatus?: string; status?: string;` or map attributes upon ingestion.
 
 ---
 
 ### 25. 🟠 HIGH / MODERATE RISK: Counterparty Legal Entity Name Mapping Loss — ✅ [RESOLVED in `fix/code-consistency`: Commit `d00ccb6`]
-- **Location:** [types/tcem.ts:L129-L133](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/types/tcem.ts#L129-L133) and [TradeDetailModal.tsx:L146](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/components/trades/TradeDetailModal.tsx#L146) vs [Party.java:L20-L30](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/common-lib/src/main/java/com/tcem/common/model/trade/Party.java#L20-L30).
+- **Location:** [types/tcem.ts:L129-L133](../../frontend/src/types/tcem.ts#L129-L133) and [TradeDetailModal.tsx:L146](../../frontend/src/components/trades/TradeDetailModal.tsx#L146) vs [Party.java:L20-L30](../../services/common-lib/src/main/java/com/tcem/common/model/trade/Party.java#L20-L30).
 - **Issue:**
   In `common-lib`, `Party.java` stores the enriched institution name in `legalEntityName` (populated by `TradeEnricher.java:L75`). The frontend `Party` interface defines `partyName?: string` and line 146 renders `{p.partyName || p.partyId}`.
 - **System Impact:**
@@ -320,7 +320,7 @@
 ---
 
 ### 26. 🟠 HIGH / MODERATE RISK: Manual Review Identifier Mismatch (`tradeId` vs `workItemId`)
-- **Location:** [ManualReviewQueue.tsx:L29-L32](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/components/manualReview/ManualReviewQueue.tsx#L29-L32) and [AppContext.tsx:L247-L249](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/context/AppContext.tsx#L247-L249) vs [WorkItemController.java:L99-L100](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/src/main/java/com/tcem/workitem/controller/WorkItemController.java#L99-L100).
+- **Location:** [ManualReviewQueue.tsx:L29-L32](../../frontend/src/components/manualReview/ManualReviewQueue.tsx#L29-L32) and [AppContext.tsx:L247-L249](../../frontend/src/context/AppContext.tsx#L247-L249) vs [WorkItemController.java:L99-L100](../../services/workitem-service/src/main/java/com/tcem/workitem/controller/WorkItemController.java#L99-L100).
 - **Issue:**
   The backend manual review endpoint is `POST /workitems/{id}/review`, requiring the work item identifier (`WI-xxxxxxxx`). In the frontend, `ManualReviewQueue` binds directly to `Trade` objects and invokes `approveManualReview(currentTrade.tradeId, ...)` passing `tradeId`.
 - **System Impact:**
@@ -331,7 +331,7 @@
 ---
 
 ### 27. 🟡 LOW RISK / INCONSISTENCY: Proxy Routing Collisions for Metrics Endpoints
-- **Location:** [vite.config.ts:L16](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/vite.config.ts#L16) and [nginx.conf:L23-L31](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/nginx.conf#L23-L31).
+- **Location:** [vite.config.ts:L16](../../frontend/vite.config.ts#L16) and [nginx.conf:L23-L31](../../frontend/nginx.conf#L23-L31).
 - **Issue:**
   Both proxies route `/api/metrics` to `ingestion-service:8081`. However, `exception-service` exposes `/metrics/exception-rate` on port 8084, and `validation-service` exposes `/metrics/stp-rate` on port 8083. If the frontend requests `/api/metrics/exception-rate`, the request is misrouted to `ingestion-service:8081`, returning HTTP 404.
 - **System Impact:**
@@ -342,7 +342,7 @@
 ---
 
 ### 28. 🟡 LOW RISK / INCONSISTENCY: Missing Owner Queues in Filter Dropdowns
-- **Location:** [ExceptionQueue.tsx:L31-L38](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/components/exceptions/ExceptionQueue.tsx#L31-L38) and [WorkItemList.tsx:L81-L88](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/components/workitems/WorkItemList.tsx#L81-L88).
+- **Location:** [ExceptionQueue.tsx:L31-L38](../../frontend/src/components/exceptions/ExceptionQueue.tsx#L31-L38) and [WorkItemList.tsx:L81-L88](../../frontend/src/components/workitems/WorkItemList.tsx#L81-L88).
 - **Issue:**
   `types/tcem.ts` and backend `WorkItemRules.java` define 7 canonical owner queues (`DATA_REMEDIATION`, `OPERATIONS_REVIEW`, `TEMPLATE_MAINTENANCE`, `REFERENCE_DATA`, `TECHNOLOGY_SUPPORT`, `SPECIALIST_REVIEW`, `RULES_OWNER`). `ExceptionQueue.tsx` omits `SPECIALIST_REVIEW` and `RULES_OWNER`, while `WorkItemList.tsx` omits `RULES_OWNER`.
 - **System Impact:**
@@ -353,7 +353,7 @@
 ---
 
 ### 29. 🟢 NOT BREAKING / COSMETIC: Inconsistent CouchDB Database Naming in Topology View
-- **Location:** [ServiceTopology.tsx:L34-L41](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/src/components/topology/ServiceTopology.tsx#L34-L41) vs [scripts/init-couchdb.sh:L19-L27](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/scripts/init-couchdb.sh#L19-L27).
+- **Location:** [ServiceTopology.tsx:L34-L41](../../frontend/src/components/topology/ServiceTopology.tsx#L34-L41) vs [scripts/init-couchdb.sh:L19-L27](../../scripts/init-couchdb.sh#L19-L27).
 - **Issue:**
   `ServiceTopology.tsx` displays database names using underscores (`workitems`, `audit_events`, `dlq_entries`), whereas the actual CouchDB databases provisioned in `init-couchdb.sh` use hyphens (`work-items`, `audit-events`, `dlq-entries`).
 - **Recommended Remediation:**
@@ -366,7 +366,7 @@
 ---
 
 ### 30. 🔴 BREAKS THE SYSTEM: Missing `frontend/.dockerignore` Leaks Host OS Native Modules into Container Build — ✅ [RESOLVED in `fix/code-consistency`: Commit `ef23e52`]
-- **Location:** [frontend/Dockerfile:L15-L19](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/Dockerfile#L15-L19), [docker-compose.yml:L337-L340](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docker-compose.yml#L337-L340).
+- **Location:** [frontend/Dockerfile:L15-L19](../../frontend/Dockerfile#L15-L19), [docker-compose.yml:L337-L340](../../docker-compose.yml#L337-L340).
 - **Issue:**
   The `docker-compose.yml` defines the frontend build context as `./frontend`. In Docker, `.dockerignore` must reside at the root of the build context (`./frontend/.dockerignore`). However, no `.dockerignore` exists inside `./frontend/` (only at the repo root and in `services/`).
   In `frontend/Dockerfile`:
@@ -380,7 +380,7 @@
 - **System Impact:**
   `npm run build` inside Docker fails with binary architecture mismatch (`exec format error` or missing Linux musl bindings for `@rolldown/binding` / `oxlint`), completely breaking the container build on macOS developer workstations.
 - **Recommended Remediation:**
-  Create [frontend/.dockerignore](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/frontend/.dockerignore) containing:
+  Create [frontend/.dockerignore](../../frontend/.dockerignore) containing:
   ```
   node_modules/
   dist/
@@ -391,7 +391,7 @@
 ---
 
 ### 31. 🔴 BREAKS THE SYSTEM: Asymmetric Data Persistence & Kafka Log Loss (No Volume Mount for Broker) — ✅ [RESOLVED in `fix/code-consistency`: Commit `e181b58`]
-- **Location:** [docker-compose.yml:L32-L58](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docker-compose.yml#L32-L58) vs [docker-compose.yml:L106-L125](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docker-compose.yml#L106-L125).
+- **Location:** [docker-compose.yml:L32-L58](../../docker-compose.yml#L32-L58) vs [docker-compose.yml:L106-L125](../../docker-compose.yml#L106-L125).
 - **Issue:**
   In `docker-compose.yml`, CouchDB has a persistent named volume attached:
   ```yaml
@@ -417,7 +417,7 @@
 ---
 
 ### 32. 🟠 HIGH / MODERATE RISK: Unbounded JVM Heap Allocation (75% Host RAM per Container)
-- **Location:** All backend Dockerfiles ([ingestion-service/Dockerfile:L42](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/Dockerfile#L42), [enrichment-service/Dockerfile:L42](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/enrichment-service/Dockerfile#L42), [validation-service/Dockerfile:L42](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/validation-service/Dockerfile#L42), [exception-service/Dockerfile:L42](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/exception-service/Dockerfile#L42), [workitem-service/Dockerfile:L42](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/workitem-service/Dockerfile#L42)) vs [docker-compose.yml](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docker-compose.yml).
+- **Location:** All backend Dockerfiles ([ingestion-service/Dockerfile:L42](../../services/ingestion-service/Dockerfile#L42), [enrichment-service/Dockerfile:L42](../../services/enrichment-service/Dockerfile#L42), [validation-service/Dockerfile:L42](../../services/validation-service/Dockerfile#L42), [exception-service/Dockerfile:L42](../../services/exception-service/Dockerfile#L42), [workitem-service/Dockerfile:L42](../../services/workitem-service/Dockerfile#L42)) vs [docker-compose.yml](../../docker-compose.yml).
 - **Issue:**
   All five backend Dockerfiles specify container-aware memory flags:
   ```dockerfile
@@ -432,7 +432,7 @@
 ---
 
 ### 33. 🟠 HIGH / MODERATE RISK: End-to-End Pipeline CI Blindspot in GitHub Actions
-- **Location:** [.github/workflows/smoke-test.yml:L31-L54](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/.github/workflows/smoke-test.yml#L31-L54).
+- **Location:** [.github/workflows/smoke-test.yml:L31-L54](../../.github/workflows/smoke-test.yml#L31-L54).
 - **Issue:**
   The CI workflow `smoke-test.yml` starts only a subset of services:
   ```yaml
@@ -448,7 +448,7 @@
 ---
 
 ### 34. 🟡 LOW RISK / INCONSISTENCY: `scripts/dev-up.sh` Fails to Forward `--all` to Smoke Test
-- **Location:** [scripts/dev-up.sh:L36-L46](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/scripts/dev-up.sh#L36-L46) vs [scripts/smoke-test.sh:L44-L57](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/scripts/smoke-test.sh#L44-L57).
+- **Location:** [scripts/dev-up.sh:L36-L46](../../scripts/dev-up.sh#L36-L46) vs [scripts/smoke-test.sh:L44-L57](../../scripts/smoke-test.sh#L44-L57).
 - **Issue:**
   `scripts/dev-up.sh` supports the `--all` argument:
   ```bash
@@ -472,7 +472,7 @@
 ---
 
 ### 35. 🟡 LOW RISK / INCONSISTENCY: `scripts/init-kafka.sh` Dead Environment Variable & Container Coupling
-- **Location:** [scripts/init-kafka.sh:L8-L45](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/scripts/init-kafka.sh#L8-L45).
+- **Location:** [scripts/init-kafka.sh:L8-L45](../../scripts/init-kafka.sh#L8-L45).
 - **Issue:**
   Line 8 defines `BOOTSTRAP_SERVER="${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}"`, and line 22 echoes it. However, the variable `$BOOTSTRAP_SERVER` is **never referenced in any execution command**. Instead, the script hardcodes `docker compose exec -T kafka ... --bootstrap-server localhost:9092`.
 - **System Impact:**
@@ -483,7 +483,7 @@
 ---
 
 ### 36. 🟡 LOW RISK / INCONSISTENCY: Database Initializers Omit `enrichment-idempotency` — ✅ [RESOLVED in `fix/code-consistency`: Commit `d30e283`]
-- **Location:** [docker-compose.yml:L163-L170](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docker-compose.yml#L163-L170), [scripts/init-couchdb.sh:L19-L27](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/scripts/init-couchdb.sh#L19-L27).
+- **Location:** [docker-compose.yml:L163-L170](../../docker-compose.yml#L163-L170), [scripts/init-couchdb.sh:L19-L27](../../scripts/init-couchdb.sh#L19-L27).
 - **Issue:**
   Both `couchdb-init` in `docker-compose.yml` and `scripts/init-couchdb.sh` provision 7 application databases:
   `trades`, `confirmations`, `exceptions`, `work-items`, `audit-events`, `stp-metrics`, `dlq-entries`.
@@ -491,12 +491,12 @@
 - **System Impact:**
   While `enrichment-service` has `auto-create-databases: true` enabled as a fallback, running CouchDB in environments with restricted administrative permissions causes `enrichment-service` to fail with HTTP 401/403 when attempting to auto-create the missing database.
 - **Recommended Remediation:**
-  Add `"enrichment-idempotency"` to `APP_DBS` in [scripts/init-couchdb.sh](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/scripts/init-couchdb.sh) and `couchdb-init` in [docker-compose.yml](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docker-compose.yml).
+  Add `"enrichment-idempotency"` to `APP_DBS` in [scripts/init-couchdb.sh](../../scripts/init-couchdb.sh) and `couchdb-init` in [docker-compose.yml](../../docker-compose.yml).
 
 ---
 
 ### 37. 🟢 NOT BREAKING / COSMETIC: Documentation & Base Image Tag Drift
-- **Location:** [README.md:L13-L17](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/README.md#L13-L17), [docker-compose.yml:L93](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/docker-compose.yml#L93).
+- **Location:** [README.md:L13-L17](../../README.md#L13-L17), [docker-compose.yml:L93](../../docker-compose.yml#L93).
 - **Issue:**
   1. Root `README.md` states: *"enrichment-service, validation-service and exception-service are still runnable stubs"*, and *"common-lib (empty for now)"*, even though all modules are fully implemented with test suites.
   2. `docker-compose.yml` uses an unpinned mutable image tag: `provectuslabs/kafka-ui:latest`.
@@ -586,6 +586,3 @@
 3. **Hardened Container & Streaming Persistence:** Persistent Kafka volume ensures consumer group offsets survive restarts without state divergence against CouchDB.
 4. **High-Performance Operations UI:** Modern React 19 + TypeScript + Vite + Tailwind CSS stack with aligned data contracts, enriched party resolution, and zero build/lint errors.
 5. **Deterministic Exception & Recommendation Engine:** Automated classification and real-time SLA tracking across 6 canonical exception categories.
-
-
-
