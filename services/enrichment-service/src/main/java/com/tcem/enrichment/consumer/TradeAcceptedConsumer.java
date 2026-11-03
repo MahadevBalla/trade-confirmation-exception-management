@@ -2,6 +2,7 @@ package com.tcem.enrichment.consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tcem.common.constants.TopicNames;
 import com.tcem.common.idempotency.IdempotencyKey;
 import com.tcem.common.model.message.MessageHeader;
 import com.tcem.common.model.message.TradeEvent;
@@ -31,7 +32,7 @@ public class TradeAcceptedConsumer {
         this.deadLetterProducer = deadLetterProducer; this.idempotencyRepository = idempotencyRepository;
     }
 
-    @KafkaListener(topics = "${enrichment.input-topic:trade.accepted}", groupId = "${spring.kafka.consumer.group-id}",
+    @KafkaListener(topics = TopicNames.TRADE_ACCEPTED, groupId = "${spring.kafka.consumer.group-id}",
             autoStartup = "${spring.kafka.listener.auto-startup:true}")
     public void onMessage(ConsumerRecord<String, String> record) {
         log.info("Received accepted trade [key={}, topic={}, partition={}, offset={}]",

@@ -31,7 +31,6 @@ couchdb:
   read-timeout-ms: 5000
 
 validation:
-  input-topic: ${VALIDATION_INPUT_TOPIC:trade.enriched}
   service-name: validation-service
 
 management:
