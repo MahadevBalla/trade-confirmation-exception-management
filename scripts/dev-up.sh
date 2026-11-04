@@ -43,4 +43,4 @@ fi
 
 # 5. Run smoke test
 echo "=== [dev-up] Running smoke test verification ==="
-./scripts/smoke-test.sh
+./scripts/smoke-test.sh "$MODE"

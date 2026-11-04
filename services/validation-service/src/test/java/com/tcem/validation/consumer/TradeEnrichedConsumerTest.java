@@ -22,6 +22,7 @@ import com.tcem.validation.producer.ExceptionCreatedProducer;
 import com.tcem.validation.producer.StpValidatedProducer;
 import com.tcem.validation.repository.ConfirmationCouchDbRepository;
 import com.tcem.validation.repository.ConfirmationDocument;
+import com.tcem.validation.repository.HeldTradeRepository;
 import com.tcem.validation.rules.StpRulesEngine;
 import com.tcem.validation.rules.StpValidationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,7 @@ class TradeEnrichedConsumerTest {
     @Mock private DeadLetterProducer deadLetterProducer;
     @Mock private ConfirmationCouchDbRepository confirmationRepository;
     @Mock private ValidationIdempotencyRepository idempotencyRepository;
+    @Mock private HeldTradeRepository heldTradeRepository;
 
     private ObjectMapper objectMapper;
     private ValidationProperties validationProperties;
@@ -76,7 +78,7 @@ class TradeEnrichedConsumerTest {
                 objectMapper, stpRulesEngine, stpValidatedProducer,
                 confirmationService, stpExceptionMapper,
                 exceptionCreatedProducer, deadLetterProducer,
-                confirmationRepository, idempotencyRepository, validationProperties);
+                confirmationRepository, idempotencyRepository, heldTradeRepository, validationProperties);
 
         // Lenient stubs: these are "safety nets" so the async send methods don't NPE.
         // Not every test exercises every producer path, so lenient avoids false
@@ -165,7 +167,9 @@ class TradeEnrichedConsumerTest {
 
         verify(stpValidatedProducer).sendStpValidated(eq("TRD-002"), any(StpValidatedEvent.class));
         verify(stpExceptionMapper).mapToExceptionEvents(any(), any(), any());
-        verify(exceptionCreatedProducer).sendExceptionCreated(eq("TRD-002"), eq(mockException));
+        var inOrder = inOrder(heldTradeRepository, exceptionCreatedProducer);
+        inOrder.verify(heldTradeRepository).hold("TRD-002", toJson(event));
+        inOrder.verify(exceptionCreatedProducer).sendExceptionCreated(eq("TRD-002"), eq(mockException));
         verifyNoInteractions(confirmationService, deadLetterProducer);
     }
 
@@ -442,5 +446,32 @@ class TradeEnrichedConsumerTest {
 
         verify(stpRulesEngine).evaluate(any(TradeEvent.class));
         verifyNoInteractions(deadLetterProducer);
+    }
+
+    @Test
+    @DisplayName("Replay identity (eventType, replayCount) survives onto stp.validated")
+    void replay_keepsReplayIdentityOnStpValidated() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-030", 1, EventType.REPLAY);
+        event.getMessageHeader().setReplayCount(2);
+        when(stpRulesEngine.evaluate(any())).thenReturn(passedResult());
+
+        consumer.onMessage(toJson(event));
+
+        ArgumentCaptor<StpValidatedEvent> captor = ArgumentCaptor.forClass(StpValidatedEvent.class);
+        verify(stpValidatedProducer).sendStpValidated(eq("TRD-030"), captor.capture());
+        assertThat(captor.getValue().getMessageHeader().getEventType()).isEqualTo(EventType.REPLAY);
+        assertThat(captor.getValue().getMessageHeader().getReplayCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Dead letters are keyed by tradeId so workitem-service can match the replay outcome")
+    void deadLetter_isKeyedByTradeId() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-031", 1, EventType.NEW_TRADE);
+        when(confirmationRepository.findLatestForTrade("TRD-031")).thenReturn(Optional.empty());
+        when(stpRulesEngine.evaluate(any())).thenThrow(new IllegalStateException("boom"));
+
+        consumer.onMessage(toJson(event));
+
+        verify(deadLetterProducer).sendDeadLetter(eq("TRD-031"), any(DeadLetterEvent.class));
     }
 }

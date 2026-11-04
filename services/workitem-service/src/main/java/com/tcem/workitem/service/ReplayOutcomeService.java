@@ -46,7 +46,7 @@ public class ReplayOutcomeService {
             TopicNames.TRADE_ENRICHED, Set.of(TopicNames.STP_VALIDATED, TopicNames.CONFIRMATION_GENERATED,
                     TopicNames.EXCEPTION_CREATED),
             TopicNames.STP_VALIDATED, Set.of(TopicNames.CONFIRMATION_GENERATED, TopicNames.EXCEPTION_CREATED),
-            TopicNames.EXCEPTION_CREATED, Set.of(TopicNames.EXCEPTION_CLASSIFIED));
+            TopicNames.EXCEPTION_CREATED, Set.of(TopicNames.EXCEPTION_CLASSIFIED, TopicNames.MANUAL_REVIEW_REQUIRED));
 
     private final ObjectMapper objectMapper;
     private final DlqEntryRepository dlqRepository;

@@ -93,7 +93,7 @@ services:
         echo '=== [kafka-init] Done. ==='
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: provectuslabs/kafka-ui:v0.7.2
     container_name: tcem-kafka-ui
     networks:
       - tcem-network
@@ -190,6 +190,7 @@ services:
       context: ./services
       dockerfile: ingestion-service/Dockerfile
     container_name: tcem-ingestion-service
+    mem_limit: 768m   # JVM heap = 75% of this (-XX:MaxRAMPercentage=75.0)
     networks:
       - tcem-network
     depends_on:
@@ -220,6 +221,7 @@ services:
       context: ./services
       dockerfile: enrichment-service/Dockerfile
     container_name: tcem-enrichment-service
+    mem_limit: 768m   # JVM heap = 75% of this (-XX:MaxRAMPercentage=75.0)
     networks:
       - tcem-network
     depends_on:
@@ -250,6 +252,7 @@ services:
       context: ./services
       dockerfile: validation-service/Dockerfile
     container_name: tcem-validation-service
+    mem_limit: 768m   # JVM heap = 75% of this (-XX:MaxRAMPercentage=75.0)
     networks:
       - tcem-network
     depends_on:
@@ -280,6 +283,7 @@ services:
       context: ./services
       dockerfile: exception-service/Dockerfile
     container_name: tcem-exception-service
+    mem_limit: 768m   # JVM heap = 75% of this (-XX:MaxRAMPercentage=75.0)
     networks:
       - tcem-network
     depends_on:
@@ -310,6 +314,7 @@ services:
       context: ./services
       dockerfile: workitem-service/Dockerfile
     container_name: tcem-workitem-service
+    mem_limit: 768m   # JVM heap = 75% of this (-XX:MaxRAMPercentage=75.0)
     networks:
       - tcem-network
     depends_on:

@@ -292,5 +292,21 @@ class ConfirmationServiceTest {
         assertThat(savedDoc.getConfirmationId()).isNotBlank();
         assertThat(savedDoc.getConfirmationFingerprint()).isNotBlank();
     }
-}
 
+    @Test
+    @DisplayName("Replay identity (eventType, replayCount) survives onto confirmation.generated")
+    void replayIdentityPropagated() {
+        MessageHeader header = buildHeader("MSG-RPL", "CORR-RPL");
+        header.setEventType(EventType.REPLAY);
+        header.setReplayCount(2);
+        when(repository.findLatestForTrade("TRD-RPL")).thenReturn(Optional.empty());
+        when(generator.generate(any(), any(), any())).thenReturn("body");
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        MessageHeader outbound = service.processConfirmation(header, buildTrade("TRD-RPL", 1))
+                .orElseThrow().getMessageHeader();
+
+        assertThat(outbound.getEventType()).isEqualTo(EventType.REPLAY);
+        assertThat(outbound.getReplayCount()).isEqualTo(2);
+    }
+}

@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,14 +54,15 @@ class PipelineConsumersTest {
     void exceptionConsumers() {
         when(linkingService.onClassified(any())).thenThrow(new IllegalStateException("couchdb down"));
         ExceptionClassifiedConsumer classified = new ExceptionClassifiedConsumer(linkingService, replayOutcomeService);
-        ManualReviewConsumer manualReview = new ManualReviewConsumer(linkingService);
+        ManualReviewConsumer manualReview = new ManualReviewConsumer(linkingService, replayOutcomeService);
 
         assertDoesNotThrow(() -> classified.onMessage(
                 new ConsumerRecord<>(TopicNames.EXCEPTION_CLASSIFIED, 0, 0L, "TRD-1", "{}")));
         manualReview.onMessage(new ConsumerRecord<>(TopicNames.MANUAL_REVIEW_REQUIRED, 0, 0L, "TRD-1", "{\"x\":1}"));
 
         verify(linkingService).onManualReview("{\"x\":1}");
-        verify(replayOutcomeService, never()).onPipelineMessage(any(), any(), any(), anyBoolean());
+        verify(replayOutcomeService, never()).onPipelineMessage(eq(TopicNames.EXCEPTION_CLASSIFIED), any(), any(), anyBoolean());
+        verify(replayOutcomeService).onPipelineMessage(TopicNames.MANUAL_REVIEW_REQUIRED, "TRD-1", "{\"x\":1}", false);
     }
 
     @Test

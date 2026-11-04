@@ -226,4 +226,25 @@ class TradeIngestionServiceTest {
         assertThat(result.isAccepted()).isTrue();
         verify(kafkaOperations).send(eq(TopicNames.TRADE_ACCEPTED), eq(result.getTradeId()), any());
     }
+
+    @Test
+    @DisplayName("A second replay of the same message is reprocessed, not suppressed as a duplicate")
+    void testReplayBypassesDuplicateSuppression() throws Exception {
+        com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode)
+                objectMapper.readTree(generator.generateTradeJson(TradeScenarioType.VALID_STANDARD_STP, 3));
+        com.fasterxml.jackson.databind.node.ObjectNode header =
+                (com.fasterxml.jackson.databind.node.ObjectNode) root.get("messageHeader");
+        header.put("eventType", "REPLAY");
+        header.put("replayCount", 2);
+
+        org.mockito.Mockito.lenient().when(couchDb.getDocument(eq("trades"), startsWith("idempotency:"), eq(IdempotencyDocument.class)))
+                .thenReturn(Optional.of(new IdempotencyDocument()));
+        when(kafkaOperations.send(eq(TopicNames.TRADE_ACCEPTED), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(mockSendResult(TopicNames.TRADE_ACCEPTED)));
+
+        service.processRawTrade("TRD-REPLAY-1", objectMapper.writeValueAsString(root));
+
+        verify(kafkaOperations).send(eq(TopicNames.TRADE_ACCEPTED), any(), any());
+        verify(kafkaOperations, never()).send(eq(TopicNames.EXCEPTION_CREATED), any(), any());
+    }
 }

@@ -56,6 +56,9 @@ class ManualReviewServiceTest {
         assertEquals("supervisor-1", decided.getReviewedBy());
         assertNotNull(decided.getResolvedAt());
         verify(kafka, never()).send(eq(TopicNames.DEADLETTER_TRADE), anyString(), any());
+        // validation-service generates the confirmation from this event.
+        verify(kafka).send(eq(TopicNames.WORKITEM_LINKED), eq("TRD-1"),
+                org.mockito.ArgumentMatchers.argThat(json -> json != null && json.contains("\"reviewDecision\":\"APPROVED\"")));
     }
 
     @Test

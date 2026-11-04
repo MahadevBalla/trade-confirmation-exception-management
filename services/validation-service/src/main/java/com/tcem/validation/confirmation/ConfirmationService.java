@@ -158,6 +158,8 @@ public class ConfirmationService {
         MessageHeader outboundHeader = new MessageHeader();
         outboundHeader.setMessageId("MSG-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase());
         outboundHeader.setCorrelationId(header.getCorrelationId());
+        outboundHeader.setEventType(header.getEventType());
+        outboundHeader.setReplayCount(header.getReplayCount());
         outboundHeader.setSchemaVersion(SchemaVersions.CURRENT);
         outboundHeader.setCreatedTimestamp(now);
         outboundHeader.setSourceService(generatedBy);

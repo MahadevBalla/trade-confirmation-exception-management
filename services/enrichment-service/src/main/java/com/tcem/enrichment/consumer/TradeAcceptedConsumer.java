@@ -2,6 +2,7 @@ package com.tcem.enrichment.consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tcem.common.constants.EventType;
 import com.tcem.common.constants.TopicNames;
 import com.tcem.common.idempotency.IdempotencyKey;
 import com.tcem.common.model.message.MessageHeader;
@@ -55,7 +56,10 @@ public class TradeAcceptedConsumer {
 
         IdempotencyKey key = IdempotencyKey.of(event.getTrade().getTradeId(), event.getMessageHeader().getMessageId(),
                 event.getMessageHeader().getSchemaVersion(), event.getMessageHeader().getEventType());
-        if (idempotencyRepository.isProcessed(key)) {
+        // Every replay attempt of a message shares one key, so replays bypass the guard (as in validation and
+        // exception-service); otherwise attempt 2 would be dropped and its DLQ entry would stay REPLAYING.
+        boolean replay = event.getMessageHeader().getEventType() == EventType.REPLAY;
+        if (!replay && idempotencyRepository.isProcessed(key)) {
             log.info("Skipping duplicate accepted trade [tradeId={}, messageId={}, topic={}, partition={}, offset={}]",
                     event.getTrade().getTradeId(), event.getMessageHeader().getMessageId(), record.topic(), record.partition(), record.offset());
             return;
@@ -64,7 +68,9 @@ public class TradeAcceptedConsumer {
         TradeEvent enriched = enricher.enrich(event);
         enrichedProducer.publish(enriched.getTrade().getTradeId(), enriched);
         // At-least-once boundary: a crash after Kafka acknowledges but before this write can re-publish on redelivery.
-        idempotencyRepository.record(key);
+        if (!replay) {
+            idempotencyRepository.record(key); // PUT without _rev: re-recording an existing marker would 409.
+        }
         log.info("Published enriched trade [tradeId={}, messageId={}, outputTopic={}, inputPartition={}, inputOffset={}]",
                 enriched.getTrade().getTradeId(), enriched.getMessageHeader().getMessageId(), "trade.enriched",
                 record.partition(), record.offset());

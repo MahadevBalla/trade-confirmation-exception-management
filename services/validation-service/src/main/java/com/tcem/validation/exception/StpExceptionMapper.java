@@ -111,6 +111,8 @@ public class StpExceptionMapper {
         MessageHeader outboundHeader = new MessageHeader();
         outboundHeader.setMessageId("MSG-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase());
         outboundHeader.setCorrelationId(inboundHeader.getCorrelationId());
+        outboundHeader.setEventType(inboundHeader.getEventType());
+        outboundHeader.setReplayCount(inboundHeader.getReplayCount());
         outboundHeader.setSchemaVersion(SchemaVersions.CURRENT);
         outboundHeader.setCreatedTimestamp(now);
         outboundHeader.setSourceService(generatedBy);

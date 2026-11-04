@@ -305,5 +305,19 @@ class DefaultExceptionProcessingServiceTest {
         CompletableFuture<SendResult<String, String>> future = CompletableFuture.completedFuture(sr);
         when(kafkaOperations.send(eq(topic), anyString(), anyString())).thenReturn(future);
     }
-}
 
+    @Test
+    @DisplayName("Replay identity (eventType, replayCount) survives onto exception.classified")
+    void replay_keepsReplayIdentityOnOutboundHeader() throws Exception {
+        stubKafkaSend(TopicNames.EXCEPTION_CLASSIFIED);
+        ExceptionRecord rec = buildRecord("TRD-RPL", ExceptionCategory.TEMPLATE_ISSUE,
+                ExceptionSubTheme.NO_MATCHING_TEMPLATE, EventType.REPLAY);
+        ExceptionEvent event = buildEvent(rec, EventType.REPLAY);
+        event.getMessageHeader().setReplayCount(2);
+
+        service.process("TRD-RPL", objectMapper.writeValueAsString(event));
+
+        verify(kafkaOperations).send(eq(TopicNames.EXCEPTION_CLASSIFIED), eq("TRD-RPL"),
+                argThat(json -> json.contains("\"eventType\":\"REPLAY\"") && json.contains("\"replayCount\":2")));
+    }
+}

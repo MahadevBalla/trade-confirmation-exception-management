@@ -62,6 +62,7 @@ public class WorkItemDocument {
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .resolvedAt(resolvedAt)
+                .reviewDecision(reviewDecision)
                 .build();
     }
 

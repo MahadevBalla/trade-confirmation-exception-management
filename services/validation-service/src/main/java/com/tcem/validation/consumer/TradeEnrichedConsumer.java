@@ -31,6 +31,7 @@ import com.tcem.validation.producer.ExceptionCreatedProducer;
 import com.tcem.validation.producer.StpValidatedProducer;
 import com.tcem.validation.repository.ConfirmationCouchDbRepository;
 import com.tcem.validation.repository.ConfirmationDocument;
+import com.tcem.validation.repository.HeldTradeRepository;
 import com.tcem.validation.rules.StpRulesEngine;
 import com.tcem.validation.rules.StpValidationResult;
 
@@ -53,7 +54,8 @@ import com.tcem.validation.rules.StpValidationResult;
  *   <li>Always publish the STP decision to {@code stp.validated}.</li>
  *   <li>On STP pass: delegate to {@link ConfirmationService} (fingerprint check,
  *       persistence, confirmation.generated).</li>
- *   <li>On STP fail: map each failure to an {@link ExceptionEvent} via
+ *   <li>On STP fail: hold the enriched trade in case a reviewer approves it later, then
+ *       map each failure to an {@link ExceptionEvent} via
  *       {@link StpExceptionMapper} and publish each to {@code exception.created}.</li>
  *   <li>Record the {@link IdempotencyKey} once every downstream publish has succeeded.</li>
  *   <li>On irrecoverable parse / unexpected error: publish to {@code deadletter.trade}
@@ -92,6 +94,7 @@ public class TradeEnrichedConsumer {
     private final DeadLetterProducer deadLetterProducer;
     private final ConfirmationCouchDbRepository confirmationRepository;
     private final ValidationIdempotencyRepository idempotencyRepository;
+    private final HeldTradeRepository heldTradeRepository;
     private final ValidationProperties validationProperties;
 
     public TradeEnrichedConsumer(ObjectMapper objectMapper,
@@ -103,6 +106,7 @@ public class TradeEnrichedConsumer {
                                  DeadLetterProducer deadLetterProducer,
                                  ConfirmationCouchDbRepository confirmationRepository,
                                  ValidationIdempotencyRepository idempotencyRepository,
+                                 HeldTradeRepository heldTradeRepository,
                                  ValidationProperties validationProperties) {
         this.objectMapper = objectMapper;
         this.schemaVersionRouter = new SchemaVersionRouter(objectMapper);
@@ -114,6 +118,7 @@ public class TradeEnrichedConsumer {
         this.deadLetterProducer = deadLetterProducer;
         this.confirmationRepository = confirmationRepository;
         this.idempotencyRepository = idempotencyRepository;
+        this.heldTradeRepository = heldTradeRepository;
         this.validationProperties = validationProperties;
     }
 
@@ -210,7 +215,7 @@ public class TradeEnrichedConsumer {
             // -----------------------------------------------------------------------
             // Step 5: Publish STP decision (always, regardless of outcome)
             // -----------------------------------------------------------------------
-            MessageHeader stpOutboundHeader = buildOutboundHeader(header.getCorrelationId());
+            MessageHeader stpOutboundHeader = buildOutboundHeader(header);
             StpValidatedEvent stpEvent = StpValidatedEvent.of(
                     stpOutboundHeader, tradeId, tradeVersion, stpResult);
             stpValidatedProducer.sendStpValidated(tradeId, stpEvent);
@@ -229,6 +234,8 @@ public class TradeEnrichedConsumer {
             } else {
                 log.info("STP FAILED for tradeId={}, version={} with {} failures — routing exceptions",
                         tradeId, tradeVersion, stpResult.getFailures().size());
+                // Before the exceptions go out, so an approval can never overtake the snapshot.
+                heldTradeRepository.hold(tradeId, payload);
                 List<ExceptionEvent> exceptionEvents =
                         stpExceptionMapper.mapToExceptionEvents(header, trade, stpResult);
                 for (ExceptionEvent exceptionEvent : exceptionEvents) {
@@ -263,17 +270,32 @@ public class TradeEnrichedConsumer {
         }
     }
 
+    /** Dead letters are keyed by tradeId (see docs/kafka-topics.md); null when the payload has none. */
+    private String extractTradeId(String payload) {
+        try {
+            String tradeId = objectMapper.readTree(payload).path("trade").path("tradeId").asText(null);
+            return isBlank(tradeId) ? null : tradeId;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
     /**
-     * Builds a fresh outbound {@link MessageHeader} for events produced by this service.
+     * Builds a fresh outbound {@link MessageHeader} for events produced by this service, keeping the
+     * inbound event type and replay count: workitem-service relies on them to detect a replay's outcome.
      */
-    private MessageHeader buildOutboundHeader(String correlationId) {
+    private MessageHeader buildOutboundHeader(MessageHeader inbound) {
         MessageHeader h = new MessageHeader();
         h.setMessageId("MSG-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase());
-        h.setCorrelationId(correlationId);
+        if (inbound != null) {
+            h.setCorrelationId(inbound.getCorrelationId());
+            h.setEventType(inbound.getEventType());
+            h.setReplayCount(inbound.getReplayCount());
+        }
         h.setSchemaVersion(SchemaVersions.CURRENT);
         h.setCreatedTimestamp(Instant.now());
         h.setSourceService(validationProperties.getServiceName());
@@ -306,9 +328,7 @@ public class TradeEnrichedConsumer {
                                   String failureReason,
                                   boolean replayable) {
         try {
-            String dlqKey = originalHeader != null && originalHeader.getCorrelationId() != null
-                    ? originalHeader.getCorrelationId()
-                    : null;
+            String dlqKey = extractTradeId(originalPayload);
 
             String stackTrace = null;
             String exceptionClass = null;
@@ -322,8 +342,7 @@ public class TradeEnrichedConsumer {
                 stackTrace = sb.toString();
             }
 
-            MessageHeader dlqHeader = buildOutboundHeader(
-                    originalHeader != null ? originalHeader.getCorrelationId() : null);
+            MessageHeader dlqHeader = buildOutboundHeader(originalHeader);
 
             DeadLetterEvent dlqEvent = DeadLetterEvent.builder()
                     .messageHeader(dlqHeader)
