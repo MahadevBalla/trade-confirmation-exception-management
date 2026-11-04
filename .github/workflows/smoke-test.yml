@@ -38,12 +38,12 @@ jobs:
 
       - name: Exercise work-item API through the gateway
         run: |
-          created=$(curl -fsS -X POST http://localhost:3000/api/workitems \
+          created=$(curl -fsS -u ops:ops-demo -X POST http://localhost:3000/api/workitems \
             -H 'Content-Type: application/json' \
             -d '{"tradeId":"TRD-SMOKE-1","type":"DATA_FIX","title":"Smoke test item","description":"created by CI","ownerQueue":"DATA_REMEDIATION","priority":"MEDIUM"}')
           echo "$created"
           id=$(echo "$created" | python3 -c 'import json,sys; print(json.load(sys.stdin)["workItemId"])')
-          curl -fsS -X PATCH "http://localhost:3000/api/workitems/$id" \
+          curl -fsS -u ops:ops-demo -X PATCH "http://localhost:3000/api/workitems/$id" \
             -H 'Content-Type: application/json' -d '{"status":"DONE","actor":"ci"}' | grep -q '"DONE"'
           curl -fsS "http://localhost:3000/api/workitems?tradeId=TRD-SMOKE-1" | grep -q "$id"
 

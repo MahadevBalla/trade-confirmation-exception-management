@@ -171,4 +171,43 @@ class TradeQueryControllerTest {
                 .andExpect(jsonPath("$.acceptedTrades").value(2))
                 .andExpect(jsonPath("$.schemaInvalidTrades").value(1));
     }
+
+    @Test
+    @DisplayName("GET /audit returns audit events newest first, across trades")
+    void testListAuditNewestFirst() throws Exception {
+        AuditDocument older = AuditDocument.builder().tradeId("TRD-1").stage("A").timestamp(java.time.Instant.parse("2026-01-01T00:00:00Z")).build();
+        AuditDocument newer = AuditDocument.builder().tradeId("TRD-2").stage("B").timestamp(java.time.Instant.parse("2026-01-02T00:00:00Z")).build();
+        when(couchDb.find(eq("audit-events"), any(FindQueryRequest.class), eq(AuditDocument.class))).thenReturn(List.of(older, newer));
+
+        mockMvc.perform(get("/audit").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(2))
+                .andExpect(jsonPath("$.content[0].tradeId").value("TRD-2"))
+                .andExpect(jsonPath("$.content[1].tradeId").value("TRD-1"));
+    }
+
+    @Test
+    @DisplayName("GET /audit asks CouchDB to sort by timestamp, and still answers if the index is missing")
+    void testListAuditFallsBackWithoutIndex() throws Exception {
+        org.mockito.ArgumentCaptor<FindQueryRequest> query = org.mockito.ArgumentCaptor.forClass(FindQueryRequest.class);
+        when(couchDb.find(eq("audit-events"), query.capture(), eq(AuditDocument.class)))
+                .thenThrow(new com.tcem.ingestion.couchdb.CouchDbException("no index"))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/audit")).andExpect(status().isOk()).andExpect(jsonPath("$.count").value(0));
+
+        org.assertj.core.api.Assertions.assertThat(query.getAllValues().get(0).getSort()).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("GET /trades leaves the raw payload out of the list")
+    void testListTradesOmitsRawPayload() throws Exception {
+        TradeDocument doc = TradeDocument.builder().id("TRD-1").tradeId("TRD-1").rawPayload("{\"big\":true}").build();
+        when(couchDb.find(eq("trades"), any(FindQueryRequest.class), eq(TradeDocument.class))).thenReturn(List.of(doc));
+
+        mockMvc.perform(get("/trades"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trades[0].tradeId").value("TRD-1"))
+                .andExpect(jsonPath("$.trades[0].rawPayload").doesNotExist());
+    }
 }

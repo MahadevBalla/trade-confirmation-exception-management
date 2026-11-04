@@ -130,6 +130,20 @@ public class CouchDbClient implements CouchDbOperations {
     }
 
     @Override
+    public void ensureIndex(String databaseName, String indexName, List<String> fields) {
+        try {
+            restClient.post()
+                    .uri("/{db}/_index", databaseName)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(java.util.Map.of("index", java.util.Map.of("fields", fields), "name", indexName, "type", "json"))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception ex) {
+            throw new CouchDbException("Failed to create index '" + indexName + "' on '" + databaseName + "'", ex);
+        }
+    }
+
+    @Override
     public <T> List<T> find(String databaseName, FindQueryRequest request, Class<T> docType) {
         try {
             String rawResponse = restClient.post()

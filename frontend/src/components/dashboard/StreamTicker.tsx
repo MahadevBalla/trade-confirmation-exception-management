@@ -3,7 +3,7 @@ import { useApp } from '../../context/useApp';
 import { ExternalLink } from 'lucide-react';
 
 export const StreamTicker: React.FC = () => {
-  const { streamEvents, setSelectedTradeId, setActiveTab } = useApp();
+  const { streamEvents, setSelectedTradeId, setActiveTab, dataMode } = useApp();
 
   const getTopicColor = (topic: string) => {
     switch (topic) {
@@ -37,8 +37,8 @@ export const StreamTicker: React.FC = () => {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white">Live Kafka Topic Stream</h3>
-            <p className="text-xs text-slate-400">Real-time event stream across microservice boundaries</p>
+            <h3 className="text-sm font-semibold text-white">{dataMode === 'live' ? 'Recent Pipeline Activity' : 'Live Kafka Topic Stream'}</h3>
+            <p className="text-xs text-slate-400">{dataMode === 'live' ? 'Latest audit events from all services, refreshed every few seconds' : 'Real-time event stream across microservice boundaries'}</p>
           </div>
         </div>
 

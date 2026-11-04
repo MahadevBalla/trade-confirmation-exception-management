@@ -1,5 +1,7 @@
 package com.tcem.ingestion.repository;
 
+import com.tcem.ingestion.couchdb.CouchDbException;
+import java.util.Comparator;
 import com.tcem.ingestion.config.CouchDbProperties;
 import com.tcem.ingestion.couchdb.CouchDbOperations;
 import com.tcem.ingestion.couchdb.CouchDbResponse;
@@ -54,6 +56,30 @@ public class AuditCouchDbRepository {
         }
         log.debug("Recorded audit event '{}' for trade '{}'", document.getId(), document.getTradeId());
         return document;
+    }
+
+    /**
+     * Returns the most recent audit records across all trades and services, newest first.
+     * Falls back to an unsorted page if the timestamp index is not available yet.
+     */
+    public List<AuditDocument> findRecent(int limit, int skip) {
+        FindQueryRequest query = FindQueryRequest.builder()
+                .selector(Map.of("docType", "AUDIT_EVENT", "timestamp", Map.of("$gt", "")))
+                .limit(limit)
+                .skip(skip)
+                .build();
+        query.setSort(List.of(Map.of("timestamp", "desc")));
+        List<AuditDocument> records;
+        try {
+            records = couchDb.find(properties.getAuditEventsDatabase(), query, AuditDocument.class);
+        } catch (CouchDbException ex) {
+            log.warn("Sorted audit query failed, returning an unsorted page: {}", ex.getMessage());
+            records = couchDb.find(properties.getAuditEventsDatabase(), FindQueryRequest.builder()
+                    .selector(Map.of("docType", "AUDIT_EVENT")).limit(limit).skip(skip).build(), AuditDocument.class);
+        }
+        return records.stream()
+                .sorted(Comparator.comparing(AuditDocument::getTimestamp, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
     }
 
     /**

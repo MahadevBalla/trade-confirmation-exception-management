@@ -19,6 +19,11 @@ public interface CouchDbOperations {
     boolean ensureDatabaseExists(String databaseName);
 
     /**
+     * Creates a Mango index on the given fields if it does not exist yet.
+     */
+    default void ensureIndex(String databaseName, String indexName, List<String> fields) {}
+
+    /**
      * Retrieves a document by its ID.
      */
     <T> Optional<T> getDocument(String databaseName, String docId, Class<T> responseType);

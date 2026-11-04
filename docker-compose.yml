@@ -211,6 +211,9 @@ services:
       COUCHDB_URL: http://couchdb:5984
       COUCHDB_USER: ${COUCHDB_USER:-admin}
       COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+      TCEM_OPS_PASSWORD: ${TCEM_OPS_PASSWORD:-ops-demo}
+      TCEM_SUPERVISOR_PASSWORD: ${TCEM_SUPERVISOR_PASSWORD:-supervisor-demo}
+      TCEM_ADMIN_PASSWORD: ${TCEM_ADMIN_PASSWORD:-admin-demo}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 10s
@@ -335,6 +338,9 @@ services:
       COUCHDB_URL: http://couchdb:5984
       COUCHDB_USER: ${COUCHDB_USER:-admin}
       COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:-password}
+      TCEM_OPS_PASSWORD: ${TCEM_OPS_PASSWORD:-ops-demo}
+      TCEM_SUPERVISOR_PASSWORD: ${TCEM_SUPERVISOR_PASSWORD:-supervisor-demo}
+      TCEM_ADMIN_PASSWORD: ${TCEM_ADMIN_PASSWORD:-admin-demo}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 10s

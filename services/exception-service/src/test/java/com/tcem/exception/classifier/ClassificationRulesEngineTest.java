@@ -96,7 +96,7 @@ class ClassificationRulesEngineTest {
 
         assertThat(result.getConfirmedCategory()).isEqualTo(ExceptionCategory.BUSINESS_RULE_FAILURE);
         assertThat(result.getConfirmedSubTheme()).isEqualTo(ExceptionSubTheme.COUNTERPARTY_NOT_STP_ELIGIBLE);
-        assertThat(result.getClassificationConfidence()).isEqualTo(1.0);
+        assertThat(result.requiresManualReview()).isTrue();
     }
 
     @Test

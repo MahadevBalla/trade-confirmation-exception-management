@@ -3,6 +3,7 @@ package com.tcem.ingestion.couchdb;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,6 +20,10 @@ public class FindQueryRequest {
 
     @JsonProperty("skip")
     private Integer skip;
+
+    /** Mango sort, e.g. {@code [{"timestamp": "desc"}]}. Needs a matching index. */
+    @JsonProperty("sort")
+    private List<Map<String, String>> sort;
 
     public FindQueryRequest() {}
 
@@ -40,6 +45,9 @@ public class FindQueryRequest {
 
     public Integer getSkip() { return skip; }
     public void setSkip(Integer skip) { this.skip = skip; }
+
+    public List<Map<String, String>> getSort() { return sort; }
+    public void setSort(List<Map<String, String>> sort) { this.sort = sort; }
 
     public static class Builder {
         private Map<String, Object> selector;

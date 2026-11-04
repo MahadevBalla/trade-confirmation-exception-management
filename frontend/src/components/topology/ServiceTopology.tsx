@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 
 export const ServiceTopology: React.FC = () => {
-  const { metrics } = useApp();
+  const { metrics, serviceHealth, connection, dlqEntries } = useApp();
+  const live = serviceHealth !== null;
 
   const services = [
     { name: 'ingestion-service', port: 8081, role: 'Schema validation & Raw persistence', spec: 'FR1–FR3', status: 'Healthy' },
@@ -27,8 +28,8 @@ export const ServiceTopology: React.FC = () => {
     { name: 'exception.created', producer: 'validation-service', consumer: 'exception-service', count: metrics.exceptionsCount },
     { name: 'exception.classified', producer: 'exception-service', consumer: 'workitem-service', count: metrics.exceptionsCount },
     { name: 'workitem.linked', producer: 'workitem-service', consumer: 'workitem-service / UI', count: metrics.activeWorkItemsCount },
-    { name: 'manual.review.required', producer: 'exception-service', consumer: 'workitem-service / UI', count: 2 },
-    { name: 'deadletter.trade', producer: 'any service on error', consumer: 'workitem-service (replay)', count: metrics.dlqCount },
+    { name: 'manual.review.required', producer: 'exception-service', consumer: 'workitem-service / UI', count: metrics.manualReviewCount },
+    { name: 'deadletter.trade', producer: 'any service on error', consumer: 'workitem-service (replay)', count: live ? dlqEntries.length : metrics.dlqCount },
   ];
 
   const databases = [
@@ -50,14 +51,14 @@ export const ServiceTopology: React.FC = () => {
             <h2>Event-Driven Architecture &amp; Topic Topology (Spec §5)</h2>
           </div>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Real-time topology view of Apache Kafka (KRaft event streaming), Apache CouchDB (JSON document store), and the 5 decoupled Java Spring Boot microservices.
+            Topology view of Apache Kafka (KRaft event streaming), Apache CouchDB (JSON document store), and the 5 decoupled Java Spring Boot microservices.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            Broker: KRaft Mode (Healthy)
+            {live ? `Backend: ${connection.status}` : 'Broker: KRaft Mode (Healthy)'}
           </span>
         </div>
       </div>
@@ -87,10 +88,17 @@ export const ServiceTopology: React.FC = () => {
               </div>
 
               <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  {svc.status}
-                </span>
+                {(() => {
+                  const status = serviceHealth?.[svc.name] ?? svc.status;
+                  const bad = status === 'Unreachable';
+                  const neutral = status === 'No API to check' || status === 'Checking';
+                  return (
+                    <span className={`flex items-center gap-1.5 font-medium ${bad ? 'text-red-400' : neutral ? 'text-slate-400' : 'text-emerald-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${bad ? 'bg-red-400' : neutral ? 'bg-slate-500' : 'bg-emerald-400'}`}></span>
+                      {status}
+                    </span>
+                  );
+                })()}
                 <span className="text-slate-500 font-mono">Step {i + 1}</span>
               </div>
             </div>
@@ -115,7 +123,7 @@ export const ServiceTopology: React.FC = () => {
                 <th className="py-2.5 px-4">Topic Name</th>
                 <th className="py-2.5 px-4">Producer Service</th>
                 <th className="py-2.5 px-4">Consumer Service</th>
-                <th className="py-2.5 px-4 text-right">Processed Messages</th>
+                <th className="py-2.5 px-4 text-right" title={live ? 'Records stored by the services, not Kafka message offsets' : undefined}>{live ? 'Stored Records' : 'Processed Messages'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">

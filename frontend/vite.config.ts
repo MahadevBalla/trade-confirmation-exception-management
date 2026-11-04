@@ -13,6 +13,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/trades': { target: 'http://localhost:8081', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
+      '/api/auth': { target: 'http://localhost:8081', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
+      '/api/audit': { target: 'http://localhost:8081', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
       '/api/metrics': { target: 'http://localhost:8081', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
       '/api/enrichment': { target: 'http://localhost:8082', changeOrigin: true, rewrite: (path) => path.replace(/^\/api/, '') },
       '/api/validation': { target: 'http://localhost:8083', changeOrigin: true, rewrite: (path) => path.replace(/^\/api\/validation/, '') },

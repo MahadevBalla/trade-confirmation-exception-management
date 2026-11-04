@@ -3,17 +3,19 @@ import { useApp } from '../../context/useApp';
 import { Clock, ShieldAlert } from 'lucide-react';
 
 export const AgingChart: React.FC = () => {
-  const { exceptions } = useApp();
+  const { exceptions, metrics } = useApp();
 
   // Bucket exceptions by age/SLA
   const openExceptions = exceptions.filter((e) => e.status !== 'RESOLVED' && e.status !== 'CLOSED');
 
-  // Realistic buckets
+  // Demo mode keeps its illustrative counts; live mode measures the age of each open exception.
+  const counts = metrics.agingBuckets ?? [2, 3, 1, 0];
+
   const buckets = [
-    { label: '< 2 Hours', desc: 'Fresh / Well within SLA', count: 2, color: 'bg-emerald-500', text: 'text-emerald-400' },
-    { label: '2 – 6 Hours', desc: 'Active Investigation', count: 3, color: 'bg-blue-500', text: 'text-blue-400' },
-    { label: '6 – 24 Hours', desc: 'Elevated SLA Risk', count: 1, color: 'bg-amber-500', text: 'text-amber-400' },
-    { label: '> 24 Hours', desc: 'SLA Breached / Overdue', count: 0, color: 'bg-rose-500', text: 'text-rose-400' },
+    { label: '< 2 Hours', desc: 'Fresh / Well within SLA', count: counts[0], color: 'bg-emerald-500', text: 'text-emerald-400' },
+    { label: '2 – 6 Hours', desc: 'Active Investigation', count: counts[1], color: 'bg-blue-500', text: 'text-blue-400' },
+    { label: '6 – 24 Hours', desc: 'Elevated SLA Risk', count: counts[2], color: 'bg-amber-500', text: 'text-amber-400' },
+    { label: '> 24 Hours', desc: 'SLA Breached / Overdue', count: counts[3], color: 'bg-rose-500', text: 'text-rose-400' },
   ];
 
   return (

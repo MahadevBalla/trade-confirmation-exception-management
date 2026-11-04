@@ -8,6 +8,7 @@ import type {
   DeadLetterEvent,
   OperationsMetrics,
   UserRole,
+  DataMode,
 } from '../types/tcem';
 import {
   INITIAL_TRADES,
@@ -22,10 +23,17 @@ import {
   AppContext,
   type ToastMessage,
   type StreamEventNotice,
+  type ConnectionState,
   isOpenReviewItem,
 } from './AppContextInstance';
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const DEMO_CONNECTION: ConnectionState = { status: 'connected', unavailable: [], lastUpdated: null };
+
+/** The in-browser simulation: invented data and simulated actions, with no backend calls. */
+export const MockAppProvider: React.FC<{
+  children: React.ReactNode;
+  setDataMode: (mode: DataMode) => void;
+}> = ({ children, setDataMode }) => {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [userRole, setUserRole] = useState<UserRole>('OPERATIONS_SPECIALIST');
 
@@ -87,6 +95,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dlqCount,
       slaBreachRiskCount,
       avgResolutionTimeMinutes: 14.5,
+      manualReviewCount: trades.filter((t) => t.status === 'MANUAL_REVIEW').length,
     };
   }, [trades, exceptions, workItems, dlqEntries]);
 
@@ -786,6 +795,15 @@ Settlement:               STANDARD DELIVERY (T+2)
   return (
     <AppContext.Provider
       value={{
+        dataMode: 'demo',
+        setDataMode,
+        connection: DEMO_CONNECTION,
+        serviceHealth: null,
+        seedTrades: () => undefined,
+        currentUser: null,
+        signOut: () => undefined,
+        canReview: true,
+        canReplay: true,
         activeTab,
         setActiveTab,
         userRole,

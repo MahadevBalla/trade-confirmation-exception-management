@@ -36,6 +36,8 @@ public class TradeQueryController {
 
     private static final Logger log = LoggerFactory.getLogger(TradeQueryController.class);
 
+    private static final int MAX_AUDIT_PAGE_SIZE = 1000;
+
     private final TradeCouchDbRepository tradeRepository;
     private final AuditCouchDbRepository auditRepository;
     private final IngestionMetricsService metricsService;
@@ -111,6 +113,8 @@ public class TradeQueryController {
             trades = tradeRepository.findAll(safeSize, skip);
         }
 
+        // The raw message is only needed on the detail view; it would double the size of every poll.
+        trades.forEach(trade -> trade.setRawPayload(null));
         return ResponseEntity.ok(new TradeListResponse(trades, safePage, safeSize, status));
     }
 
@@ -129,6 +133,19 @@ public class TradeQueryController {
     /**
      * Returns ingestion throughput and validation breakdown summary.
      */
+    /**
+     * Returns the most recent audit events across all trades and services, newest first (FR11).
+     */
+    @GetMapping("/audit")
+    public ResponseEntity<Map<String, Object>> listAudit(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "100") int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), MAX_AUDIT_PAGE_SIZE);
+        List<AuditDocument> events = auditRepository.findRecent(safeSize, safePage * safeSize);
+        return ResponseEntity.ok(Map.of("content", events, "page", safePage, "size", safeSize, "count", events.size()));
+    }
+
     @GetMapping("/trades/metrics/summary")
     public ResponseEntity<IngestionMetricsSummary> getMetricsSummary() {
         return ResponseEntity.ok(metricsService.getSummary());

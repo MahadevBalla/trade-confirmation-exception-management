@@ -37,7 +37,13 @@ public class BusinessRuleFailureRule implements ClassificationRule {
 
         ExceptionSubTheme inboundSubTheme = record.getSubTheme();
 
-        if (inboundSubTheme != null && VALID_SUB_THEMES.contains(inboundSubTheme)) {
+        if (inboundSubTheme == ExceptionSubTheme.COUNTERPARTY_NOT_STP_ELIGIBLE) {
+            // Whether to trade with a non-eligible counterparty is a human decision (spec section 12), so the
+            // confidence is capped below the manual-review threshold, as CounterpartyDisputeRule does.
+            result.confirmedSubTheme(inboundSubTheme)
+                    .withConfidence(0.5)
+                    .withDiagnosticNote("Counterparty is not STP-eligible; routed for a manual decision");
+        } else if (inboundSubTheme != null && VALID_SUB_THEMES.contains(inboundSubTheme)) {
             result.confirmedSubTheme(inboundSubTheme)
                     .withConfidence(1.0);
         } else if (inboundSubTheme == ExceptionSubTheme.UNKNOWN || inboundSubTheme == null) {

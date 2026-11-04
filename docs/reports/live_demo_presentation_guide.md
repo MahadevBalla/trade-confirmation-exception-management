@@ -4,9 +4,11 @@
 **Format:** 100% Live Screen-Shared Demonstration (NO SLIDES / NO PPT)  
 **Total Duration:** ~15 Minutes (12 mins demo + 3 mins Q&A)  
 **Target Audience:** Evaluators, Enterprise Architects, and Business Stakeholders  
-**Branch:** `fix/code-consistency` (7 critical showstoppers and 19 Sprint 2 fixes resolved)  
+**Branch:** `feat/frontend-live-data` (7 critical showstoppers and 20 Sprint 2 fixes resolved; the UI runs on real data)  
 
 ---
+
+> **The UI now shows real backend data by default, after signing in.** Check that the navbar badge says **LIVE**. Clicking a scenario button publishes a real trade to Kafka, and approve, reject, replay and resolve all call the backend, with your role enforced by the API. **DEMO DATA** is the old in-browser simulation: use it only as a fallback if the stack fails, and say so if you do. Some speaking scripts below were written for the simulation, so each presenter should rehearse their act against the live screens.
 
 ## 1. Pre-Flight Setup & Environment Checklist (Done 10 mins Before Demo)
 
@@ -172,13 +174,13 @@ All 6 team members will actively participate, speaking to the exact service doma
 #### Speaking Script:
 > *"Thanks Oren. To tie the entire ecosystem together, our React 19 frontend provides executive operations leadership with a single pane of glass:*
 >
-> 1. *Executive Metrics (FR3): Real-time STP rate gauge (tracking our 85%+ target), active exceptions counter, and aged items breakdown.*
+> 1. *Executive Metrics (FR3): Real-time STP rate gauge (79% on the seed data, which deliberately includes edge cases, against an 85% target), active exceptions counter, and aged items breakdown.*
 > 2. *Live Stream Event Ticker: Real-time visual heartbeat of Kafka events pulsing across microservices.*
 > 3. *Interactive Service Topology: On the Topology tab, operators and system architects can visualize the physical decoupling of our 5 Spring Boot microservices, the 10 Kafka topics connecting them, and the underlying CouchDB document databases.*
 >
 > *To prepare for enterprise production readiness, our team also completed a comprehensive 37-finding architectural consistency audit. We eliminated all critical containerization showstoppers, hardened our Kafka persistence volumes, and aligned our data contracts.*
 >
-> *We have also completed end-to-end replay tracking, automated confirmation generation from manual reviews, and full-pipeline CI coverage. Our roadmap now covers wiring this UI to the live APIs.*
+> *Everything you have seen on this screen is live: real trades, flowing through Kafka and CouchDB. We have also completed end-to-end replay tracking, confirmation generation from manual reviews, and full-pipeline CI coverage. Our roadmap covers scaling this UI beyond demo volumes.*
 >
 > *We are proud to present TCEM as a complete, scalable, and resilient trade confirmation exception management platform. Thank you, and we now welcome your questions."*
 
@@ -192,40 +194,18 @@ To guarantee a 100% smooth, glitch-free presentation, every team member must str
 |:---|:---|:---|:---|
 | **Trade Generation** | Ingest clean synthetic batches (`--generate 5`). | Do not replay a `CANCEL_TRADE`. | Replay overwrites the event type, so a replayed cancel runs through STP. |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. A freshly booted stack is unaffected. |
-| **Manual Review** | Showcase Manual Review queue, rule cards, and decision buttons. | Do not claim the UI buttons trigger the backend. To show a real confirmation from an approval, use the commands in Section 4.1. | The frontend is a simulation (C4-01). The backend flow works since C3-01 was fixed. The 500-trade seed creates no manual review items, so create one through the API. |
-| **DLQ Console** | Expand diagnostics and show stack traces. | Do not claim the UI replay button calls the backend. To show a real replay, use `POST /dlq/{id}/replay` (Section 4.1). | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |
-| **Frontend State** | Filter queues, search counterparties, and inspect modals. | Do not refresh the browser mid-demo if you want to keep seeded session data. | Frontend runs state simulation with mock fallback (C4-01). |
+| **Manual Review** | Approve or reject a real trade from the queue, then show its confirmation or dead-letter entry. | Do not describe a bilateral reconciliation in live mode. | The backend has no counterparty affirmation data, so that table only exists in demo mode. Live mode shows the real reason for review. |
+| **DLQ Console** | Run `./scripts/demo-dlq-failure.sh`, then click Replay Message on the new entry. | Do not use the malformed-message button to demonstrate replay. | Malformed messages are real dead letters but cannot be replayed. |
+| **Frontend State** | Refresh freely: live data comes from the backend. Work items and queues update within about 3 seconds. | Do not switch to DEMO DATA without saying so. | Demo mode is a simulation and resets on refresh (C4-01). |
 
 
-### 4.1 Showing the Real Backend Flow (Optional)
+### 4.1 Before You Present
 
-The frontend does not call these APIs, so run them in a terminal and show the result in Kafka UI or CouchDB Fauxton.
+The full steps, a demo day checklist and troubleshooting are in [`live-and-demo-data-guide.md`](../live-and-demo-data-guide.md).
 
-**Manual review approval (C3-01).** Sequence 9403 uses a counterparty that fails STP, so the trade is held rather than confirmed:
-
-```bash
-curl -s -X POST "localhost:8081/trades/generate/scenario?scenario=BUSINESS_RULE_NON_STP&sequence=9403&publishToKafka=true" > /dev/null
-sleep 5
-curl -s -o /dev/null -w "before approval: %{http_code}\n" localhost:8083/trades/TRD-009403/confirmation   # 404
-
-WI=$(curl -s -X POST localhost:8085/workitems -H 'Content-Type: application/json' \
-  -d '{"tradeId":"TRD-009403","type":"MANUAL_REVIEW","title":"Demo review","description":"Demo","ownerQueue":"OPERATIONS_REVIEW","priority":"MEDIUM"}' \
-  | jq -r .workItemId)
-curl -s -X POST "localhost:8085/workitems/$WI/review" -H 'Content-Type: application/json' \
-  -d '{"decision":"APPROVE","notes":"Eligible after review","reviewer":"supervisor-1"}' > /dev/null
-sleep 5
-curl -s localhost:8083/trades/TRD-009403/confirmation | jq '.status'                                       # "ALLEGED"
-```
-
-**DLQ replay.** List entries, then replay one by its `_id`. The status moves from `PENDING_REPLAY` to `REPLAY_SUCCEEDED` once the message reaches the next stage:
-
-```bash
-curl -s "localhost:8085/dlq?status=PENDING_REPLAY" | jq -r '.content[]._id'
-curl -s -X POST "localhost:8085/dlq/<_id>/replay" | jq '.dlqStatus'
-curl -s "localhost:8085/dlq/<_id>" | jq '.dlqStatus'
-```
-
-A normal seed produces no replayable entries, so this needs a real failure first (for example, a message that failed while a service's CouchDB database was unavailable).
+1. On a fresh stack, sign in as `admin` / `admin-demo`, then click **Load 500 seed trades** on the banner, **once**, then wait about a minute. Seeding again raises duplicate exceptions, and work items jump to about 400. Expect 485 distinct trades, 383 confirmed (79% STP) and 17 in manual review.
+2. To show replay, run `./scripts/demo-dlq-failure.sh` just before that part of the demo. It creates a real, replayable failure within a few seconds, and the entry appears on the Dead-Letter Queue screen.
+3. Use **Publish Clean STP** and the other buttons to show new trades arriving. Results appear within a few seconds.
 
 ---
 

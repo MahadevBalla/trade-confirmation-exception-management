@@ -8,7 +8,8 @@ import { useApp } from '../../context/useApp';
 import { Sparkles, Zap } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
-  const { triggerSyntheticScenario } = useApp();
+  const { triggerSyntheticScenario, dataMode } = useApp();
+  const verb = dataMode === 'live' ? 'Publish' : 'Simulate';
 
   return (
     <div className="space-y-6">
@@ -32,7 +33,7 @@ export const DashboardView: React.FC = () => {
             title="Inject clean trade that passes straight through to confirmation"
           >
             <Sparkles size={13} />
-            <span>Simulate Clean STP</span>
+            <span>{verb} Clean STP</span>
           </button>
           <button
             onClick={() => triggerSyntheticScenario('MISSING_STRIKE')}
@@ -40,15 +41,15 @@ export const DashboardView: React.FC = () => {
             title="Inject trade with missing strike to trigger exception pipeline"
           >
             <Sparkles size={13} />
-            <span>Simulate Missing Strike</span>
+            <span>{verb} Missing Strike</span>
           </button>
           <button
             onClick={() => triggerSyntheticScenario('TECHNICAL_DLQ')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-semibold transition-all"
-            title="Inject technical timeout to test Dead-Letter Queue & Replay"
+            title={dataMode === 'live' ? 'Publish invalid JSON, which goes to the Dead-Letter Queue and cannot be replayed' : 'Inject technical timeout to test Dead-Letter Queue & Replay'}
           >
             <Sparkles size={13} />
-            <span>Simulate DLQ Failure</span>
+            <span>{dataMode === 'live' ? 'Publish Malformed Message' : 'Simulate DLQ Failure'}</span>
           </button>
         </div>
       </div>

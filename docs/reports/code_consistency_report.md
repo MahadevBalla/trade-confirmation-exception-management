@@ -1,7 +1,7 @@
 # TCEM Code Consistency & System Risk Report
 
 **Audit Mode:** Multi-Phase Architecture & Code Consistency Audit  
-**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 19 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)  
+**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 20 Sprint 2 Fixes Remediated (Branches `fix/code-consistency`, `feat/frontend-live-data`)  
 **Target Repository:** `trade-confirmation-exception-management`  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Remediation Guide:** [`presentation_fixes_guide.md`](./presentation_fixes_guide.md)  
@@ -27,7 +27,7 @@
 - **Phase 4 (Completed):** Audited frontend React 19 application (`frontend`), Vite and Nginx reverse proxies, TypeScript types vs Java DTOs, `AppContext` state management, recommendation engine parity, and backend API integration.
 - **Phase 5 (Completed):** Audited DevOps infrastructure, Docker orchestration, initializers, JVM memory flags, and GitHub Actions CI.
 - **Remediation Sprint (Completed):** Fixed 7 critical demo-breaking showstoppers on `fix/code-consistency` (Docker build `.dockerignore`, Kafka persistence volume, CouchDB 25-limit cap, TypeScript enum alignment, DLQ dual-property models, enriched counterparty name display, and database provisioning). System health score upgraded from **68/100 to 86/100**.
-- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), C5-03, C5-05 and C5-06 (DevOps), and all remaining high-severity findings: C2-03, C2-04, C3-04, C3-05, C4-04 and C5-04, on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. **29 of 37 findings are now resolved; 8 remain, all low severity or cosmetic** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
+- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), C5-03, C5-05 and C5-06 (DevOps), and all remaining high-severity findings: C2-03, C2-04, C3-04, C3-05, C4-04 and C5-04, on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. C4-01 (live data in the UI) is resolved on `feat/frontend-live-data`. **30 of 37 findings are now resolved; 7 remain, all low severity or cosmetic** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
 
 ---
 
@@ -323,7 +323,7 @@
 
 ### Phase 4 Findings: Frontend UI Alignment, State Management & API Integration
 
-### 23. 🔴 BREAKS THE SYSTEM: Frontend Operates in 100% In-Memory Mock Isolation Without Backend API Wiring
+### 23. 🔴 BREAKS THE SYSTEM: Frontend Operates in 100% In-Memory Mock Isolation Without Backend API Wiring — ✅ [RESOLVED in `feat/frontend-live-data`]
 - **Location:** [AppContext.tsx:L1-L786](../../frontend/src/context/AppContext.tsx#L1-L786), [vite.config.ts:L14-L22](../../frontend/vite.config.ts#L14-L22), and [nginx.conf:L11-L82](../../frontend/nginx.conf#L11-L82).
 - **Issue:**
   Both `vite.config.ts` and `nginx.conf` define detailed proxy rules for `/api/trades`, `/api/metrics`, `/api/enrichment`, `/api/validation`, `/api/exceptions`, `/api/workitems`, and `/api/dlq`. However, the React frontend contains **zero network calls** (`fetch`, `axios`, `WebSocket`, or `EventSource`). All data collections (`trades`, `exceptions`, `workItems`, `confirmations`, `dlqEntries`, `auditTrail`) are initialized from `mockData.ts`. User mutations (DLQ replay, manual review sign-off, work item status update, exception resolution) mutate only local component state in `AppContext.tsx`.
@@ -331,6 +331,8 @@
   The frontend is completely disconnected from the live Spring Boot microservices, Kafka topics, and CouchDB databases. In a running environment, trades ingested by backend services never appear in the dashboard, and operational actions taken in the UI never dispatch to the backend Kafka pipeline.
 - **Recommended Remediation:**
   Create a backend API service layer (`frontend/src/services/apiClient.ts`) that calls the proxied `/api/...` endpoints on mount and dispatches actual REST mutations (`POST /api/dlq/{id}/replay`, `POST /api/workitems/{id}/review`), retaining mock data as an offline fallback.
+- **Resolution:**
+  The UI now runs on real backend data by default. `LiveAppProvider` polls the APIs every 3 seconds and sends every action to the backend; the simulation moved to `MockAppProvider` behind a visible LIVE / DEMO DATA switch, and the two never mix. This needed backend work the audit did not list: a trade lifecycle read model in `ingestion-service` (trade status previously stayed at `ACCEPTED`), `GET /audit` and `GET /confirmations`, routing non-eligible counterparties to manual review, and a generator and seed in which valid trades really are eligible. Values the UI invented are computed from real data in live mode or removed. *Limits:* the UI loads whole lists by polling, which suits demo volumes but not the 1M/day design target. Authentication was added afterwards: HTTP Basic with demo accounts on the write APIs of `ingestion-service` and `workitem-service`, with reads left open.
 
 ---
 
@@ -568,10 +570,12 @@ These were found while fixing and live-testing the items above. They are not par
 | `ingestion-service` had no `REPLAY` bypass | A second replay emitted a duplicate exception still carrying the replay marker, which was misread as a successful replay. | ✅ Fixed in `8b4435d` |
 | Replays routed to `manual.review.required` were not counted as success | The DLQ entry stayed in `REPLAYING`. | ✅ Fixed in `8b4435d` |
 | The original C5-02 fix did not persist Kafka data | See finding 31. | ✅ Fixed with `KAFKA_LOG_DIRS` |
-| DLQ API returns `_id`, not `id` | The `id` alias added for C4-02 will not match when the frontend is wired to the live API (C4-01). | 🟡 Open |
-| `BUSINESS_RULE_NON_STP` does not always fail STP | The scenario only sets a jurisdiction, which no rule checks. Outcome depends on the counterparty: `sequence` values 9103, 9403 and 9407 (counterparty 103) failed STP, while 9401 and 9402 (101, 102) were confirmed normally. | 🟡 Open |
-| The 500-trade seed produces no manual review items | Nothing in the seed routes to `manual.review.required`, so the real queue is empty after seeding. Create the item through the API to demonstrate it. | 🟡 Open |
+| DLQ API returns `_id`, not `id` | The `id` alias added for C4-02 would not match the live API. | ✅ Fixed: `adaptDlq` maps `_id` |
+| Generator counterparties made outcomes depend on sequence | Half of `VALID_STANDARD_STP` trades used ineligible counterparties and failed STP, and `BUSINESS_RULE_NON_STP` often passed. | ✅ Fixed: valid trades use eligible counterparties, business-rule trades use `PTY-CP-103`, seed updated. Seed STP rate rose from about 44% to 79% |
+| The 500-trade seed produced no manual review items | Nothing routed to `manual.review.required`. | ✅ Fixed: `COUNTERPARTY_NOT_STP_ELIGIBLE` routes to manual review; the seed now produces 17 |
 | Frontend healthcheck always failed | `localhost` resolves to `::1` in the image while nginx listens on IPv4 only, so the container was reported unhealthy and `docker compose up --wait` failed. | ✅ Fixed: healthcheck uses `127.0.0.1` |
+| One stopped service froze the whole UI | A poll waits for all sources, and a request to a stopped service hung for 39 seconds. Found while testing C4-01. | ✅ Fixed: client request timeouts, and a connect timeout on every gateway route |
+| STP chart labelled leftovers as dead letters | The segment was calculated as the remainder, so 34 schema-invalid trades showed as dead letters. Found while testing C4-01. | ✅ Fixed: each segment is counted directly |
 | A replayed `CANCEL_TRADE` runs through STP | Replay overwrites `eventType` with `REPLAY`, so `TradeEnrichedConsumer` no longer recognises the cancel. | 🟡 Open |
 | One approval confirms the whole trade | Approving a review closes the trade's other open work items, even a `DATA_FIX`, and can produce a confirmation with template `N/A`. | 🟡 Team to confirm this is the intended rule |
 
@@ -603,7 +607,7 @@ These were found while fixing and live-testing the items above. They are not par
 | **C3-07** | Phase 3 | `ExceptionCouchDbRepository` | `countAll()` caps exception counts at 1,000 and pulls full documents into heap memory. | 🟡 Low Risk (Sprint 2) | Low (Use CouchDB view / db metadata) |
 | **C3-08** | Phase 3 | Build Configuration (`pom.xml`) | Missing `-Dnet.bytebuddy.experimental=true` surefire argLine breaks tests on modern JDKs (Java 25+). | 🟡 Low Risk (Sprint 2) | Trivial (Update parent POM plugin config) |
 | **C3-09** | Phase 3 | `IdempotencyKey` Javadoc | Documents nonexistent workitem API for manual CouchDB idempotency record purging. | ✅ **RESOLVED (`8b4435d`)** | Trivial (Update Javadoc comments) |
-| **C4-01** | Phase 4 | `AppContext.tsx` | Frontend operates in an in-browser operational simulation harness; live REST binding scheduled for hardening phase. | 🟡 Managed Demo State | Architecture Decoupling |
+| **C4-01** | Phase 4 | `AppContext.tsx` | Frontend operates in an in-browser operational simulation harness; live REST binding scheduled for hardening phase. | ✅ **RESOLVED (`feat/frontend-live-data`)** | Architecture Decoupling |
 | **C4-02** | Phase 4 | `types/tcem.ts` (`DeadLetterEvent`) | Property naming divergence (`dlqId`/`status` vs backend `id`/`dlqStatus`) causes rendering/action failure against live API. | ✅ **RESOLVED (`370fa98`)** | Low (Dual-mapped attributes) |
 | **C4-03** | Phase 4 | `TradeDetailModal.tsx` | Party name reads `p.partyName` instead of `p.legalEntityName`, hiding enriched counterparty names. | ✅ **RESOLVED (`d00ccb6`)** | Trivial (Reads `p.legalEntityName`) |
 | **C4-04** | Phase 4 | `ManualReviewQueue.tsx` | Review action passes `tradeId` instead of `workItemId` to backend approval endpoint. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Look up and pass `workItemId`) |
@@ -629,7 +633,7 @@ These were found while fixing and live-testing the items above. They are not par
 - [x] **Phase 4: Frontend UI Alignment, State Management & API Integration (`frontend`)** (Findings C4-01 to C4-07)
 - [x] **Phase 5: DevOps, Docker Orchestration, Shell Scripts & Consolidated System Risk Matrix** (Findings C5-01 to C5-08)
 - [x] **Showstopper Remediation Sprint:** Fixed all 7 critical blockers (C5-01, C5-02, C2-02, C1-02, C4-02, C4-03, C3-06/C5-07) on `fix/code-consistency`.
-- [ ] **Sprint 2 Remediation (in progress):** all high-severity findings resolved on `fix/code-consistency`; 8 of 37 findings remain open, all low severity or cosmetic (see the risk matrix).
+- [ ] **Sprint 2 Remediation (in progress):** all high-severity findings and C4-01 resolved; 7 of 37 findings remain open, all low severity or cosmetic (see the risk matrix).
 
 ---
 
@@ -643,7 +647,7 @@ These were found while fixing and live-testing the items above. They are not par
 │                                                                        │
 │  Domain Modeling & Design:   ██████████████████░░  92/100 (Strong)     │
 │  DevOps & Containerization:  ██████████████████░░  92/100 (Hardened)   │
-│  Backend Unit Test Coverage: ██████████████████░░  88/100 (509 pass)   │
+│  Backend Unit Test Coverage: ██████████████████░░  88/100 (532 pass)   │
 │  Event Contracts & Enums:    █████████████████░░░  85/100 (Aligned)    │
 │  Operations Cockpit UI:      ██████████████░░░░░░  72/100 (Live Ready) │
 │                                                                        │

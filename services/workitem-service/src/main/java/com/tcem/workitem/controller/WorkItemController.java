@@ -91,14 +91,15 @@ public class WorkItemController {
     }
 
     @PatchMapping("/workitems/{id}")
-    public WorkItemDocument update(@PathVariable String id, @RequestBody UpdateWorkItemRequest request) {
+    public WorkItemDocument update(@PathVariable String id, @RequestBody UpdateWorkItemRequest request, java.security.Principal user) {
         return workItemService.update(id, request.status(), request.priority(), request.ownerQueue(),
-                request.notes(), request.actor());
+                request.notes(), user != null ? user.getName() : request.actor());
     }
 
     @PostMapping("/workitems/{id}/review")
-    public WorkItemDocument review(@PathVariable String id, @RequestBody ReviewRequest request) {
-        return manualReviewService.decide(id, request.decision(), request.notes(), request.reviewer());
+    public WorkItemDocument review(@PathVariable String id, @RequestBody ReviewRequest request, java.security.Principal user) {
+        return manualReviewService.decide(id, request.decision(), request.notes(),
+                user != null ? user.getName() : request.reviewer());
     }
 
     @ExceptionHandler(WorkItemException.class)

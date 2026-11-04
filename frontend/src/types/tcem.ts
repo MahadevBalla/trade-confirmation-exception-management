@@ -34,7 +34,8 @@ export type ProcessingStatus =
   | 'MANUAL_REVIEW'
   | 'RESOLVED'
   | 'DEAD_LETTER'
-  | 'REPLAYED';
+  | 'REPLAYED'
+  | 'CANCELLED';
 
 export type ConfirmationStatus =
   | 'MATCHED'
@@ -185,6 +186,9 @@ export interface Trade {
   nonEconomicTerms?: NonEconomicTerms;
   enrichmentMetadata?: ReferenceDataEnrichment;
   status: ProcessingStatus;
+  /** Live data only: when ingestion received the trade, and the header of the stored message. */
+  receivedAt?: string;
+  sourceHeader?: Partial<MessageHeader>;
 }
 
 export interface TradeEvent {
@@ -269,6 +273,8 @@ export interface AuditEvent {
   messageId: string;
   correlationId: string;
   fromStatus?: ProcessingStatus | null;
+  /** Pipeline stage, recorded by the backend in place of a from-status. */
+  stage?: string;
   toStatus: ProcessingStatus;
   serviceName: string;
   occurredAt: string;
@@ -314,6 +320,16 @@ export interface OperationsMetrics {
   dlqCount: number;
   slaBreachRiskCount: number;
   avgResolutionTimeMinutes: number;
+  manualReviewCount: number;
+  /** Live data only: open exceptions under 2h, 2-6h, 6-24h and over 24h old. */
+  agingBuckets?: [number, number, number, number];
+}
+
+export type DataMode = 'live' | 'demo';
+
+export interface SignedInUser {
+  username: string;
+  role: UserRole;
 }
 
 export type UserRole = 'OPERATIONS_SPECIALIST' | 'SUPERVISOR' | 'SYSTEM_ADMIN';

@@ -26,7 +26,7 @@ export const TradeDetailModal: React.FC = () => {
 
   // FpML-inspired canonical envelope (Spec §10)
   const canonicalEnvelope = {
-    messageHeader: {
+    messageHeader: trade.sourceHeader ?? {
       messageId: `MSG-${trade.tradeId}`,
       correlationId: `CORR-${trade.tradeId}`,
       eventType: 'NEW_TRADE',
@@ -294,7 +294,7 @@ export const TradeDetailModal: React.FC = () => {
                       </div>
                       <p className="text-slate-300 mt-1">{aud.detail}</p>
                       <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                        Status Transition: {aud.fromStatus || 'NULL'} &rarr; <span className="text-indigo-400 font-semibold">{aud.toStatus}</span>
+                        {aud.fromStatus ? 'Status Transition' : 'Stage'}: {aud.fromStatus || aud.stage || 'NULL'} &rarr; <span className="text-indigo-400 font-semibold">{aud.toStatus}</span>
                       </div>
                     </div>
                   ))

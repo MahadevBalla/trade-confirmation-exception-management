@@ -164,5 +164,15 @@ class ConfirmationQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalConfirmations").value(0));
     }
-}
 
+    @Test
+    @DisplayName("GET /confirmations: returns a page, with the size capped")
+    void listConfirmations_returnsPage() throws Exception {
+        when(confirmationRepository.findPage(1000, 0)).thenReturn(List.of(buildDoc("CONF-1", "TRD-1", 1)));
+
+        mockMvc.perform(get("/confirmations").param("size", "5000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(1))
+                .andExpect(jsonPath("$.content[0].confirmationId").value("CONF-1"));
+    }
+}

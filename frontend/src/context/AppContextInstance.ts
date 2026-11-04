@@ -7,6 +7,8 @@ import type {
   AuditEvent,
   DeadLetterEvent,
   OperationsMetrics,
+  DataMode,
+  SignedInUser,
   UserRole,
 } from '../types/tcem';
 
@@ -27,7 +29,26 @@ export interface StreamEventNotice {
   timestamp: string;
 }
 
+export interface ConnectionState {
+  status: 'connecting' | 'connected' | 'partial' | 'offline';
+  unavailable: string[];
+  lastUpdated: string | null;
+}
+
 export interface AppContextType {
+  // Data source: real backend data, or the in-browser simulation
+  dataMode: DataMode;
+  setDataMode: (mode: DataMode) => void;
+  connection: ConnectionState;
+  /** Live data only: what is known about each service, keyed by service name. */
+  serviceHealth: Record<string, string> | null;
+  seedTrades: () => void;
+  /** Live data only: the signed-in user. Demo mode has no sign-in and uses the role selector. */
+  currentUser: SignedInUser | null;
+  signOut: () => void;
+  canReview: boolean;
+  canReplay: boolean;
+
   // Navigation & Role
   activeTab: string;
   setActiveTab: (tab: string) => void;

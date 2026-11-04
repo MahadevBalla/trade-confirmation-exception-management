@@ -2,7 +2,7 @@
 
 **Author:** Mayank Chauhan (Team Lead)  
 **Target Deadline:** 3 Days to Presentation / Evaluation  
-**Status:** ✅ ALL 7 URGENT FIXES COMPLETED & COMMITTED (Branch `fix/code-consistency`)  
+**Status:** ✅ ALL 7 URGENT FIXES COMPLETED. The UI now runs on real data (see Section 3)  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Related Report:** [`code_consistency_report.md`](./code_consistency_report.md)  
 **Follow-up Fixes:** Sprint 2 fixes applied after the 7 showstoppers are recorded in [Section 7](#7-sprint-2-fixes-applied-after-the-showstoppers)  
@@ -183,6 +183,8 @@ provision_db "enrichment-idempotency"
 
 ## 3. The 3-Day Presentation Strategy (Decoupled Demo Architecture)
 
+> **Update:** C4-01 is now done on `feat/frontend-live-data`, reversing the advice below. The UI runs on real backend data, and the simulation remains available through the LIVE / DEMO DATA switch as a fallback for the risks listed here. See [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md).
+
 ### Why You Should NOT Rewire the Frontend Right Now (Issue C4-01)
 The frontend (`AppContext.tsx`) currently runs with rich, pre-loaded mock simulations (`INITIAL_TRADES`, `INITIAL_EXCEPTIONS`, live-event streaming ticker, SLA countdowns, and rule evaluation). 
 
@@ -256,8 +258,8 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 | :--- | :--- | :--- | :--- |
 | **Trade Ingestion** | Ingest clean new trades (`--generate 5`). | Do not replay a `CANCEL_TRADE`. | A cancel now cancels the trade's open work items (C2-04), but replay overwrites the event type, so a replayed cancel runs through STP. |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The `ConfirmationFingerprint` party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. |
-| **Manual Review** | Walk through the Manual Review Queue UI and recommendation cards. To show the real flow, use the API (see the live demo guide). | Do not claim the UI buttons call the backend. | The frontend is a simulation (C4-01). The backend flow itself works since C3-01 was fixed. |
-| **DLQ Management** | Show the DLQ screen, payload preview, and stack traces. To show a real replay, use `POST /dlq/{id}/replay`. | Do not claim the UI replay button calls the backend. | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |
+| **Manual Review** | Approve or reject a real trade in the queue. | Do not call the "Reason for Review" panel a bilateral reconciliation in live mode. | The backend has no counterparty affirmation data, so the comparison table only exists in demo mode. |
+| **DLQ Management** | Run `./scripts/demo-dlq-failure.sh`, then replay the entry from the screen. | Do not use the malformed-message button to demonstrate replay. | Malformed messages are real dead letters but cannot be replayed. |
 
 ---
 
@@ -265,8 +267,8 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 
 Include a **"System Audit & Sprint 2 Hardening Roadmap"** slide in your presentation. Presenting these points proactively turns audit findings into proof of senior architectural maturity:
 
-1. **Frontend Wiring:**
-   - *"The operations UI runs on a simulation harness. Wiring it to the live REST APIs through the existing gateway routes is the next step (C4-01)."*
+1. **Scale of the UI:**
+   - *"The operations UI polls whole lists, which suits demo volumes. Reaching the 1M/day target needs server-side pagination and a push channel."*
 2. **Replay Scope:**
    - *"Replay is working end to end. The next refinement is keeping the original event type on a replayed message, so a replayed cancel is still treated as a cancel."*
 3. **Cancellation Coverage:**
@@ -309,3 +311,21 @@ Further findings from [`code_consistency_report.md`](./code_consistency_report.m
 **Verification of the high-severity fixes:** `mvn verify` passes (509 tests, 0 failures). All 14 deliberately broken versions of the backend fixes were caught by tests. The CI workflow's steps pass locally with shifted ports (smoke 15 of 15, pipeline 12 of 12), and `pipeline-test.sh` fails on the code without C2-03 and C2-04. C4-04 was checked in a real browser against the old and new builds. C3-04 and C3-05 are covered by unit tests only.
 
 **C2-03 changes the demo numbers:** missing economics now show as accepted at ingestion and fail at STP. On the 500-trade seed, ingestion rejections fall from 85 to 34, STP failures rise from 199 to 250, and confirmations stay at 201.
+
+## 8. Live Data in the UI (C4-01)
+
+Done on `feat/frontend-live-data`.
+
+| Area | Change |
+| :--- | :--- |
+| Trade status | New `TradeLifecycleConsumer` keeps `trades` current and stores the enriched trade. A status only moves forward; `CANCELLED` is final; a replay can bring a trade back from `DEAD_LETTER` |
+| New APIs | `GET /audit` (newest first, using a CouchDB index) and `GET /confirmations`. `GET /trades` no longer returns `rawPayload` in lists |
+| Manual review | `COUNTERPARTY_NOT_STP_ELIGIBLE` routes to manual review, so the queue fills from real trades |
+| Data | Valid trades use eligible counterparties, and `BUSINESS_RULE_NON_STP` always uses `PTY-CP-103`. 246 seed trades updated |
+| UI | `LiveAppProvider` and `MockAppProvider` behind a visible switch, with banners for offline, partial outage and empty states |
+
+**Sign-in added afterwards:** demo accounts `ops`, `supervisor` and `admin` (see [`live-and-demo-data-guide.md`](../live-and-demo-data-guide.md)). Reviews need supervisor or admin, replay needs admin, and other changes need any signed-in user. Reads stay open, and demo mode needs no sign-in, so it still works when the backend is down.
+
+**Verification:** `mvn verify` passes (532 tests). All 16 deliberately broken versions of the new backend logic were caught by tests. `pipeline-test.sh` passes 18 of 18 and fails 9 checks on the previous commit. A one-off browser run through the gateway passed 68 checks, comparing the screens with the backend APIs, including a seed, approve, reject, resolve, replay, a stopped service, a full outage, recovery and the demo mode flow. That browser script is not in the repo.
+
+**The numbers change again.** On the 500-trade seed: 485 distinct trades, 383 confirmed (79% STP), 17 in manual review, 51 other STP failures and 34 rejected at ingestion. The 79% is below the 85% target because the seed deliberately includes edge cases.

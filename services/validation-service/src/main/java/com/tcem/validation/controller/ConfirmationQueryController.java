@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
@@ -45,6 +46,19 @@ public class ConfirmationQueryController {
 
     public ConfirmationQueryController(ConfirmationCouchDbRepository confirmationRepository) {
         this.confirmationRepository = confirmationRepository;
+    }
+
+    /**
+     * Retrieves a page of confirmations across all trades.
+     */
+    @GetMapping("/confirmations")
+    public ResponseEntity<Map<String, Object>> listConfirmations(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "100") int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 1000);
+        List<ConfirmationDocument> content = confirmationRepository.findPage(safeSize, safePage * safeSize);
+        return ResponseEntity.ok(Map.of("content", content, "page", safePage, "size", safeSize, "count", content.size()));
     }
 
     /**

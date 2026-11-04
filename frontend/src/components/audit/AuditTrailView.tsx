@@ -4,7 +4,7 @@ import { StatusBadge } from '../common/StatusBadge';
 import { History, Search, Filter, RotateCcw, ExternalLink } from 'lucide-react';
 
 export const AuditTrailView: React.FC = () => {
-  const { auditTrail, setSelectedTradeId, setActiveTab } = useApp();
+  const { auditTrail, setSelectedTradeId, setActiveTab, dataMode } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [serviceFilter, setServiceFilter] = useState('ALL');
@@ -47,7 +47,7 @@ export const AuditTrailView: React.FC = () => {
         </div>
 
         <div className="px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-semibold shrink-0">
-          Recorded Events: {auditTrail.length}
+          {dataMode === 'live' ? 'Latest Events' : 'Recorded Events'}: {auditTrail.length}
         </div>
       </div>
 
@@ -101,7 +101,7 @@ export const AuditTrailView: React.FC = () => {
                 filteredAudits.map((a) => (
                   <tr key={a.auditEventId} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-200 font-mono">{a.auditEventId}</div>
+                      <div className="font-bold text-slate-200 font-mono" title={a.auditEventId}>{a.auditEventId.replace(/^audit:[^:]*:\d+:/, 'AUD-')}</div>
                       <div className="text-[11px] text-slate-500 font-mono mt-0.5">{a.occurredAt}</div>
                       {a.isReplay && (
                         <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-400 font-semibold border border-cyan-500/30">
@@ -135,7 +135,7 @@ export const AuditTrailView: React.FC = () => {
 
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
-                        <span>{a.fromStatus || 'INIT'}</span>
+                        <span>{a.fromStatus || a.stage || 'INIT'}</span>
                         <span className="text-slate-600">&rarr;</span>
                         <StatusBadge status={a.toStatus} />
                       </div>

@@ -11,6 +11,12 @@ import {
   Cpu,
 } from 'lucide-react';
 
+const ROLE_LABELS: Record<UserRole, string> = {
+  OPERATIONS_SPECIALIST: 'Operations',
+  SUPERVISOR: 'Supervisor',
+  SYSTEM_ADMIN: 'Admin',
+};
+
 export const Navbar: React.FC = () => {
   const {
     userRole,
@@ -19,11 +25,30 @@ export const Navbar: React.FC = () => {
     setIsStreaming,
     triggerSyntheticScenario,
     metrics,
+    dataMode,
+    setDataMode,
+    connection,
+    currentUser,
+    signOut,
   } = useApp();
 
   const [showScenarioMenu, setShowScenarioMenu] = useState(false);
 
-  const scenarios = [
+  const live = dataMode === 'live';
+  const connectionLabel = {
+    connecting: 'Connecting...',
+    connected: 'Backend: Connected',
+    partial: 'Backend: Partly unavailable',
+    offline: 'Backend: Unreachable',
+  }[connection.status];
+  const connectionHealthy = connection.status === 'connected';
+
+  const scenarios = live ? [
+    { id: 'CLEAN_STP', label: '1. Clean STP Happy Path', desc: 'Publishes a valid FX Option -> STP Passed -> Confirmation Generated' },
+    { id: 'MISSING_STRIKE', label: '2. Missing Economic Strike', desc: 'Publishes a trade with no strike -> STP Failed -> Data Remediation' },
+    { id: 'TECHNICAL_DLQ', label: '3. Malformed Message (DLQ)', desc: 'Publishes invalid JSON -> deadletter.trade, not replayable' },
+    { id: 'MANUAL_DISPUTE', label: '4. Non-Eligible Counterparty', desc: 'Publishes a trade with an ineligible counterparty -> Manual Review' },
+  ] : [
     { id: 'CLEAN_STP', label: '1. Clean STP Happy Path', desc: 'FX Option -> STP Passed -> Confirmation Generated' },
     { id: 'MISSING_STRIKE', label: '2. Missing Economic Strike', desc: 'Triggers MISSING_ECONOMIC_DATA -> Data Remediation Queue' },
     { id: 'TECHNICAL_DLQ', label: '3. Technical Timeout (DLQ)', desc: 'Routes to deadletter.trade with diagnostic stack trace' },
@@ -52,12 +77,20 @@ export const Navbar: React.FC = () => {
         {/* Kafka Broker Live Pill */}
         <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-xs">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            {(!live || connectionHealthy) && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            )}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${!live || connectionHealthy ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
           </span>
-          <span className="text-slate-300 font-mono">Kafka: Online</span>
-          <span className="text-slate-500">•</span>
-          <span className="text-slate-400">CouchDB: Connected</span>
+          {live ? (
+            <span className="text-slate-300 font-mono">{connectionLabel}</span>
+          ) : (
+            <>
+              <span className="text-slate-300 font-mono">Kafka: Online</span>
+              <span className="text-slate-500">•</span>
+              <span className="text-slate-400">CouchDB: Connected</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -100,6 +133,19 @@ export const Navbar: React.FC = () => {
           )}
         </div>
 
+        {/* Data source switch */}
+        <button
+          onClick={() => setDataMode(live ? 'demo' : 'live')}
+          title={live ? 'Showing real backend data. Click for the in-browser simulation.' : 'Showing simulated data. Click for real backend data.'}
+          className={`rounded-lg border px-2 py-1.5 text-xs font-bold tracking-wide ${
+            live
+              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+              : 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+          }`}
+        >
+          {live ? 'LIVE' : 'DEMO DATA'}
+        </button>
+
         {/* Live Auto-Stream Toggle */}
         <button
           onClick={() => setIsStreaming(!isStreaming)}
@@ -108,7 +154,7 @@ export const Navbar: React.FC = () => {
               ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
               : 'bg-slate-800 hover:bg-slate-700/80 border-slate-700 text-slate-300'
           }`}
-          title={isStreaming ? 'Stop streaming simulator' : 'Start auto-generating synthetic trade events'}
+          title={live ? (isStreaming ? 'Stop publishing trades' : 'Publish a synthetic trade to Kafka every few seconds') : (isStreaming ? 'Stop streaming simulator' : 'Start auto-generating synthetic trade events')}
         >
           {isStreaming ? (
             <>
@@ -126,6 +172,19 @@ export const Navbar: React.FC = () => {
         {/* Role Selector (Spec §9 Stretch, §13 Security) */}
         <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
           <Cpu size={14} className="text-slate-400 hidden sm:block" />
+          {currentUser ? (
+            <span className="flex items-center gap-2 text-xs text-slate-300" title={`Signed in as ${currentUser.username}`}>
+              <span>
+                <strong className="text-white">{currentUser.username}</strong> ({ROLE_LABELS[currentUser.role]})
+              </span>
+              <button
+                onClick={signOut}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 font-medium hover:bg-slate-700"
+              >
+                Sign out
+              </button>
+            </span>
+          ) : (
           <select
             value={userRole}
             onChange={(e) => setUserRole(e.target.value as UserRole)}
@@ -135,6 +194,7 @@ export const Navbar: React.FC = () => {
             <option value="SUPERVISOR">Role: Supervisor / Lead</option>
             <option value="SYSTEM_ADMIN">Role: System Administrator</option>
           </select>
+          )}
         </div>
 
         {/* Live STP badge */}

@@ -1,8 +1,9 @@
-import { AppProvider } from './context/AppContext';
+import { AppProvider } from './context/AppProvider';
 import { useApp } from './context/useApp';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { ToastContainer } from './components/layout/ToastContainer';
+import { DataStatusBanner } from './components/layout/DataStatusBanner';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { TradeList } from './components/trades/TradeList';
 import { ExceptionQueue } from './components/exceptions/ExceptionQueue';
@@ -17,6 +18,7 @@ const MainContent: React.FC = () => {
 
   return (
     <main className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-950/40">
+      <DataStatusBanner />
       {activeTab === 'dashboard' && <DashboardView />}
       {activeTab === 'trades' && <TradeList />}
       {activeTab === 'exceptions' && <ExceptionQueue />}

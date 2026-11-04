@@ -36,6 +36,8 @@ export const TradeList: React.FC = () => {
     { id: 'MANUAL_REVIEW', label: 'Manual Review' },
     { id: 'WORKITEM_LINKED', label: 'Work Item Linked' },
     { id: 'DEAD_LETTER', label: 'Dead Letter (DLQ)' },
+    { id: 'SCHEMA_INVALID', label: 'Schema Invalid' },
+    { id: 'CANCELLED', label: 'Cancelled' },
   ];
 
   return (

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 export const ManualReviewQueue: React.FC = () => {
-  const { trades, workItems, approveManualReview, rejectManualReview, setSelectedTradeId, setActiveTab } = useApp();
+  const { trades, workItems, exceptions, dataMode, canReview, approveManualReview, rejectManualReview, setSelectedTradeId, setActiveTab } = useApp();
 
   // The queue is driven by open MANUAL_REVIEW work items, as on the backend (GET /workitems?type=MANUAL_REVIEW).
   const reviewItems = workItems.filter(isOpenReviewItem);
@@ -28,6 +28,7 @@ export const ManualReviewQueue: React.FC = () => {
 
   const currentTrade = manualTrades.find((t) => t.tradeId === selectedTrade) || manualTrades[0];
   const currentReviewItem = reviewItems.find((w) => w.tradeId === currentTrade?.tradeId);
+  const tradeExceptions = exceptions.filter((e) => e.tradeId === currentTrade?.tradeId);
 
   const handleApprove = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,6 +157,8 @@ export const ManualReviewQueue: React.FC = () => {
                 </button>
               </div>
 
+              {dataMode === 'demo' ? (
+                <>
               {/* Bilateral Comparison Table */}
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
@@ -225,6 +228,39 @@ export const ManualReviewQueue: React.FC = () => {
                   </table>
                 </div>
               </div>
+                </>
+              ) : (
+                <>
+              {/* Why this trade needs a decision (live data has no counterparty affirmation to compare against) */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+                  <ShieldAlert size={15} className="text-amber-400" />
+                  <span>Reason for Review</span>
+                </h4>
+                <div className="space-y-2">
+                  {tradeExceptions.map((e) => (
+                    <div key={e.exceptionId} className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-xs space-y-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-amber-300">{e.subTheme ?? e.category}</span>
+                        <span className="font-mono text-slate-500">{e.exceptionId}</span>
+                      </div>
+                      <p className="text-slate-300">{e.reasonCode}</p>
+                      <p className="text-slate-400">{e.recommendedAction}</p>
+                    </div>
+                  ))}
+                  {tradeExceptions.length === 0 && (
+                    <p className="text-xs text-slate-400">{currentReviewItem?.description}</p>
+                  )}
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-xs sm:grid-cols-4">
+                  <div><dt className="text-slate-500">Notional</dt><dd className="font-mono text-white">{currentTrade.fxOptionEconomics?.notionalCurrency} {currentTrade.fxOptionEconomics?.notionalAmount?.toLocaleString() ?? 'MISSING'}</dd></div>
+                  <div><dt className="text-slate-500">Strike</dt><dd className="font-mono text-white">{currentTrade.fxOptionEconomics?.strike ?? 'MISSING'}</dd></div>
+                  <div><dt className="text-slate-500">Underlier</dt><dd className="font-mono text-white">{currentTrade.fxOptionEconomics?.underlier ?? 'MISSING'}</dd></div>
+                  <div><dt className="text-slate-500">Counterparty</dt><dd className="text-white">{currentTrade.parties.find((party) => party.partyRole === 'COUNTERPARTY')?.legalEntityName ?? currentTrade.parties.find((party) => party.partyRole === 'COUNTERPARTY')?.partyId}</dd></div>
+                </dl>
+              </div>
+                </>
+              )}
 
               {/* Review Actions Bar */}
               <div className="pt-2 border-t border-slate-800">
@@ -232,12 +268,15 @@ export const ManualReviewQueue: React.FC = () => {
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs text-slate-400">
                       Determine operational verdict for trade {currentTrade.tradeId} (work item {currentReviewItem?.workItemId}):
+                      {!canReview && <span className="block text-amber-300">Only a supervisor or admin can decide a review.</span>}
                     </span>
 
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setActionType('REJECT')}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-semibold transition-colors"
+                        disabled={!canReview}
+                        title={canReview ? undefined : 'Only a supervisor or admin can decide a review'}
+                        className="disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-semibold transition-colors"
                       >
                         <XCircle size={15} />
                         <span>Reject to DLQ</span>
@@ -245,7 +284,9 @@ export const ManualReviewQueue: React.FC = () => {
 
                       <button
                         onClick={() => setActionType('APPROVE')}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition-colors"
+                        disabled={!canReview}
+                        title={canReview ? undefined : 'Only a supervisor or admin can decide a review'}
+                        className="disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition-colors"
                       >
                         <CheckCircle2 size={15} />
                         <span>Approve &amp; Generate Confirmation</span>

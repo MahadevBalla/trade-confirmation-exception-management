@@ -98,4 +98,14 @@ class SyntheticTradeGeneratorTest {
         JsonNode node = objectMapper.readTree(batch.get(0));
         assertThat(node.get("trade").get("tradeId").asText()).isEqualTo("TRD-000001");
     }
+
+    @Test
+    void validTradesUseEligibleCounterpartiesAndBusinessRuleTradesDoNot() throws Exception {
+        for (int sequence = 1; sequence <= 8; sequence++) {
+            assertThat(generator.generateTradeJson(TradeScenarioType.VALID_STANDARD_STP, sequence))
+                    .containsAnyOf("PTY-CP-101", "PTY-CP-102");
+            assertThat(generator.generateTradeJson(TradeScenarioType.BUSINESS_RULE_NON_STP, sequence))
+                    .contains("PTY-CP-103");
+        }
+    }
 }

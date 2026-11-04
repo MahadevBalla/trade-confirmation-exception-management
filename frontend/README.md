@@ -6,6 +6,19 @@ Built with **React 19**, **TypeScript 5.8+**, **Vite 8**, and **Tailwind CSS v4*
 
 ---
 
+## Data Sources
+
+For how to run and use each mode, see [`docs/live-and-demo-data-guide.md`](../docs/live-and-demo-data-guide.md).
+
+The UI has two modes, shown by the badge in the navbar:
+
+- **LIVE (default):** real data from the backend, after signing in. `context/LiveAppProvider.tsx` polls the APIs through `/api/*` every 3 seconds (`services/api.ts`), converts the responses (`services/adapters.ts`), and sends every action to the backend.
+- **DEMO DATA:** the in-browser simulation in `context/MockAppProvider.tsx`, using `data/mockData.ts`. It needs no backend, and is a fallback for when the stack is unavailable.
+
+Screens read from `useApp()` and don't need to know which mode is active, apart from a few that hide or label simulated content. The two modes never mix. If the backend is unreachable, the UI says so and offers demo mode rather than switching by itself.
+
+The feature descriptions below were written for the simulation. Live mode has no bilateral comparison table, because the backend holds no counterparty affirmation data.
+
 ## 🚀 Key Features & Architectural Compliance
 
 ### 1. Event-Driven Workflow (No UI Trade Entry)
@@ -75,7 +88,8 @@ Built with **React 19**, **TypeScript 5.8+**, **Vite 8**, and **Tailwind CSS v4*
 ### 10. Service Topology Map (Spec §5)
 - Visual topology diagram displaying the 5 microservices, 10 Kafka topics with live message counters, and CouchDB document store schemas.
 
-### 11. Multi-Role Switcher (Spec §9 & §13 Security)
+### 11. Roles (Spec §9 & §13 Security)
+- In live mode, your sign-in sets your role and the API enforces it. The switcher below only exists in demo mode.
 - Quick switcher between:
   - **Operations Specialist**: Day-to-day exception inspection and data fix workflow.
   - **Supervisor / Lead**: Four-eyes review authorization, queue management, SLA escalations.

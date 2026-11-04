@@ -7,14 +7,16 @@ export const STPChart: React.FC = () => {
 
   const total = trades.length || 1;
   const confirmed = trades.filter((t) => t.status === 'CONFIRMED').length;
-  const exceptions = trades.filter((t) => t.status === 'EXCEPTION_CAPTURED' || t.status === 'WORKITEM_LINKED').length;
+  const exceptions = trades.filter((t) =>
+    ['EXCEPTION_CAPTURED', 'WORKITEM_LINKED', 'STP_FAILED', 'SCHEMA_INVALID'].includes(t.status)
+  ).length;
   const manual = trades.filter((t) => t.status === 'MANUAL_REVIEW').length;
   const dlq = trades.filter((t) => t.status === 'DEAD_LETTER').length;
 
   const confirmedPct = Math.round((confirmed / total) * 100);
   const exceptionsPct = Math.round((exceptions / total) * 100);
   const manualPct = Math.round((manual / total) * 100);
-  const dlqPct = Math.max(0, 100 - confirmedPct - exceptionsPct - manualPct);
+  const dlqPct = Math.round((dlq / total) * 100);
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 flex flex-col justify-between">
@@ -73,7 +75,7 @@ export const STPChart: React.FC = () => {
           </div>
           <div>
             <div className="text-xs font-semibold text-slate-200">{exceptions} ({exceptionsPct}%)</div>
-            <div className="text-[11px] text-slate-400">Open Exceptions</div>
+            <div className="text-[11px] text-slate-400">Exceptions</div>
           </div>
         </div>
 

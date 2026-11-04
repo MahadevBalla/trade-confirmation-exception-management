@@ -58,6 +58,7 @@ public class CouchDbConfig {
 
             couchDbClient.ensureDatabaseExists(properties.getTradesDatabase());
             couchDbClient.ensureDatabaseExists(properties.getAuditEventsDatabase());
+            couchDbClient.ensureIndex(properties.getAuditEventsDatabase(), "audit-by-timestamp", java.util.List.of("timestamp"));
             log.info("CouchDB initialization complete for databases: '{}', '{}'",
                     properties.getTradesDatabase(), properties.getAuditEventsDatabase());
         };

@@ -19,6 +19,8 @@ workitem-service watches the "replay outcome" topics only to learn whether a rep
 
 A replayed message has `eventType=REPLAY` and keeps its original `messageId`, so every replay attempt has the same `IdempotencyKey`. Consumers therefore skip their duplicate check for `REPLAY` messages. `ingestion-service`, `enrichment-service`, `validation-service` and `exception-service` all do this, and they keep `eventType` and `replayCount` on the events they publish.
 
+`ingestion-service` also follows `trade.enriched`, `stp.validated`, `exception.created`, `manual.review.required`, `confirmation.generated` and `deadletter.trade` to keep the `trades` read model current for the UI (`TradeLifecycleConsumer`). Topics are not ordered against each other, so a status only moves forward.
+
 Consumers bind their input topic through the `TopicNames` constants in `common-lib` (there are no `*.input-topic` property overrides), so a topic rename is a single code change and a consumer can never drift from what its producers publish to.
 
 ## Decisions still open for the team

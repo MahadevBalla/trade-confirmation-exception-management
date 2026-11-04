@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export const DeadLetterQueue: React.FC = () => {
-  const { dlqEntries, replayDLQ, setSelectedTradeId, setActiveTab } = useApp();
+  const { dlqEntries, replayDLQ, setSelectedTradeId, setActiveTab, canReplay } = useApp();
 
   const [expandedDlqId, setExpandedDlqId] = useState<string | null>(null);
   const [replayingId, setReplayingId] = useState<string | null>(null);
@@ -119,8 +119,9 @@ export const DeadLetterQueue: React.FC = () => {
                     {entry.replayable && !isSucceeded && (
                       <button
                         onClick={() => handleReplayClick(effectiveId)}
-                        disabled={isReplaying}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md shadow-red-600/20 transition-all disabled:opacity-50"
+                        disabled={isReplaying || !canReplay}
+                        title={canReplay ? undefined : 'Only an admin can replay a message'}
+                        className="disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md shadow-red-600/20 transition-all disabled:opacity-50"
                       >
                         <RotateCcw size={14} className={isReplaying ? 'animate-spin' : ''} />
                         <span>{isReplaying ? 'Replaying...' : 'Replay Message'}</span>

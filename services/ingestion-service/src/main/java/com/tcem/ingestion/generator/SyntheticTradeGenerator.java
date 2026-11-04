@@ -28,7 +28,9 @@ public class SyntheticTradeGenerator {
 
     private static final String[] UNDERLIERS = {"EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD"};
     private static final double[] BASE_STRIKES = {1.0850, 1.2720, 154.50, 0.8850, 0.6550};
-    private static final String[] VALID_COUNTERPARTIES = {"PTY-CP-101", "PTY-CP-102", "PTY-CP-103", "PTY-CP-104"};
+    // Eligible for STP on FX options; see counterparties.json and counterparty-products.json.
+    private static final String[] VALID_COUNTERPARTIES = {"PTY-CP-101", "PTY-CP-102"};
+    private static final String NON_STP_COUNTERPARTY = "PTY-CP-103";
     private static final String BANK_PARTY_ID = "PTY-BANK-001";
 
     private final ObjectMapper objectMapper;
@@ -132,7 +134,10 @@ public class SyntheticTradeGenerator {
             case MISSING_ECONOMIC_PREMIUM -> premium = 0.0;
             case MISSING_REFDATA_COUNTERPARTY -> counterpartyId = "PTY-CP-UNKNOWN-999";
             case TEMPLATE_ISSUE_MISSING -> templateHint = "FX_OPTION_NONEXISTENT_TEMPLATE";
-            case BUSINESS_RULE_NON_STP -> jurisdiction = "SANCTIONED_ZONE";
+            case BUSINESS_RULE_NON_STP -> {
+                jurisdiction = "SANCTIONED_ZONE";
+                counterpartyId = NON_STP_COUNTERPARTY;
+            }
             case AMEND_TRADE -> {
                 eventType = EventType.AMEND_TRADE;
                 tradeVersion = 2;

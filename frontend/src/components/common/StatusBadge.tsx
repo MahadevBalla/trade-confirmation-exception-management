@@ -61,6 +61,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, type = 'status
             REPLAYED
           </span>
         );
+      case 'CANCELLED':
+        return (
+          <span className={`inline-flex items-center rounded-full font-medium bg-zinc-500/10 text-zinc-300 border border-zinc-500/30 line-through ${sizeClasses}`}>
+            CANCELLED
+          </span>
+        );
       case 'ENRICHED':
       case 'ACCEPTED':
       case 'VALIDATING':

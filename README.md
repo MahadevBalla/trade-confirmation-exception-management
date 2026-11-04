@@ -117,6 +117,7 @@ The `ingestion-service` exposes comprehensive REST endpoints for synthetic trade
 | `/trades/{id}` | GET | Returns trade details and complete CouchDB audit trail (FR3). |
 | `/trades?status={STATUS}&page={P}&size={S}` | GET | Returns paginated list of trades with optional status filter (`ACCEPTED`, `SCHEMA_INVALID`, `RECEIVED`). |
 | `/trades/{id}/audit` | GET | Returns chronological audit log records from CouchDB `audit-events`. |
+| `/audit?page={P}&size={S}` | GET | Returns the latest audit events across all trades and services, newest first. Through the gateway: `/api/audit`. |
 | `/trades/metrics/summary` | GET | Returns aggregate ingestion counters (received, accepted, rejected, duplicates, DLQ, acceptance rate). |
 | `/metrics/stp-rate` | GET | Returns Straight-Through Processing (STP) rate for React Operations UI (FR11). |
 | `/actuator/health` | GET | Spring Boot Actuator health check (includes custom CouchDB health indicator). |
@@ -149,8 +150,11 @@ npm install
 npm run dev      # Vite dev server on :5173
 ```
 
+The UI shows real backend data by default, so the backend must be running, and you sign in with a demo account (see the guide below). The navbar's **LIVE** / **DEMO DATA** button switches to an in-browser simulation that needs no backend. See [`docs/live-and-demo-data-guide.md`](docs/live-and-demo-data-guide.md).
+
 ## Docs
 
+- [`docs/live-and-demo-data-guide.md`](docs/live-and-demo-data-guide.md) - running the website with real data, and using demo data as a backup
 - [`docs/devops-guide.md`](docs/devops-guide.md) - Docker orchestration, provisioning, container security & workflow guide
 - [`docs/phase-4-5-implementation-plan.md`](docs/phase-4-5-implementation-plan.md) - Implementation plan for Phase 4 (Nginx Gateway) & Phase 5 (CI/CD)
 - [`docs/architecture.md`](docs/architecture.md) - event flow + service boundaries
