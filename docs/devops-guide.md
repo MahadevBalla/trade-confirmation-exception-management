@@ -63,7 +63,7 @@ Auto-creation of topics is explicitly disabled (`KAFKA_AUTO_CREATE_TOPICS_ENABLE
 ### B. CouchDB & `couchdb-init`
 `couchdb-init` polls the CouchDB `/_up` endpoint and provisions required databases with HTTP PUT calls:
 - **System Databases**: `_users`, `_replicator`, `_global_changes`
-- **Application Databases**: `trades`, `confirmations`, `exceptions`, `work-items`, `audit-events`, `stp-metrics`, `dlq-entries`
+- **Application Databases**: `trades`, `confirmations`, `exceptions`, `work-items`, `audit-events`, `stp-metrics`, `dlq-entries`, `enrichment-idempotency`, `validation-idempotency`
 
 ### C. Health Checks & Readiness Dependency Graph
 All services enforce strict readiness ordering:

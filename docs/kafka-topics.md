@@ -17,6 +17,8 @@ From the capstone spec's architecture diagram (Section 5) and MVP scope (Section
 
 workitem-service watches the "replay outcome" topics only to learn whether a replayed message got past the stage it failed in. It reacts only to records marked as replays (`messageHeader.eventType=REPLAY`, `replayCount > 0`, or the `tcem.replayCount` header), so producers on those topics should preserve the incoming `messageHeader` (or at least its `eventType`/`replayCount`) and key records by tradeId.
 
+Consumers bind their input topic through the `TopicNames` constants in `common-lib` (there are no `*.input-topic` property overrides), so a topic rename is a single code change and a consumer can never drift from what its producers publish to.
+
 ## Decisions still open for the team
 
 - Exact key strategy (likely `tradeId` for ordering/partitioning per trade).

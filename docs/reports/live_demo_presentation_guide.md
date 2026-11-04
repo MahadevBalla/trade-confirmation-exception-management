@@ -4,7 +4,7 @@
 **Format:** 100% Live Screen-Shared Demonstration (NO SLIDES / NO PPT)  
 **Total Duration:** ~15 Minutes (12 mins demo + 3 mins Q&A)  
 **Target Audience:** Evaluators, Enterprise Architects, and Business Stakeholders  
-**Branch:** `fix/code-consistency` (all 7 critical showstoppers resolved)  
+**Branch:** `fix/code-consistency` (7 critical showstoppers and 5 Sprint 2 fixes resolved)  
 
 ---
 
@@ -191,7 +191,7 @@ To guarantee a 100% smooth, glitch-free presentation, every team member must str
 | Area | Safe to Show Live ✅ | DO NOT Click / Show ❌ | Technical Reason (From Audit Report) |
 |:---|:---|:---|:---|
 | **Trade Generation** | Ingest clean synthetic batches (`--generate 5`). | Do not seed `CANCEL_TRADE` events. | `validation-service` drops cancels without publishing status to `stp.validated` (C2-04). |
-| **Trade Types** | Showcase `FX_OPTION` and `EQUITY_SWAP` trades. | Do not demo trade amendments changing the counterparty. | `ConfirmationFingerprint` JSON array predicate bug on party changes (C1-01). |
+| **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. A freshly booted stack is unaffected. |
 | **Manual Review** | Showcase Manual Review queue, rule cards, and decision buttons. | Do not try to show confirmation generation resulting from manual approval in Kafka UI. | `validation-service` does not yet subscribe to `workitem.linked` (C3-01). |
 | **DLQ Console** | Expand diagnostics, show stack traces, and click replay once. | Do not spam the replay button 3+ times on the same message. | Replay attempts > 1 share identical idempotency keys (C3-03). |
 | **Frontend State** | Filter queues, search counterparties, and inspect modals. | Do not refresh the browser mid-demo if you want to keep seeded session data. | Frontend runs state simulation with mock fallback (C4-01). |
@@ -204,7 +204,7 @@ When evaluators ask technical architectural questions, use these senior engineer
 
 ### Q1: "How do you prevent duplicate trades during high-volume spikes or network retries?"
 > **Answer (Mayank):**  
-> *"We implement a multi-tiered idempotency strategy. Ingestion checks a CouchDB-backed `IdempotencyKey` formatted as `idempotency:{tradeId}:{messageId}:{schemaVersion}:{eventType}` before accepting the trade. Downstream, `enrichment-service` and `exception-service` maintain isolated idempotency collections. Furthermore, `validation-service` uses SHA-256 fingerprinting so amend messages with no economic changes never generate duplicate confirmations."*
+> *"We implement a multi-tiered idempotency strategy. Ingestion checks a CouchDB-backed `IdempotencyKey` formatted as `idempotency:{tradeId}:{messageId}:{schemaVersion}:{eventType}` before accepting the trade. Downstream, `enrichment-service`, `validation-service` and `exception-service` each maintain an isolated idempotency collection (`validation-service` uses `validation-idempotency`, so a redelivered message for a trade that failed STP is skipped instead of raising a second exception). On top of that, `validation-service` uses SHA-256 fingerprinting so amend messages with no confirmable change never generate duplicate confirmations."*
 
 ### Q2: "What happens if a downstream service fails during event processing?"
 > **Answer (Oren):**  
@@ -212,7 +212,7 @@ When evaluators ask technical architectural questions, use these senior engineer
 
 ### Q3: "What is your roadmap for schema changes and backward compatibility?"
 > **Answer (Mahadev / Gunjan):**  
-> *"In our architectural audit, we flagged schema version routing as a key evolution item. Currently, `enrichment-service` utilizes our `SchemaVersionRouter` to route incoming payloads dynamically by schema version. In our next hardening sprint, we are expanding this pattern across validation and exception consumers to support seamless backward compatibility for older payload revisions."*
+> *"Our architectural audit flagged schema version routing as a key evolution item. `enrichment-service` and `validation-service` now both route incoming payloads through `SchemaVersionRouter`: supported versions are parsed (with a reserved migration path for 1.1) and unsupported versions go to the dead-letter queue with a `SCHEMA_VERSION_UNSUPPORTED` reason instead of being silently mis-parsed. In our next hardening sprint we extend the same pattern to the remaining consumers."*
 
 ---
 

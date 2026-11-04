@@ -12,7 +12,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * **Phase 3 (Schema Validation Engine):** Implemented `TradeValidator` validating headers, dates, parties, FX Option economics, non-economic terms, and JSON syntax; maps schema violations to structured `ExceptionRecord` entries.
   * **Phase 4 (Kafka Pipeline & Idempotency Filter):** Implemented `TradeRawConsumer` on `trade.raw`, CouchDB-backed `IdempotencyKey` duplicate suppression filter, canonical publishing to `trade.accepted` (`TradeAcceptedProducer`), exception routing to `exception.created` (`ExceptionCreatedProducer`), and DLQ routing to `deadletter.trade` (`DeadLetterProducer`).
   * **Phase 5 (Operations REST APIs & Health):** Implemented `TradeQueryController` (`GET /trades/{id}`, `GET /trades?status=&page=&size=`, `GET /trades/{id}/audit`, `GET /trades/metrics/summary`, `GET /metrics/stp-rate`), `IngestionMetricsService` tracking throughput and STP rates, and `WebConfig` CORS configuration.
-  * **Phase 6 (Automated Testing & Pipeline Verification):** Comprehensive test suite with 97 passing tests across unit, repository, producer, consumer, and end-to-end integration flows ([`TradeIngestionPipelineIntegrationTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/integration/TradeIngestionPipelineIntegrationTest.java)); verified full Maven reactor build.
+  * **Phase 6 (Automated Testing & Pipeline Verification):** Comprehensive test suite with 97 passing tests across unit, repository, producer, consumer, and end-to-end integration flows ([`TradeIngestionPipelineIntegrationTest`](../services/ingestion-service/src/test/java/com/tcem/ingestion/integration/TradeIngestionPipelineIntegrationTest.java)); verified full Maven reactor build.
 * **What is Remaining:**
   * Ready for upstream consumption! Lead team PR reviews and coordinate with Bhavik (`enrichment-service`) for consuming `trade.accepted`.
 
@@ -36,7 +36,9 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Implemented confirmation generation with fingerprint-based duplicate suppression and exception mapping.
   * Implemented the `trade.enriched` consumer and confirmation query/metrics REST APIs.
   * Fixed CouchDB 25-record cap in `ConfirmationCouchDbRepository.countAll()` (explicit 10,000 query limit).
-  * Added unit and embedded-Kafka integration tests: 124 tests passing. Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
+  * Added unit and embedded-Kafka integration tests: 132 tests passing in `validation-service` (482 across the Maven reactor). Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
+  * Sprint 2 hardening: durable `IdempotencyKey` guard in `TradeEnrichedConsumer` (new `validation-idempotency` database), `SchemaVersionRouter` parsing with `SCHEMA_VERSION_UNSUPPORTED` DLQ routing, and `ConfirmationFingerprint` party-path resolution so counterparty changes trigger a new confirmation (commits `a2cb6d6`, `537f353`).
+  * Added a 34-test suite to `common-lib` (commit `8b00f86`) and standardized listener topics on `TopicNames` constants (commit `970ecf6`).
 * **What is Remaining:**
   * Ready for live demonstration.
 
@@ -61,7 +63,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Work items: created and linked from `exception.classified` (type, queue and priority rules), manual review queue from `manual.review.required` (approve / reject), closed on `confirmation.generated`.
   * Audit trail: immutable audit capture shared with `ingestion-service`.
   * DevOps: Complete local orchestration with health checks, initializers, multi-stage Dockerfiles, and named volumes for Kafka and CouchDB.
-  * Hardened `docker-compose.yml` with persistent `kafka_data` volume and auto-provisioned `enrichment-idempotency` database.
+  * Hardened `docker-compose.yml` with persistent `kafka_data` volume and auto-provisioned `enrichment-idempotency` and `validation-idempotency` databases.
 * **What is Remaining:**
   * Ready for live demonstration.
 
@@ -83,5 +85,6 @@ This document tracks the progress of the Trade Confirmation Exception Management
 
 * **Code Consistency Audit:** Completed across all 5 services and frontend ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
 * **Showstopper Fixes:** All 7 critical fixes resolved and committed on `fix/code-consistency` ([`docs/reports/presentation_fixes_guide.md`](reports/presentation_fixes_guide.md)).
+* **Sprint 2 Fixes:** C1-01, C1-03, C1-04, C1-05 and C1-06 resolved on `fix/code-consistency` (commits `a2cb6d6`, `8b00f86`, `bda73d5`, `537f353`, `970ecf6`); 15 of 37 audit findings resolved ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
 * **Live Demo Presentation Guide:** Master live demonstration script and flow for all 6 presenters ([`docs/reports/live_demo_presentation_guide.md`](reports/live_demo_presentation_guide.md)).
 * **Status:** 100% Ready for live evaluator evaluation.

@@ -5,6 +5,7 @@
 **Status:** ✅ ALL 7 URGENT FIXES COMPLETED & COMMITTED (Branch `fix/code-consistency`)  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Related Report:** [`code_consistency_report.md`](./code_consistency_report.md)  
+**Follow-up Fixes:** Sprint 2 fixes applied after the 7 showstoppers are recorded in [Section 7](#7-sprint-2-fixes-applied-after-the-showstoppers)  
 
 ---
 
@@ -253,7 +254,7 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 | Action | Safe Demo Behavior ✅ | Pitfall to Avoid ❌ | Reason |
 | :--- | :--- | :--- | :--- |
 | **Trade Ingestion** | Ingest clean new trades (`--generate 5`). | Do not ingest `CANCEL_TRADE` events. | Validation service drops cancels silently without closing work items (C2-04). |
-| **Trade Types** | Showcase FX Options and Equity Swaps. | Do not demo trade amendments with counterparty changes. | `ConfirmationFingerprint` party predicate bug (C1-01). |
+| **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The `ConfirmationFingerprint` party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. |
 | **Manual Review** | Walk through the Manual Review Queue UI and recommendation cards. | Do not try to show confirmation output from manual review in backend. | `validation-service` does not yet consume `workitem.linked` (C3-01). |
 | **DLQ Management** | Show the DLQ screen, payload preview, and stack traces. | Do not click replay multiple times consecutively on the same item. | Multi-attempt replays (> 1) share idempotency keys (C3-03). |
 
@@ -270,4 +271,20 @@ Include a **"System Audit & Sprint 2 Hardening Roadmap"** slide in your presenta
 3. **Global Idempotency Key Standardization:**
    - *"We are upgrading our per-service idempotency stores into a unified key structure that includes the replay count, enabling infinite idempotent replay retries."*
 4. **Schema Version Evolution:**
-   - *"We are expanding the SchemaVersionRouter pattern established in enrichment-service to all downstream consumers to support seamless backward compatibility for older payload revisions."*
+   - *"`SchemaVersionRouter` now guards both `enrichment-service` and `validation-service` (unsupported versions go to the DLQ with `SCHEMA_VERSION_UNSUPPORTED`). We are extending the same pattern to the remaining consumers."*
+
+---
+
+## 7. Sprint 2 Fixes Applied After the Showstoppers
+
+Five further findings from [`code_consistency_report.md`](./code_consistency_report.md) were fixed on `fix/code-consistency`, one commit per fix (C1-03 and C1-04 share a commit because they change the same consumer):
+
+| Audit ID | Fix | Commit |
+| :--- | :--- | :--- |
+| C1-01 | `ConfirmationFingerprint` resolves `parties[ROLE].field` paths, so party changes alter the fingerprint | `a2cb6d6` |
+| C1-05 | 34 unit tests added to `common-lib` (fingerprint, field registry, idempotency key, schema router) | `8b00f86` |
+| C1-03 (infra) | `validation-idempotency` database provisioned in `init-couchdb.sh` and `couchdb-init` | `bda73d5` |
+| C1-03 + C1-04 | `validation-service` durable `IdempotencyKey` guard and `SchemaVersionRouter` parsing | `537f353` |
+| C1-06 | Kafka listener topics standardized on `TopicNames` constants; dead `input-topic` property removed | `970ecf6` |
+
+**Verification:** `mvn clean verify` in `services/` passes (482 tests, 0 failures). On a clean `docker compose` stack, `./scripts/smoke-test.sh --all` passes 15 checks, a re-published `trade.enriched` message is skipped as a duplicate, and a payload with an unsupported `schemaVersion` lands in the DLQ with reason `SCHEMA_VERSION_UNSUPPORTED`.

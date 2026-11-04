@@ -1,7 +1,7 @@
 # TCEM Code Consistency & System Risk Report
 
 **Audit Mode:** Multi-Phase Architecture & Code Consistency Audit  
-**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers Remediated (Branch `fix/code-consistency`)  
+**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 5 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)  
 **Target Repository:** `trade-confirmation-exception-management`  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Remediation Guide:** [`presentation_fixes_guide.md`](./presentation_fixes_guide.md)  
@@ -27,6 +27,7 @@
 - **Phase 4 (Completed):** Audited frontend React 19 application (`frontend`), Vite and Nginx reverse proxies, TypeScript types vs Java DTOs, `AppContext` state management, recommendation engine parity, and backend API integration.
 - **Phase 5 (Completed):** Audited DevOps infrastructure, Docker orchestration, initializers, JVM memory flags, and GitHub Actions CI.
 - **Remediation Sprint (Completed):** Fixed 7 critical demo-breaking showstoppers on `fix/code-consistency` (Docker build `.dockerignore`, Kafka persistence volume, CouchDB 25-limit cap, TypeScript enum alignment, DLQ dual-property models, enriched counterparty name display, and database provisioning). System health score upgraded from **68/100 to 86/100**.
+- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite) and C1-06 (Kafka topic wiring) on `fix/code-consistency`. **15 of 37 findings are now resolved; 22 remain** (see the risk matrix).
 
 ---
 
@@ -34,7 +35,7 @@
 
 ### Phase 1 Findings: Shared Core Library, Kafka Topics & Event Contracts
 
-### 1. 🔴 BREAKS THE SYSTEM: Algorithmic Failure in `ConfirmationFingerprint` for Counterparty/Bank Party Changes
+### 1. 🔴 BREAKS THE SYSTEM: Algorithmic Failure in `ConfirmationFingerprint` for Counterparty/Bank Party Changes — ✅ [RESOLVED in `fix/code-consistency`: Commit `a2cb6d6`]
 - **Location:** [ConfirmationFingerprint.java:L106-L125](../../services/common-lib/src/main/java/com/tcem/common/registry/ConfirmationFingerprint.java#L106-L125) and [ConfirmableFieldRegistry.java:L72-L73](../../services/common-lib/src/main/java/com/tcem/common/registry/ConfirmableFieldRegistry.java#L72-L73).
 - **Issue:** 
   `ConfirmableFieldRegistry` registers `"parties[COUNTERPARTY].partyId"` and `"parties[BANK].partyId"` as confirmable fields. However, `ConfirmationFingerprint.extractValue()` parses paths only by dot-separation (`String[] parts = dotPath.split("\\.")`) and executes `root.get(part)`. Because `parties` is a JSON Array (`List<Party>`), `root.get("parties[COUNTERPARTY]")` returns `null`. 
@@ -42,6 +43,10 @@
   `extractValue` always evaluates both party IDs to `__NULL__`. If a trade is amended with a counterparty novation or party identifier update, `ConfirmationFingerprint.compute()` yields the exact same SHA-256 hash as the previous version. The system **falsely suppresses the confirmation generation**, leaving the new counterparty without a legal confirmation document.
 - **Recommended Remediation:**
   Refactor `extractValue()` in `ConfirmationFingerprint` to parse array predicates (e.g. `parties[partyRole=COUNTERPARTY].partyId`) by iterating over the `parties` JsonNode array, matching `partyRole`, and extracting `partyId`.
+
+- **Resolution:**
+  `ConfirmationFingerprint.extractValue()` now understands array selectors: the shorthand `parties[COUNTERPARTY].partyId` and the explicit form `parties[partyRole=COUNTERPARTY].partyId` select the first element of the array whose `partyRole` matches. Missing parties still resolve to the `__NULL__` marker. Covered by `ConfirmationFingerprintTest`, including a test asserting that every `FX_OPTION` / `FX_FORWARD` registry path resolves on a fully populated trade.
+  *Behaviour note:* fingerprints now include party IDs, so a confirmation stored before this fix has a different fingerprint; the first amendment of such a trade generates one new confirmation (one-time).
 
 ---
 
@@ -57,7 +62,7 @@
 
 ---
 
-### 3. 🔴 BREAKS THE SYSTEM: Flawed Idempotency Architecture in `validation-service` Causing Duplicate Exception Storms
+### 3. 🔴 BREAKS THE SYSTEM: Flawed Idempotency Architecture in `validation-service` Causing Duplicate Exception Storms — ✅ [RESOLVED in `fix/code-consistency`: Commits `537f353`, `bda73d5`]
 - **Location:** [TradeEnrichedConsumer.java:L149-L163](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L149-L163).
 - **Issue:**
   While `ingestion-service`, `enrichment-service`, and `exception-service` consistently utilize `IdempotencyKey` and persist keys to CouchDB (`idempotency:{tradeId}:{messageId}:{schemaVersion}:{eventType}`), `validation-service` skips `IdempotencyKey` entirely. Instead, it checks `Optional<ConfirmationDocument> existing = confirmationRepository.findLatestForTrade(tradeId)`.
@@ -66,9 +71,14 @@
 - **Recommended Remediation:**
   Integrate `IdempotencyKey` check and recording in `validation-service` before running STP rules, storing the processing outcome in an `idempotency` collection.
 
+- **Resolution:**
+  `validation-service` now builds the shared `IdempotencyKey` and persists it through the new `ValidationIdempotencyRepository` in a dedicated `validation-idempotency` CouchDB database (provisioned in `scripts/init-couchdb.sh` and `couchdb-init`, commit `bda73d5`; also auto-created on startup). The key is checked before STP runs (duplicates are skipped) and recorded only after every downstream publish succeeds, so a failed attempt is retried on redelivery or replay. `REPLAY` events bypass the check, and the version-based confirmation guard is kept as a second line of defence. Messages missing `tradeId`, `messageId`, `schemaVersion` or `eventType` are dead-lettered (same as `enrichment-service`).
+  *Verified live:* re-publishing an already-processed `trade.enriched` message logs `Idempotency: duplicate message ... skipping` and leaves the `validation-idempotency` document count unchanged.
+  *Known limitation:* the key is written after publishing, so a crash between publish and record can still produce one duplicate on redelivery (at-least-once semantics, identical to `enrichment-service`).
+
 ---
 
-### 4. 🟠 HIGH / MODERATE RISK: Bypassing `SchemaVersionRouter` in `validation-service`
+### 4. 🟠 HIGH / MODERATE RISK: Bypassing `SchemaVersionRouter` in `validation-service` — ✅ [RESOLVED in `fix/code-consistency`: Commit `537f353`]
 - **Location:** [TradeEnrichedConsumer.java:L114-L115](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L114-L115).
 - **Issue:**
   `common-lib` provides `SchemaVersionRouter` to enforce backward compatibility, schema version validation, and migration of legacy payloads. While `enrichment-service` properly routes incoming payloads through `SchemaVersionRouter(objectMapper).route(record.value())`, `validation-service` directly calls `objectMapper.readValue(payload, TradeEvent.class)`.
@@ -77,9 +87,12 @@
 - **Recommended Remediation:**
   Update `TradeEnrichedConsumer` to utilize `SchemaVersionRouter` just like `TradeAcceptedConsumer`.
 
+- **Resolution:**
+  `TradeEnrichedConsumer` now parses payloads through `SchemaVersionRouter`. An unsupported `schemaVersion` is routed to the DLQ with a `SCHEMA_VERSION_UNSUPPORTED` failure reason and flagged non-replayable (a replay would fail again); the original header is extracted for correlation. Unit-tested, and verified live: a payload with `schemaVersion` `capstone-fpml-json-9.9` produced a DLQ entry with that reason.
+
 ---
 
-### 5. 🟠 HIGH / MODERATE RISK: Zero Unit Test Coverage in `common-lib`
+### 5. 🟠 HIGH / MODERATE RISK: Zero Unit Test Coverage in `common-lib` — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b00f86`]
 - **Location:** `services/common-lib/src/test` (directory is absent).
 - **Issue:**
   `common-lib` contains foundational business logic including SHA-256 fingerprint generation, confirmable field definitions, schema routing, and idempotency key hashing. Yet it contains zero automated unit or integration tests.
@@ -88,9 +101,12 @@
 - **Recommended Remediation:**
   Add a comprehensive test suite in `services/common-lib/src/test/java/com/tcem/common/...` validating `ConfirmationFingerprint`, `SchemaVersionRouter`, `IdempotencyKey`, and `ConfirmableFieldRegistry`.
 
+- **Resolution:**
+  `common-lib` now has test-scope dependencies (`junit-jupiter`, `assertj-core`, `jackson-datatype-jsr310`, versions managed by the Spring Boot BOM) and 34 tests: `ConfirmationFingerprintTest` (15), `ConfirmableFieldRegistryTest` (6), `IdempotencyKeyTest` (6) and `SchemaVersionRouterTest` (7). CI (`mvn verify` on the reactor) now runs them.
+
 ---
 
-### 6. 🟡 LOW RISK / INCONSISTENCY: Discrepancy Between YAML Configuration and `@KafkaListener` Topic Declarations
+### 6. 🟡 LOW RISK / INCONSISTENCY: Discrepancy Between YAML Configuration and `@KafkaListener` Topic Declarations — ✅ [RESOLVED in `fix/code-consistency`: Commit `970ecf6`]
 - **Location:** [services/validation-service/src/main/resources/application.yml:L33](../../services/validation-service/src/main/resources/application.yml#L33) vs [TradeEnrichedConsumer.java:L106](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L106).
 - **Issue:**
   `application.yml` defines `validation.input-topic: ${VALIDATION_INPUT_TOPIC:trade.enriched}`, but `TradeEnrichedConsumer` uses the compile-time constant `TopicNames.TRADE_ENRICHED`. Conversely, `TradeAcceptedConsumer` in `enrichment-service` uses `@KafkaListener(topics = "${enrichment.input-topic:trade.accepted}", ...)`.
@@ -98,6 +114,9 @@
   The property in `validation-service`'s `application.yml` is dead configuration. Operators overriding `VALIDATION_INPUT_TOPIC` via environment variables will find it has zero effect.
 - **Recommended Remediation:**
   Standardize across all microservices: either consistently allow Spring expression injection with fallback to `TopicNames.*` or standardize strictly on `TopicNames` constants.
+
+- **Resolution:**
+  Standardized strictly on the `TopicNames` constants. The dead `validation.input-topic` property was removed (`application.yml` and `ValidationProperties`) and `TradeAcceptedConsumer` now uses `TopicNames.TRADE_ACCEPTED` instead of `${enrichment.input-topic:trade.accepted}`. Rationale: all producers use the constants and `kafka-init` provisions a fixed topic list, so overriding a single consumer's topic would silently desynchronize the pipeline. The `VALIDATION_INPUT_TOPIC` and `enrichment.input-topic` overrides no longer exist.
 
 ---
 
@@ -511,12 +530,12 @@
 
 | ID | Phase | Component | Issue Description | Severity / Status | Fix Complexity |
 | :---: | :---: | :--- | :--- | :---: | :---: |
-| **C1-01** | Phase 1 | `ConfirmationFingerprint` | Party field paths (`parties[COUNTERPARTY].partyId`) always return `null`, breaking amendment confirmation checks. | 🔴 Breaks System (Sprint 2) | Low (Regex / JsonNode parsing) |
+| **C1-01** | Phase 1 | `ConfirmationFingerprint` | Party field paths (`parties[COUNTERPARTY].partyId`) always return `null`, breaking amendment confirmation checks. | ✅ **RESOLVED (`a2cb6d6`)** | Low (Array-selector paths in `extractValue`) |
 | **C1-02** | Phase 1 | `types/tcem.ts` vs `common-lib` | Enum divergence (`IRS` vs `IR_SWAP`, missing `NOVATION`/`COMPRESSION`, extra `HEARTBEAT`). | ✅ **RESOLVED (`c43263d`)** | Trivial (TypeScript alignment) |
-| **C1-03** | Phase 1 | `validation-service` | Missing `IdempotencyKey` deduplication on STP failures causes duplicate `exception.created` events. | 🔴 Breaks System (Sprint 2) | Medium (Add CouchDB idempotency store) |
-| **C1-04** | Phase 1 | `validation-service` | Bypassing `SchemaVersionRouter` in `TradeEnrichedConsumer`. | 🟠 High Risk (Sprint 2) | Low (Route via `SchemaVersionRouter`) |
-| **C1-05** | Phase 1 | `common-lib` | Complete absence of unit tests in shared module. | 🟠 High Risk (Sprint 2) | Medium (Add JUnit 5 test suite) |
-| **C1-06** | Phase 1 | Configuration vs Listeners | Inconsistent Kafka topic property injection vs static constants across consumers. | 🟡 Low Risk (Sprint 2) | Low (Standardize listener annotations) |
+| **C1-03** | Phase 1 | `validation-service` | Missing `IdempotencyKey` deduplication on STP failures causes duplicate `exception.created` events. | ✅ **RESOLVED (`537f353`, `bda73d5`)** | Medium (Added `validation-idempotency` store + key guard) |
+| **C1-04** | Phase 1 | `validation-service` | Bypassing `SchemaVersionRouter` in `TradeEnrichedConsumer`. | ✅ **RESOLVED (`537f353`)** | Low (Routed via `SchemaVersionRouter`) |
+| **C1-05** | Phase 1 | `common-lib` | Complete absence of unit tests in shared module. | ✅ **RESOLVED (`8b00f86`)** | Medium (Added 34-test JUnit 5 suite) |
+| **C1-06** | Phase 1 | Configuration vs Listeners | Inconsistent Kafka topic property injection vs static constants across consumers. | ✅ **RESOLVED (`970ecf6`)** | Low (Standardized on `TopicNames` constants) |
 | **C1-07** | Phase 1 | `docs/architecture.md` | Stale documentation claiming 3 backend services are stubs. | ✅ **RESOLVED (`fix/code-consistency`)** | Trivial (Update markdown) |
 | **C2-01** | Phase 2 | `ConfirmationService` & `StpExceptionMapper` | Strips `eventType` and `replayCount` from outbound headers, permanently breaking DLQ replay completion in `workitem-service`. | 🔴 Breaks System (Sprint 2) | Low (Copy header fields) |
 | **C2-02** | Phase 2 | `ConfirmationCouchDbRepository` | `countAll()` Mango query defaults to limit 25, capping STP metrics permanently at 25. | ✅ **RESOLVED (`2c4b3aa`)** | Low (Added explicit limit 10000) |
@@ -559,6 +578,7 @@
 - [x] **Phase 4: Frontend UI Alignment, State Management & API Integration (`frontend`)** (Findings C4-01 to C4-07)
 - [x] **Phase 5: DevOps, Docker Orchestration, Shell Scripts & Consolidated System Risk Matrix** (Findings C5-01 to C5-08)
 - [x] **Showstopper Remediation Sprint:** Fixed all 7 critical blockers (C5-01, C5-02, C2-02, C1-02, C4-02, C4-03, C3-06/C5-07) on `fix/code-consistency`.
+- [ ] **Sprint 2 Remediation (in progress):** C1-01, C1-03, C1-04, C1-05 and C1-06 resolved on `fix/code-consistency`; 22 of 37 findings remain open (see the risk matrix).
 
 ---
 
@@ -572,7 +592,7 @@
 │                                                                        │
 │  Domain Modeling & Design:   ██████████████████░░  92/100 (Strong)     │
 │  DevOps & Containerization:  ██████████████████░░  92/100 (Hardened)   │
-│  Backend Unit Test Coverage: ██████████████████░░  88/100 (80/80 pass) │
+│  Backend Unit Test Coverage: ██████████████████░░  88/100 (482 pass)   │
 │  Event Contracts & Enums:    █████████████████░░░  85/100 (Aligned)    │
 │  Operations Cockpit UI:      ██████████████░░░░░░  72/100 (Live Ready) │
 │                                                                        │
