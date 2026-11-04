@@ -7,13 +7,14 @@ Mock work-item tracker, manual review queue, audit trail and DLQ/replay handling
 ```
 exception.classified ───► ExceptionLinkingService ──► work item (create or link)
 manual.review.required ─► ExceptionLinkingService ──► MANUAL_REVIEW work item ─► POST /workitems/{id}/review
-                                                                                   ├ APPROVE → DONE
+                                                                                   ├ APPROVE → DONE, then validation-service confirms the trade
                                                                                    └ REJECT  → DONE + deadletter.trade
 deadletter.trade ───────► DlqService ──► dlq-entries + DATA_FIX work item
                             └ trade has a REPLAYING entry? → merged into it (ReplayOutcomeService)
 POST /dlq/{id}/replay ──► ReplayService ──► original topic (REPLAY message)
 trade.accepted, trade.enriched, stp.validated,
-exception.created, exception.classified ──► ReplayOutcomeService ──► REPLAY_SUCCEEDED + work item DONE
+exception.created, exception.classified,
+manual.review.required ──► ReplayOutcomeService ──► REPLAY_SUCCEEDED + work item DONE
 confirmation.generated ─► ConfirmationService ──► audit CONFIRMED + trade's open work items DONE
 ```
 
@@ -75,7 +76,7 @@ Through the gateway these are `/api/workitems/...` and `/api/dlq/...`.
 - `exception.classified` and `manual.review.required`: `ExceptionEvent` (`{messageHeader, exception}`), keyed by tradeId.
 - `confirmation.generated`: `ConfirmationEvent`; the trade id is taken from `confirmation.tradeId`, falling back to the key.
 - Replay outcome detection needs downstream producers to key by tradeId and keep the incoming `messageHeader` (at least `eventType`/`replayCount`) on their output. See `docs/kafka-topics.md`.
-- Approving a manual review only closes the item; generating the confirmation stays with validation-service, which can react to the DONE item on `workitem.linked`.
+- Approving a manual review closes the item and publishes `reviewDecision=APPROVED` on `workitem.linked`. `validation-service` then generates the confirmation from the enriched trade it held when STP failed, and `confirmation.generated` closes the trade's other open work items. If no trade is held or confirmation fails, the approval arrives on `deadletter.trade` as non-replayable, for an operator to handle.
 
 ## Configuration
 
@@ -104,4 +105,6 @@ test double) with a mocked `KafkaOperations`.
 
 - An entry stays `REPLAYING` until a downstream success or failure is seen; there is no timeout yet.
 - Work items are linked per trade and type; systemic issues across trades (e.g. one missing template behind many trades) are not grouped.
+- One approval confirms the whole trade, even if it has other open exceptions, and can produce a confirmation with template `N/A`.
+- Replay overwrites `eventType` with `REPLAY`, so a replayed `CANCEL_TRADE` is evaluated by STP like a normal trade.
 - `GET /workitems/summary` scans up to 1000 work items.

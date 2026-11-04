@@ -134,14 +134,23 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - **Verified:** `mvn clean verify` -> `validation-service` 132 tests, 0 failures (482 across the reactor). Live on docker compose: `validation-idempotency` created and populated; a re-published processed message is logged as a duplicate and the document count is unchanged; a payload with `schemaVersion` `capstone-fpml-json-9.9` produced a DLQ entry with `SCHEMA_VERSION_UNSUPPORTED`.
   - Commits: `a2cb6d6` (fingerprint), `bda73d5` (database provisioning), `537f353` (idempotency + router), `970ecf6` (topic wiring).
 
+- [x] **Phase 9: Replay and Manual Review Fixes (Audit C2-01, C3-01) (Completed):**
+  - Outbound headers on `stp.validated`, `confirmation.generated` and `exception.created` keep the inbound `eventType` and `replayCount`.
+  - Dead letters are keyed by `tradeId` instead of `correlationId`, because `workitem-service` stores the key as the trade id.
+  - [`HeldTradeRepository.java`](../services/validation-service/src/main/java/com/tcem/validation/repository/HeldTradeRepository.java): keeps the latest raw enriched message of a trade that failed STP (`docType=HELD_TRADE` in `confirmations`; confirmation queries select `docType=CONFIRMATION`, so they are unaffected).
+  - [`ManualReviewApprovalConsumer.java`](../services/validation-service/src/main/java/com/tcem/validation/consumer/ManualReviewApprovalConsumer.java): on `workitem.linked`, a closed `MANUAL_REVIEW` item with `reviewDecision=APPROVED` generates the confirmation. Other events are ignored. No held trade, or a confirmation failure, goes to the DLQ as non-replayable.
+  - **Verified:** `mvn verify` -> `validation-service` 142 tests, 0 failures (496 across the reactor). Live on an isolated docker compose stack, before and after the fix. Commit: `8b4435d`.
+
 ### What is REMAINING (To Be Built)
 
-- Nothing within validation-service scope. All seven phases are complete; remaining work is cross-service verification against the real docker-compose stack once all services are merged.
+- Nothing within validation-service scope. The cross-service replay and manual review flows have been verified against a live docker compose stack.
 
 ### Known Limitations (documented, not blocking)
 
 - **Residual duplicate window (at-least-once):** since Phase 8 the `IdempotencyKey` is recorded in `validation-idempotency` after all publishes succeed, which covers redelivered messages for STP-failed trades. A crash between publishing and recording can still cause one duplicate on redelivery.
 - **Fire-and-forget producers:** Kafka send failures are logged but do not propagate to the listener (see Phase 6), so events can be lost without a consumer retry. External monitoring is required.
+- **Manual review approval confirms the whole trade**, even with other open exceptions, and can produce a confirmation with template `N/A`. Only the latest held message per trade is kept.
+- **Replayed `CANCEL_TRADE`:** replay overwrites `eventType` with `REPLAY`, so the cancel check no longer recognises it and it runs through STP.
 - **`GET /metrics/stp-rate`** returns a total confirmation count, not a pass/fail ratio.
 
 ---

@@ -9,9 +9,9 @@ This directory provides CLI helper scripts for local development, environment pr
 | Script | Command | Purpose |
 |---|---|---|
 | **Smoke Test** | `./scripts/smoke-test.sh` | Verifies health of all active services, Actuator endpoints, and gateway routes. Use `--all` to assert all 5 microservices are UP. |
-| **Kafka Init** | `./scripts/init-kafka.sh` | Idempotently provisions all 10 Kafka topics with 3 partitions and replication factor 1. |
+| **Kafka Init** | `./scripts/init-kafka.sh` | Idempotently provisions all 10 Kafka topics with 3 partitions and replication factor 1. Commands run inside the Kafka container; `INIT_KAFKA_BOOTSTRAP_SERVER` overrides the broker address as seen from there (default `localhost:9092`). |
 | **CouchDB Init** | `./scripts/init-couchdb.sh` | Idempotently creates system and application CouchDB databases with Basic Auth. |
-| **Dev Up** | `./scripts/dev-up.sh` | Boots infra, initializes Kafka & CouchDB, builds & starts services, and runs smoke checks. Supports `--infra-only` and `--all`. |
+| **Dev Up** | `./scripts/dev-up.sh` | Boots infra, initializes Kafka & CouchDB, builds & starts services, and runs smoke checks. Supports `--infra-only` and `--all`, and passes the mode to the smoke test, so `--all` asserts all 5 services. |
 | **Dev Down** | `./scripts/dev-down.sh` | Stops containers. Pass `--reset` (or `-v`) to wipe volume data. |
 | **Seed Data** | `./scripts/seed-data.sh` | Triggers synthetic trade generation or loads the bundled 500-trade seed dataset (`sample-trades.json`). Pass `--generate <N>` to generate N trades. |
 
@@ -45,5 +45,5 @@ Starts infra, init containers, `ingestion-service`, and `frontend` (Nginx Gatewa
 ### 5. Tear Down & Clean
 ```bash
 ./scripts/dev-down.sh          # Stops containers, preserves data
-./scripts/dev-down.sh --reset  # Stops containers, wipes CouchDB volumes
+./scripts/dev-down.sh --reset  # Stops containers, wipes CouchDB and Kafka volumes
 ```

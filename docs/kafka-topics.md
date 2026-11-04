@@ -10,12 +10,14 @@ From the capstone spec's architecture diagram (Section 5) and MVP scope (Section
 | `stp.validated` | validation-service | (fan-out: confirmation path); workitem-service (replay outcome) | STP decision made (FR5) |
 | `confirmation.generated` | validation-service | workitem-service (audit, closes the trade's open work items) | Confirmation output produced (FR6); payload `ConfirmationEvent` |
 | `exception.created` | validation-service | exception-service; workitem-service (replay outcome) | Raised when STP fails (FR7) |
-| `exception.classified` | exception-service | workitem-service | Theme/sub-theme + recommendation attached (FR8, FR9); payload `ExceptionEvent` |
-| `workitem.linked` | workitem-service | (audit / UI) | Work item created, linked or updated (FR10); payload `WorkItemEvent` |
-| `manual.review.required` | exception-service | workitem-service (manual review queue) | Routed to manual review queue; payload `ExceptionEvent` (same envelope as `exception.classified`) |
-| `deadletter.trade` | any service (on failure); workitem-service (rejected manual reviews) | workitem-service (DLQ store + replay) | Irrecoverable messages with diagnostic context (FR12); payload `DeadLetterEvent`, key = tradeId |
+| `exception.classified` | exception-service | workitem-service (work items; replay outcome) | Theme/sub-theme + recommendation attached (FR8, FR9); payload `ExceptionEvent` |
+| `workitem.linked` | workitem-service | validation-service (confirms approved manual reviews); audit / UI | Work item created, linked or updated (FR10); payload `WorkItemEvent`, whose `workItem.reviewDecision` is `APPROVED` or `REJECTED` after a manual review |
+| `manual.review.required` | exception-service | workitem-service (manual review queue; replay outcome) | Routed to manual review queue; payload `ExceptionEvent` (same envelope as `exception.classified`) |
+| `deadletter.trade` | any service (on failure); workitem-service (rejected manual reviews) | workitem-service (DLQ store + replay) | Irrecoverable messages with diagnostic context (FR12); payload `DeadLetterEvent`, key = tradeId (`workitem-service` stores the key as the trade id, so any other key breaks replay tracking) |
 
 workitem-service watches the "replay outcome" topics only to learn whether a replayed message got past the stage it failed in. It reacts only to records marked as replays (`messageHeader.eventType=REPLAY`, `replayCount > 0`, or the `tcem.replayCount` header), so producers on those topics should preserve the incoming `messageHeader` (or at least its `eventType`/`replayCount`) and key records by tradeId.
+
+A replayed message has `eventType=REPLAY` and keeps its original `messageId`, so every replay attempt has the same `IdempotencyKey`. Consumers therefore skip their duplicate check for `REPLAY` messages. `ingestion-service`, `enrichment-service`, `validation-service` and `exception-service` all do this, and they keep `eventType` and `replayCount` on the events they publish.
 
 Consumers bind their input topic through the `TopicNames` constants in `common-lib` (there are no `*.input-topic` property overrides), so a topic rename is a single code change and a consumer can never drift from what its producers publish to.
 

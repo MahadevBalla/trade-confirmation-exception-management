@@ -22,7 +22,7 @@ All containers communicate over an isolated Docker bridge network (`tcem-network
 |---|---|---|---|---|
 | **`tcem-kafka`** | `apache/kafka:3.8.0` | `19092` / `19093` | `9092` | Event streaming broker in KRaft mode (single-node cluster). |
 | **`tcem-kafka-init`** | `apache/kafka:3.8.0` | N/A | N/A | One-shot init container creating 10 Kafka topics with 3 partitions. |
-| **`tcem-kafka-ui`** | `provectuslabs/kafka-ui:latest` | `8080` | `8080` | Web UI for inspecting topics, partitions, and consumer lag. |
+| **`tcem-kafka-ui`** | `provectuslabs/kafka-ui:v0.7.2` | `8080` | `8080` | Web UI for inspecting topics, partitions, and consumer lag. |
 | **`tcem-couchdb`** | `couchdb:3.3` | `5984` | `5984` | NoSQL document database for trades, audit logs, and exceptions. |
 | **`tcem-couchdb-init`** | `curlimages/curl:8.6.0` | N/A | N/A | One-shot init container provisioning system and application DBs. |
 | **`tcem-ingestion-service`** | `eclipse-temurin:21-jre-alpine` | `8081` | `8081` | Trade intake, schema validation, raw persistence (FR1–FR3). |
@@ -37,6 +37,8 @@ All containers communicate over an isolated Docker bridge network (`tcem-network
 ## 3. Automated Provisioning (Phases 1 & 2)
 
 ### A. Kafka Broker & `kafka-init`
+Broker data lives on the `kafka_data` volume through `KAFKA_LOG_DIRS: /var/lib/kafka/data`, so topics, messages and consumer offsets survive restarts and container recreation.
+
 Auto-creation of topics is explicitly disabled (`KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"`) to prevent accidental creation of single-partition topics. Instead, `kafka-init` executes idempotently once the broker passes its health check:
 
 ```bash
@@ -98,7 +100,7 @@ All backend services implement standardized, hardened multi-stage Dockerfiles.
    - Execution explicitly switched via `USER appuser`.
 3. **Container-Aware JVM Ergonomics**:
    - `JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom"`
-   - Automatically adapts heap size to cgroup memory limits.
+   - Automatically adapts heap size to cgroup memory limits. `docker-compose.yml` sets `mem_limit: 768m` on each JVM service, which gives about 576 MB of heap.
    - Uses non-blocking entropy source `/dev/./urandom` to eliminate container startup latency during crypto operations.
 4. **Port Alignment**:
    - Each backend service exposes its designated unique port (`8081` through `8085`) rather than a default `8080`.
@@ -174,6 +176,6 @@ Alternatively, use the developer automation scripts in `scripts/`:
 
 6. **Tear Down the Stack**:
    ```bash
-   docker compose down       # Preserves CouchDB volume data
-   docker compose down -v    # Resets CouchDB volume data to clean state
+   docker compose down       # Preserves CouchDB and Kafka volume data
+   docker compose down -v    # Resets CouchDB and Kafka volume data to clean state
    ```

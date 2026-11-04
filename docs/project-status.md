@@ -13,6 +13,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * **Phase 4 (Kafka Pipeline & Idempotency Filter):** Implemented `TradeRawConsumer` on `trade.raw`, CouchDB-backed `IdempotencyKey` duplicate suppression filter, canonical publishing to `trade.accepted` (`TradeAcceptedProducer`), exception routing to `exception.created` (`ExceptionCreatedProducer`), and DLQ routing to `deadletter.trade` (`DeadLetterProducer`).
   * **Phase 5 (Operations REST APIs & Health):** Implemented `TradeQueryController` (`GET /trades/{id}`, `GET /trades?status=&page=&size=`, `GET /trades/{id}/audit`, `GET /trades/metrics/summary`, `GET /metrics/stp-rate`), `IngestionMetricsService` tracking throughput and STP rates, and `WebConfig` CORS configuration.
   * **Phase 6 (Automated Testing & Pipeline Verification):** Comprehensive test suite with 97 passing tests across unit, repository, producer, consumer, and end-to-end integration flows ([`TradeIngestionPipelineIntegrationTest`](../services/ingestion-service/src/test/java/com/tcem/ingestion/integration/TradeIngestionPipelineIntegrationTest.java)); verified full Maven reactor build.
+  * Sprint 2 hardening: replays bypass the duplicate check, so a second replay is reprocessed instead of emitting a false duplicate exception (commit `8b4435d`). `ingestion-service`: 98 tests.
 * **What is Remaining:**
   * Ready for upstream consumption! Lead team PR reviews and coordinate with Bhavik (`enrichment-service`) for consuming `trade.accepted`.
 
@@ -24,6 +25,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Implemented `TradeEnricher` enriching FX Option trades against reference JSON datasets (`counterparties.json`, `instruments.json`, `templates.json`, `counterparty-products.json`).
   * Implemented `TradeAcceptedConsumer` (consuming `trade.accepted`), idempotency filtering with `EnrichmentIdempotencyRepository`, and publishing to `trade.enriched` (`TradeEnrichedProducer`) with DLQ routing.
   * In-place party enrichment (`legalEntityName`, `lei`, `country`) and template resolution.
+  * Sprint 2 hardening: replays bypass the duplicate check, so a later replay of the same message is no longer dropped (C3-03, commit `8b4435d`). `enrichment-service`: 11 tests.
 * **What is Remaining:**
   * Ready for downstream validation consumption.
 
@@ -36,9 +38,10 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Implemented confirmation generation with fingerprint-based duplicate suppression and exception mapping.
   * Implemented the `trade.enriched` consumer and confirmation query/metrics REST APIs.
   * Fixed CouchDB 25-record cap in `ConfirmationCouchDbRepository.countAll()` (explicit 10,000 query limit).
-  * Added unit and embedded-Kafka integration tests: 132 tests passing in `validation-service` (482 across the Maven reactor). Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
+  * Added unit and embedded-Kafka integration tests: 142 tests passing in `validation-service` (496 across the Maven reactor). Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
   * Sprint 2 hardening: durable `IdempotencyKey` guard in `TradeEnrichedConsumer` (new `validation-idempotency` database), `SchemaVersionRouter` parsing with `SCHEMA_VERSION_UNSUPPORTED` DLQ routing, and `ConfirmationFingerprint` party-path resolution so counterparty changes trigger a new confirmation (commits `a2cb6d6`, `537f353`).
   * Added a 34-test suite to `common-lib` (commit `8b00f86`) and standardized listener topics on `TopicNames` constants (commit `970ecf6`).
+  * Sprint 2 hardening: outbound events keep `eventType` and `replayCount`, and dead letters are keyed by `tradeId` (C2-01). Enriched trades that fail STP are held, and an approved manual review generates the confirmation (C3-01, commit `8b4435d`). `validation-service`: 142 tests.
 * **What is Remaining:**
   * Ready for live demonstration.
 
@@ -51,6 +54,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Implemented deterministic classification rules engine with confidence scoring and SLA resolution tracking.
   * CouchDB persistence for `exceptions` database with conflict retry handling.
   * REST query APIs for exception filtering, queue aggregations, and metrics.
+  * Sprint 2 hardening: outbound events keep `eventType` and `replayCount` instead of resetting to `NEW_TRADE` (C3-02, commit `8b4435d`). `exception-service`: 130 tests.
 * **What is Remaining:**
   * Ready for live demonstration.
 
@@ -64,6 +68,8 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Audit trail: immutable audit capture shared with `ingestion-service`.
   * DevOps: Complete local orchestration with health checks, initializers, multi-stage Dockerfiles, and named volumes for Kafka and CouchDB.
   * Hardened `docker-compose.yml` with persistent `kafka_data` volume and auto-provisioned `enrichment-idempotency` and `validation-idempotency` databases.
+  * Sprint 2 hardening: replays routed to manual review count as successful, and `workitem.linked` carries `reviewDecision` (commit `8b4435d`). `workitem-service`: 81 tests.
+  * DevOps: `mem_limit: 768m` on JVM services, `dev-up.sh` forwards its mode, `init-kafka.sh` uses its bootstrap variable, `kafka-ui` pinned (C5-03, C5-05, C5-06, commit `8b4435d`). Kafka data now really is on the `kafka_data` volume through `KAFKA_LOG_DIRS` (C5-02 correction).
 * **What is Remaining:**
   * Ready for live demonstration.
 
@@ -85,6 +91,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
 
 * **Code Consistency Audit:** Completed across all 5 services and frontend ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
 * **Showstopper Fixes:** All 7 critical fixes resolved and committed on `fix/code-consistency` ([`docs/reports/presentation_fixes_guide.md`](reports/presentation_fixes_guide.md)).
-* **Sprint 2 Fixes:** C1-01, C1-03, C1-04, C1-05 and C1-06 resolved on `fix/code-consistency` (commits `a2cb6d6`, `8b00f86`, `bda73d5`, `537f353`, `970ecf6`); 15 of 37 audit findings resolved ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
+* **Sprint 2 Fixes:** C1-01, C1-03, C1-04, C1-05, C1-06 (commits `a2cb6d6`, `8b00f86`, `bda73d5`, `537f353`, `970ecf6`), C2-01, C3-01, C3-02, C3-03, C3-09, C5-03, C5-05, C5-06 (commit `8b4435d`) and a C5-02 correction resolved on `fix/code-consistency`; 23 of 37 audit findings resolved ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
+* **Known Gap:** the frontend is still a simulation and does not call these APIs (C4-01), so the replay and manual-review fixes are visible through the API, Kafka UI and CouchDB, not through UI buttons.
 * **Live Demo Presentation Guide:** Master live demonstration script and flow for all 6 presenters ([`docs/reports/live_demo_presentation_guide.md`](reports/live_demo_presentation_guide.md)).
 * **Status:** 100% Ready for live evaluator evaluation.

@@ -4,7 +4,7 @@
 **Format:** 100% Live Screen-Shared Demonstration (NO SLIDES / NO PPT)  
 **Total Duration:** ~15 Minutes (12 mins demo + 3 mins Q&A)  
 **Target Audience:** Evaluators, Enterprise Architects, and Business Stakeholders  
-**Branch:** `fix/code-consistency` (7 critical showstoppers and 5 Sprint 2 fixes resolved)  
+**Branch:** `fix/code-consistency` (7 critical showstoppers and 13 Sprint 2 fixes resolved)  
 
 ---
 
@@ -159,7 +159,7 @@ All 6 team members will actively participate, speaking to the exact service doma
 > *Third, Dead-Letter Queue & Controlled Replay (FR12):*
 > *Let's navigate to the Dead-Letter Queue Console. Technical and unrecoverable downstream failures are isolated on `deadletter.trade`.*
 > *Operators can inspect the full error payload, exception class, and diagnostic stack traces.*
-> *When we click 'Replay Message', the system resets the idempotency key, increments the replay count, and republishes the payload back to the originating topic without service downtime.*
+> *A replay sets the message's event type to `REPLAY`, increments its replay count and republishes it to the topic it failed on. Services skip their duplicate check for replays, and the DLQ entry closes when the message reaches the next stage, all without service downtime.*
 >
 > *Finally, Gunjan will walk us through our Executive Operations Cockpit, Service Topology, and our production hardening roadmap."*
 
@@ -178,7 +178,7 @@ All 6 team members will actively participate, speaking to the exact service doma
 >
 > *To prepare for enterprise production readiness, our team also completed a comprehensive 37-finding architectural consistency audit. We eliminated all critical containerization showstoppers, hardened our Kafka persistence volumes, and aligned our data contracts.*
 >
-> *Our Sprint 2 hardening roadmap already includes end-to-end replay header propagation and automated confirmation generation from manual reviews.*
+> *We have also completed end-to-end replay tracking and automated confirmation generation from manual reviews. Our roadmap now covers wiring this UI to the live APIs and full-pipeline CI coverage.*
 >
 > *We are proud to present TCEM as a complete, scalable, and resilient trade confirmation exception management platform. Thank you, and we now welcome your questions."*
 
@@ -192,9 +192,40 @@ To guarantee a 100% smooth, glitch-free presentation, every team member must str
 |:---|:---|:---|:---|
 | **Trade Generation** | Ingest clean synthetic batches (`--generate 5`). | Do not seed `CANCEL_TRADE` events. | `validation-service` drops cancels without publishing status to `stp.validated` (C2-04). |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. A freshly booted stack is unaffected. |
-| **Manual Review** | Showcase Manual Review queue, rule cards, and decision buttons. | Do not try to show confirmation generation resulting from manual approval in Kafka UI. | `validation-service` does not yet subscribe to `workitem.linked` (C3-01). |
-| **DLQ Console** | Expand diagnostics, show stack traces, and click replay once. | Do not spam the replay button 3+ times on the same message. | Replay attempts > 1 share identical idempotency keys (C3-03). |
+| **Manual Review** | Showcase Manual Review queue, rule cards, and decision buttons. | Do not claim the UI buttons trigger the backend. To show a real confirmation from an approval, use the commands in Section 4.1. | The frontend is a simulation (C4-01). The backend flow works since C3-01 was fixed. The 500-trade seed creates no manual review items, so create one through the API. |
+| **DLQ Console** | Expand diagnostics and show stack traces. | Do not claim the UI replay button calls the backend. To show a real replay, use `POST /dlq/{id}/replay` (Section 4.1). | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |
 | **Frontend State** | Filter queues, search counterparties, and inspect modals. | Do not refresh the browser mid-demo if you want to keep seeded session data. | Frontend runs state simulation with mock fallback (C4-01). |
+
+
+### 4.1 Showing the Real Backend Flow (Optional)
+
+The frontend does not call these APIs, so run them in a terminal and show the result in Kafka UI or CouchDB Fauxton.
+
+**Manual review approval (C3-01).** Sequence 9403 uses a counterparty that fails STP, so the trade is held rather than confirmed:
+
+```bash
+curl -s -X POST "localhost:8081/trades/generate/scenario?scenario=BUSINESS_RULE_NON_STP&sequence=9403&publishToKafka=true" > /dev/null
+sleep 5
+curl -s -o /dev/null -w "before approval: %{http_code}\n" localhost:8083/trades/TRD-009403/confirmation   # 404
+
+WI=$(curl -s -X POST localhost:8085/workitems -H 'Content-Type: application/json' \
+  -d '{"tradeId":"TRD-009403","type":"MANUAL_REVIEW","title":"Demo review","description":"Demo","ownerQueue":"OPERATIONS_REVIEW","priority":"MEDIUM"}' \
+  | jq -r .workItemId)
+curl -s -X POST "localhost:8085/workitems/$WI/review" -H 'Content-Type: application/json' \
+  -d '{"decision":"APPROVE","notes":"Eligible after review","reviewer":"supervisor-1"}' > /dev/null
+sleep 5
+curl -s localhost:8083/trades/TRD-009403/confirmation | jq '.status'                                       # "ALLEGED"
+```
+
+**DLQ replay.** List entries, then replay one by its `_id`. The status moves from `PENDING_REPLAY` to `REPLAY_SUCCEEDED` once the message reaches the next stage:
+
+```bash
+curl -s "localhost:8085/dlq?status=PENDING_REPLAY" | jq -r '.content[]._id'
+curl -s -X POST "localhost:8085/dlq/<_id>/replay" | jq '.dlqStatus'
+curl -s "localhost:8085/dlq/<_id>" | jq '.dlqStatus'
+```
+
+A normal seed produces no replayable entries, so this needs a real failure first (for example, a message that failed while a service's CouchDB database was unavailable).
 
 ---
 

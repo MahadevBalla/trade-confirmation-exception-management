@@ -1,7 +1,7 @@
 # TCEM Code Consistency & System Risk Report
 
 **Audit Mode:** Multi-Phase Architecture & Code Consistency Audit  
-**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 5 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)  
+**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 13 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)  
 **Target Repository:** `trade-confirmation-exception-management`  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Remediation Guide:** [`presentation_fixes_guide.md`](./presentation_fixes_guide.md)  
@@ -27,7 +27,7 @@
 - **Phase 4 (Completed):** Audited frontend React 19 application (`frontend`), Vite and Nginx reverse proxies, TypeScript types vs Java DTOs, `AppContext` state management, recommendation engine parity, and backend API integration.
 - **Phase 5 (Completed):** Audited DevOps infrastructure, Docker orchestration, initializers, JVM memory flags, and GitHub Actions CI.
 - **Remediation Sprint (Completed):** Fixed 7 critical demo-breaking showstoppers on `fix/code-consistency` (Docker build `.dockerignore`, Kafka persistence volume, CouchDB 25-limit cap, TypeScript enum alignment, DLQ dual-property models, enriched counterparty name display, and database provisioning). System health score upgraded from **68/100 to 86/100**.
-- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite) and C1-06 (Kafka topic wiring) on `fix/code-consistency`. **15 of 37 findings are now resolved; 22 remain** (see the risk matrix).
+- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), and C5-03, C5-05 and C5-06 (DevOps) on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. **23 of 37 findings are now resolved; 14 remain** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
 
 ---
 
@@ -133,7 +133,7 @@
 
 ### Phase 2 Findings: Ingestion & Validation Pipeline
 
-### 8. 🔴 BREAKS THE SYSTEM: Lost Replay Context & Event Type in `validation-service` Breaking DLQ Resolution
+### 8. 🔴 BREAKS THE SYSTEM: Lost Replay Context & Event Type in `validation-service` Breaking DLQ Resolution — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** [ConfirmationService.java:L158-L164](../../services/validation-service/src/main/java/com/tcem/validation/confirmation/ConfirmationService.java#L158-L164) and [StpExceptionMapper.java:L111-L118](../../services/validation-service/src/main/java/com/tcem/validation/exception/StpExceptionMapper.java#L111-L118).
 - **Issue:**
   When `validation-service` builds outbound `MessageHeader`s for `confirmation.generated` or `exception.created`, `outboundHeader.setEventType(...)` is omitted (remaining `null`), and `inboundHeader.getReplayCount()` is never propagated. In addition, neither producer sets the Kafka record header `tcem.replayCount`.
@@ -141,6 +141,8 @@
   In `workitem-service`, `ReplayOutcomeService.onPipelineMessage()` checks whether `hasReplayMarker(value)` (`eventType == REPLAY || replayCount > 0`) or `tcem.replayCount` is present. Because `validation-service` strips these attributes, `workitem-service` **fails to detect that a replayed trade was resolved**. The DLQ entry remains permanently stuck in `REPLAYING` status, and open work items are never closed upon successful confirmation of a replayed trade. This directly breaks FR12.
 - **Recommended Remediation:**
   Propagate `inboundHeader.getEventType()` and `inboundHeader.getReplayCount()` into the outbound `MessageHeader`, and attach the `HeaderKeys.REPLAY_COUNT` record header in `ConfirmationGeneratedProducer` and `ExceptionCreatedProducer`.
+- **Resolution:**
+  `TradeEnrichedConsumer`, `ConfirmationService` and `StpExceptionMapper` now copy `eventType` and `replayCount` from the inbound header onto `stp.validated`, `confirmation.generated` and `exception.created`. The `tcem.replayCount` record header was not added because `ReplayOutcomeService` already accepts the payload marker. Fixing this alone was not enough: see the dead-letter key entry in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
 
 ---
 
@@ -203,7 +205,7 @@
 
 ### Phase 3 Findings: Enrichment, Exception Processing & Work Items
 
-### 14. 🔴 BREAKS THE SYSTEM: Manual Review "APPROVE" Action is an Architectural Dead End (Trade Stranded)
+### 14. 🔴 BREAKS THE SYSTEM: Manual Review "APPROVE" Action is an Architectural Dead End (Trade Stranded) — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** [ManualReviewService.java:L22-L25](../../services/workitem-service/src/main/java/com/tcem/workitem/service/ManualReviewService.java#L22-L25), [WorkItemService.java:L206-L213](../../services/workitem-service/src/main/java/com/tcem/workitem/service/WorkItemService.java#L206-L213), and [WorkItemLinkedProducer.java:L20-L30](../../services/workitem-service/src/main/java/com/tcem/workitem/producer/WorkItemLinkedProducer.java#L20-L30).
 - **Issue:**
   When an operations specialist reviews an exception on the manual review queue and submits an `APPROVE` decision, `ManualReviewService.decide()` closes the work item as `DONE` and publishes a `WorkItemEvent` to `workitem.linked`. The service documentation states: *"Generating the confirmation stays with validation-service, which can react to the closed item on workitem.linked"*. However, `validation-service` **only listens to `trade.enriched`**! Across all microservices, **no component listens to `workitem.linked`**.
@@ -211,10 +213,12 @@
   Manually approved trades are completely abandoned: no confirmation is ever triggered, no message is forwarded to `stp.validated` or `confirmation.generated`, and the trade remains permanently unconfirmed despite human authorization.
 - **Recommended Remediation:**
   Implement a consumer for `workitem.linked` in `validation-service` (or dispatch an approved trade re-submission event) that loads the trade and emits a confirmation upon manual approval.
+- **Resolution:**
+  `validation-service` now stores the raw enriched message when STP fails (`HeldTradeRepository`, `docType=HELD_TRADE` in the `confirmations` database, so no new database is needed) and `ManualReviewApprovalConsumer` listens to `workitem.linked`. A closed `MANUAL_REVIEW` item with `reviewDecision=APPROVED` generates the confirmation; `confirmation.generated` then closes the trade's other open work items. `WorkItem` gained `reviewDecision`, because approved and rejected items were otherwise both just `DONE`. A repeated approval is suppressed by the fingerprint check. An approval that cannot be confirmed (for example a schema-invalid trade, which was never enriched) goes to `deadletter.trade` as non-replayable.
 
 ---
 
-### 15. 🔴 BREAKS THE SYSTEM: End-to-End Replay Acknowledgment Failure Across Services (DLQ Stuck in `REPLAYING`)
+### 15. 🔴 BREAKS THE SYSTEM: End-to-End Replay Acknowledgment Failure Across Services (DLQ Stuck in `REPLAYING`) — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** [DefaultExceptionProcessingService.java:L314-L323](../../services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java#L314-L323), [ExceptionClassifiedProducer.java:L43-L60](../../services/exception-service/src/main/java/com/tcem/exception/producer/ExceptionClassifiedProducer.java#L43-L60), and [ReplayOutcomeService.java:L75-L81](../../services/workitem-service/src/main/java/com/tcem/workitem/service/ReplayOutcomeService.java#L75-L81).
 - **Issue:**
   `ReplayOutcomeService` in `workitem-service` monitors downstream pipeline topics to detect replay success. It considers a replay successful only when either `ConsumerRecords.hasReplayHeader(record)` (Kafka header `tcem.replayCount > 0`) or `hasReplayMarker(value)` (`eventType == REPLAY || replayCount > 0`) is true.
@@ -223,10 +227,12 @@
   When an `exception.created` message is replayed, its output on `exception.classified` loses all replay metadata. `ReplayOutcomeService.onPipelineMessage()` ignores the message. The DLQ entry remains permanently in `REPLAYING` status, its linked work item is never auto-closed, and subsequent replays are blocked with `ALREADY_REPLAYING`.
 - **Recommended Remediation:**
   Preserve inbound `eventType` and `replayCount` when constructing outbound headers in `DefaultExceptionProcessingService`, and propagate `tcem.replayCount` in `ExceptionClassifiedProducer`.
+- **Resolution:**
+  `DefaultExceptionProcessingService` now keeps the inbound `eventType` and `replayCount` on its outbound header. `workitem-service` also counts `manual.review.required` as proof that a replayed `exception.created` message was processed; those replays previously stayed in `REPLAYING`.
 
 ---
 
-### 16. 🔴 BREAKS THE SYSTEM: Multi-Attempt Replay Suppression in `TradeAcceptedConsumer` (Attempt > 1 Dropped)
+### 16. 🔴 BREAKS THE SYSTEM: Multi-Attempt Replay Suppression in `TradeAcceptedConsumer` (Attempt > 1 Dropped) — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** [TradeAcceptedConsumer.java:L55-L61](../../services/enrichment-service/src/main/java/com/tcem/enrichment/consumer/TradeAcceptedConsumer.java#L55-L61), [ReplayService.java:L139-L155](../../services/workitem-service/src/main/java/com/tcem/workitem/service/ReplayService.java#L139-L155), and [IdempotencyKey.java:L40-L51](../../services/common-lib/src/main/java/com/tcem/common/idempotency/IdempotencyKey.java#L40-L51).
 - **Issue:**
   When `ReplayService` republishes a dead-lettered trade to `trade.accepted`, it rewrites `eventType` to `REPLAY`. On replay attempt 1, `TradeAcceptedConsumer` processes the message and stores the key `idempotency:{tradeId}:{messageId}:{version}:REPLAY`. If downstream fails and the operator initiates a 2nd replay attempt (`replayCount=2`), `TradeAcceptedConsumer` calculates the exact same `IdempotencyKey` because `IdempotencyKey` does **not** include `replayCount`. `idempotencyRepository.isProcessed(key)` returns `true`.
@@ -234,6 +240,8 @@
   Any subsequent replay attempt (> 1) on `trade.accepted` is silently dropped as a duplicate! The replayed trade never reaches enrichment, and the operator is unable to retry failed replays.
 - **Recommended Remediation:**
   Bypass the idempotency check in `TradeAcceptedConsumer` when Kafka header `tcem.replayCount > 0` or payload `eventType == REPLAY` (matching the pattern in `DefaultExceptionProcessingService:L171`).
+- **Resolution:**
+  `TradeAcceptedConsumer` skips the duplicate check for `REPLAY` messages and does not re-record the key, because its repository PUTs without a `_rev` and would get a 409. `DefaultTradeIngestionService` had the same defect and now bypasses the check too. *Reachability note:* a successful first replay closes its DLQ entry, so in normal use this needs two DLQ entries for the same message; the live test reproduced it that way.
 
 ---
 
@@ -292,7 +300,7 @@
 
 ---
 
-### 22. 🟢 NOT BREAKING / COSMETIC: Stale Documentation Regarding Idempotency Cleanup
+### 22. 🟢 NOT BREAKING / COSMETIC: Stale Documentation Regarding Idempotency Cleanup — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** [IdempotencyKey.java:L28-L34](../../services/common-lib/src/main/java/com/tcem/common/idempotency/IdempotencyKey.java#L28-L34).
 - **Issue:**
   Javadoc claims that services must manually clear their CouchDB idempotency store before DLQ replay is initiated. In practice, `ReplayService` relies on mutating `eventType=REPLAY` in the envelope.
@@ -300,6 +308,8 @@
   None on runtime; causes developer confusion regarding replay mechanics.
 - **Recommended Remediation:**
   Align Javadoc comments with the actual event-type header rewriting architecture.
+- **Resolution:**
+  The Javadoc now says every replay attempt shares one key, so services skip the duplicate check for `REPLAY` messages.
 
 ---
 
@@ -409,7 +419,7 @@
 
 ---
 
-### 31. 🔴 BREAKS THE SYSTEM: Asymmetric Data Persistence & Kafka Log Loss (No Volume Mount for Broker) — ✅ [RESOLVED in `fix/code-consistency`: Commit `e181b58`]
+### 31. 🔴 BREAKS THE SYSTEM: Asymmetric Data Persistence & Kafka Log Loss (No Volume Mount for Broker) — ✅ [RESOLVED in `fix/code-consistency`: `KAFKA_LOG_DIRS`, completing `e181b58`]
 - **Location:** [docker-compose.yml:L32-L58](../../docker-compose.yml#L32-L58) vs [docker-compose.yml:L106-L125](../../docker-compose.yml#L106-L125).
 - **Issue:**
   In `docker-compose.yml`, CouchDB has a persistent named volume attached:
@@ -432,10 +442,12 @@
       volumes:
         - kafka_data:/var/lib/kafka/data
   ```
+- **Resolution:**
+  `e181b58` mounted the `kafka_data` volume, but the broker kept writing to its default `/tmp/kafka-logs`, so the volume stayed empty and recreating the container lost all 10 application topics. `docker-compose.yml` now also sets `KAFKA_LOG_DIRS: /var/lib/kafka/data`. Verified on an isolated stack: topics, messages and consumer offsets survive both a container recreate and `docker compose down` + `up`, nothing is reprocessed, and new trades are confirmed afterwards. `docker compose down -v` still gives a clean reset.
 
 ---
 
-### 32. 🟠 HIGH / MODERATE RISK: Unbounded JVM Heap Allocation (75% Host RAM per Container)
+### 32. 🟠 HIGH / MODERATE RISK: Unbounded JVM Heap Allocation (75% Host RAM per Container) — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** All backend Dockerfiles ([ingestion-service/Dockerfile:L42](../../services/ingestion-service/Dockerfile#L42), [enrichment-service/Dockerfile:L42](../../services/enrichment-service/Dockerfile#L42), [validation-service/Dockerfile:L42](../../services/validation-service/Dockerfile#L42), [exception-service/Dockerfile:L42](../../services/exception-service/Dockerfile#L42), [workitem-service/Dockerfile:L42](../../services/workitem-service/Dockerfile#L42)) vs [docker-compose.yml](../../docker-compose.yml).
 - **Issue:**
   All five backend Dockerfiles specify container-aware memory flags:
@@ -447,6 +459,8 @@
   Each JVM dynamically provisions its max heap as 75% of the host's total RAM. On a 16 GB developer machine, each container calculates a ~12 GB max heap ceiling. Concurrently launching 5 backend services alongside Kafka and CouchDB causes extreme memory overcommit (~60 GB theoretical ceiling), resulting in severe OS thrashing, swap exhaustion, and abrupt container kills by the host OOM-killer during batch seed execution (`500` synthetic trades).
 - **Recommended Remediation:**
   Define explicit memory limits in `docker-compose.yml` for each service (e.g., `mem_limit: 512m` or `mem_limit: 768m`), giving each JVM an explicit, predictable heap budget (~384 MB - 576 MB).
+- **Resolution:**
+  The five JVM services now have `mem_limit: 768m` (about 576 MB of heap at `MaxRAMPercentage=75`). A 500-trade seed ran with no service failures under this limit.
 
 ---
 
@@ -466,7 +480,7 @@
 
 ---
 
-### 34. 🟡 LOW RISK / INCONSISTENCY: `scripts/dev-up.sh` Fails to Forward `--all` to Smoke Test
+### 34. 🟡 LOW RISK / INCONSISTENCY: `scripts/dev-up.sh` Fails to Forward `--all` to Smoke Test — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** [scripts/dev-up.sh:L36-L46](../../scripts/dev-up.sh#L36-L46) vs [scripts/smoke-test.sh:L44-L57](../../scripts/smoke-test.sh#L44-L57).
 - **Issue:**
   `scripts/dev-up.sh` supports the `--all` argument:
@@ -487,10 +501,12 @@
   ```bash
   ./scripts/smoke-test.sh ${MODE}
   ```
+- **Resolution:**
+  `dev-up.sh` now passes `"$MODE"` to `smoke-test.sh`, so `--all` asserts all five services.
 
 ---
 
-### 35. 🟡 LOW RISK / INCONSISTENCY: `scripts/init-kafka.sh` Dead Environment Variable & Container Coupling
+### 35. 🟡 LOW RISK / INCONSISTENCY: `scripts/init-kafka.sh` Dead Environment Variable & Container Coupling — ✅ [RESOLVED in `fix/code-consistency`: Commit `8b4435d`]
 - **Location:** [scripts/init-kafka.sh:L8-L45](../../scripts/init-kafka.sh#L8-L45).
 - **Issue:**
   Line 8 defines `BOOTSTRAP_SERVER="${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}"`, and line 22 echoes it. However, the variable `$BOOTSTRAP_SERVER` is **never referenced in any execution command**. Instead, the script hardcodes `docker compose exec -T kafka ... --bootstrap-server localhost:9092`.
@@ -498,6 +514,8 @@
   Setting `KAFKA_BOOTSTRAP_SERVERS` has zero effect. Furthermore, running `./scripts/init-kafka.sh` against an external Kafka cluster or standalone container fails because it is tightly coupled to the local Docker Compose service name `kafka`.
 - **Recommended Remediation:**
   Support both in-container execution and external bootstrap server targets via the `$BOOTSTRAP_SERVER` variable.
+- **Resolution:**
+  The script now uses its bootstrap variable, renamed `INIT_KAFKA_BOOTSTRAP_SERVER` (default `localhost:9092`). The commands run inside the Kafka container through `docker compose exec`, so this is the address seen from inside the container and it remains coupled to the Compose service. Reusing `KAFKA_BOOTSTRAP_SERVERS` would have broken it, because that is the host-side address.
 
 ---
 
@@ -514,7 +532,7 @@
 
 ---
 
-### 37. 🟢 NOT BREAKING / COSMETIC: Documentation & Base Image Tag Drift
+### 37. 🟢 NOT BREAKING / COSMETIC: Documentation & Base Image Tag Drift — ✅ [RESOLVED in `fix/code-consistency`: README updated in `9f2688d`; `kafka-ui` pinned in `8b4435d`]
 - **Location:** [README.md:L13-L17](../../README.md#L13-L17), [docker-compose.yml:L93](../../docker-compose.yml#L93).
 - **Issue:**
   1. Root `README.md` states: *"enrichment-service, validation-service and exception-service are still runnable stubs"*, and *"common-lib (empty for now)"*, even though all modules are fully implemented with test suites.
@@ -523,6 +541,26 @@
   Misleads new developers about repository maturity and risks unpredictable Docker pulls if `:latest` changes upstream.
 - **Recommended Remediation:**
   Update `README.md` to reflect current implementation status, and pin `kafka-ui` to a specific version tag (e.g. `provectuslabs/kafka-ui:v0.7.2` or `kafbat/kafka-ui:v1.0.0`).
+- **Resolution:**
+  `kafka-ui` is now pinned to `provectuslabs/kafka-ui:v0.7.2`.
+
+---
+
+## Findings Added During Sprint 2 Remediation
+
+These were found while fixing and live-testing the items above. They are not part of the original 37.
+
+| Finding | Impact | Status |
+| :--- | :--- | :--- |
+| `validation-service` keyed dead letters by `correlationId` | `workitem-service` stored it as the trade id, so replay outcomes could never match the entry. | ✅ Fixed in `8b4435d`: keyed by `tradeId` |
+| `ingestion-service` had no `REPLAY` bypass | A second replay emitted a duplicate exception still carrying the replay marker, which was misread as a successful replay. | ✅ Fixed in `8b4435d` |
+| Replays routed to `manual.review.required` were not counted as success | The DLQ entry stayed in `REPLAYING`. | ✅ Fixed in `8b4435d` |
+| The original C5-02 fix did not persist Kafka data | See finding 31. | ✅ Fixed with `KAFKA_LOG_DIRS` |
+| DLQ API returns `_id`, not `id` | The `id` alias added for C4-02 will not match when the frontend is wired to the live API (C4-01). | 🟡 Open |
+| `BUSINESS_RULE_NON_STP` does not always fail STP | The scenario only sets a jurisdiction, which no rule checks. Outcome depends on the counterparty: `sequence` values 9103, 9403 and 9407 (counterparty 103) failed STP, while 9401 and 9402 (101, 102) were confirmed normally. | 🟡 Open |
+| The 500-trade seed produces no manual review items | Nothing in the seed routes to `manual.review.required`, so the real queue is empty after seeding. Create the item through the API to demonstrate it. | 🟡 Open |
+| A replayed `CANCEL_TRADE` runs through STP | Replay overwrites `eventType` with `REPLAY`, so `TradeEnrichedConsumer` no longer recognises the cancel. | 🟡 Open |
+| One approval confirms the whole trade | Approving a review closes the trade's other open work items, even a `DATA_FIX`, and can produce a confirmation with template `N/A`. | 🟡 Team to confirm this is the intended rule |
 
 ---
 
@@ -537,21 +575,21 @@
 | **C1-05** | Phase 1 | `common-lib` | Complete absence of unit tests in shared module. | ✅ **RESOLVED (`8b00f86`)** | Medium (Added 34-test JUnit 5 suite) |
 | **C1-06** | Phase 1 | Configuration vs Listeners | Inconsistent Kafka topic property injection vs static constants across consumers. | ✅ **RESOLVED (`970ecf6`)** | Low (Standardized on `TopicNames` constants) |
 | **C1-07** | Phase 1 | `docs/architecture.md` | Stale documentation claiming 3 backend services are stubs. | ✅ **RESOLVED (`fix/code-consistency`)** | Trivial (Update markdown) |
-| **C2-01** | Phase 2 | `ConfirmationService` & `StpExceptionMapper` | Strips `eventType` and `replayCount` from outbound headers, permanently breaking DLQ replay completion in `workitem-service`. | 🔴 Breaks System (Sprint 2) | Low (Copy header fields) |
+| **C2-01** | Phase 2 | `ConfirmationService` & `StpExceptionMapper` | Strips `eventType` and `replayCount` from outbound headers, permanently breaking DLQ replay completion in `workitem-service`. | ✅ **RESOLVED (`8b4435d`)** | Low (Copy header fields) |
 | **C2-02** | Phase 2 | `ConfirmationCouchDbRepository` | `countAll()` Mango query defaults to limit 25, capping STP metrics permanently at 25. | ✅ **RESOLVED (`2c4b3aa`)** | Low (Added explicit limit 10000) |
 | **C2-03** | Phase 2 | `TradeValidator` vs `EconomicFieldsRule` | Edge schema validation drops incomplete economic trades, making `EconomicFieldsRule` dead code. | 🟠 High Risk (Sprint 2) | Medium (Align FR2 vs FR5 boundary) |
 | **C2-04** | Phase 2 | `TradeEnrichedConsumer` | Silently drops `CANCEL_TRADE` without publishing to `stp.validated` or closing open exceptions. | 🟠 High Risk (Sprint 2) | Low (Emit cancellation outcome) |
 | **C2-05** | Phase 2 | API Gateway / Controllers | Conflicting `GET /metrics/stp-rate` endpoint paths with differing response structures across services. | 🟡 Low Risk (Sprint 2) | Low (Rename endpoint) |
 | **C2-06** | Phase 2 | `ingestion-service/README.md` | Documents nonexistent `TERMINATE_TRADE` event type. | 🟢 Not Breaking (Sprint 2) | Trivial (Update markdown) |
-| **C3-01** | Phase 3 | `ManualReviewService` | Operator "APPROVE" decision publishes to `workitem.linked` which no service consumes; approved trades are permanently stranded. | 🔴 Breaks System (Sprint 2) | Medium (Add consumer or direct confirmation) |
-| **C3-02** | Phase 3 | `exception-service` & Producers | `buildOutboundHeader` resets `eventType` to `NEW_TRADE`, dropping replay identity and preventing `ReplayOutcomeService` from detecting success. | 🔴 Breaks System (Sprint 2) | Low (Preserve inbound header fields) |
-| **C3-03** | Phase 3 | `TradeAcceptedConsumer` | Multi-attempt replays (> 1) share identical `IdempotencyKey`, causing 2nd replay attempts to be silently dropped as duplicates. | 🔴 Breaks System (Sprint 2) | Low (Bypass check for REPLAY / replayCount > 0) |
+| **C3-01** | Phase 3 | `ManualReviewService` | Operator "APPROVE" decision publishes to `workitem.linked` which no service consumes; approved trades are permanently stranded. | ✅ **RESOLVED (`8b4435d`)** | Medium (Add consumer or direct confirmation) |
+| **C3-02** | Phase 3 | `exception-service` & Producers | `buildOutboundHeader` resets `eventType` to `NEW_TRADE`, dropping replay identity and preventing `ReplayOutcomeService` from detecting success. | ✅ **RESOLVED (`8b4435d`)** | Low (Preserve inbound header fields) |
+| **C3-03** | Phase 3 | `TradeAcceptedConsumer` | Multi-attempt replays (> 1) share identical `IdempotencyKey`, causing 2nd replay attempts to be silently dropped as duplicates. | ✅ **RESOLVED (`8b4435d`)** | Low (Bypass check for REPLAY / replayCount > 0) |
 | **C3-04** | Phase 3 | `DefaultExceptionProcessingService` | Discards `ClassificationResult.confirmedCategory` and `confirmedSubTheme`, keeping unrefined exception metadata. | 🟠 High Risk (Sprint 2) | Low (Copy confirmed fields to record) |
 | **C3-05** | Phase 3 | `enrichment-service` Producers | `.join()` blocks Kafka consumer threads synchronously on publish, risking consumer heartbeat timeouts and rebalances. | 🟠 High Risk (Sprint 2) | Low (Use async callback or timeout) |
 | **C3-06** | Phase 3 | `scripts/init-couchdb.sh` | Omits `enrichment-idempotency` database from CouchDB provisioning script. | ✅ **RESOLVED (`d30e283`)** | Trivial (Added db name to script) |
 | **C3-07** | Phase 3 | `ExceptionCouchDbRepository` | `countAll()` caps exception counts at 1,000 and pulls full documents into heap memory. | 🟡 Low Risk (Sprint 2) | Low (Use CouchDB view / db metadata) |
 | **C3-08** | Phase 3 | Build Configuration (`pom.xml`) | Missing `-Dnet.bytebuddy.experimental=true` surefire argLine breaks tests on modern JDKs (Java 25+). | 🟡 Low Risk (Sprint 2) | Trivial (Update parent POM plugin config) |
-| **C3-09** | Phase 3 | `IdempotencyKey` Javadoc | Documents nonexistent workitem API for manual CouchDB idempotency record purging. | 🟢 Not Breaking (Sprint 2) | Trivial (Update Javadoc comments) |
+| **C3-09** | Phase 3 | `IdempotencyKey` Javadoc | Documents nonexistent workitem API for manual CouchDB idempotency record purging. | ✅ **RESOLVED (`8b4435d`)** | Trivial (Update Javadoc comments) |
 | **C4-01** | Phase 4 | `AppContext.tsx` | Frontend operates in an in-browser operational simulation harness; live REST binding scheduled for hardening phase. | 🟡 Managed Demo State | Architecture Decoupling |
 | **C4-02** | Phase 4 | `types/tcem.ts` (`DeadLetterEvent`) | Property naming divergence (`dlqId`/`status` vs backend `id`/`dlqStatus`) causes rendering/action failure against live API. | ✅ **RESOLVED (`370fa98`)** | Low (Dual-mapped attributes) |
 | **C4-03** | Phase 4 | `TradeDetailModal.tsx` | Party name reads `p.partyName` instead of `p.legalEntityName`, hiding enriched counterparty names. | ✅ **RESOLVED (`d00ccb6`)** | Trivial (Reads `p.legalEntityName`) |
@@ -560,13 +598,13 @@
 | **C4-06** | Phase 4 | Queue Filters | Dropdowns omit `RULES_OWNER` and `SPECIALIST_REVIEW` queues from filterable options. | 🟡 Low Risk (Sprint 2) | Trivial (Add missing queue options) |
 | **C4-07** | Phase 4 | `ServiceTopology.tsx` | Displays CouchDB database names with underscores rather than actual hyphenated names. | 🟢 Not Breaking (Sprint 2) | Trivial (Update string labels) |
 | **C5-01** | Phase 5 | Docker Build (`frontend`) | Missing `frontend/.dockerignore` leaks host macOS binaries into Alpine Linux container build, breaking container builds. | ✅ **RESOLVED (`ef23e52`)** | Trivial (Added `frontend/.dockerignore`) |
-| **C5-02** | Phase 5 | Docker Compose (`kafka`) | Asymmetric persistence: Kafka has no volume mount while CouchDB does, wiping offsets and causing streaming/persistence desync. | ✅ **RESOLVED (`e181b58`)** | Low (Added `kafka_data` volume) |
-| **C5-03** | Phase 5 | Orchestration & JVM Memory | Zero memory limits in `docker-compose.yml` paired with `-XX:MaxRAMPercentage=75.0` risks host OOM thrashing under load. | 🟠 High Risk (Sprint 2) | Low (Set `mem_limit: 512m`) |
+| **C5-02** | Phase 5 | Docker Compose (`kafka`) | Asymmetric persistence: Kafka has no volume mount while CouchDB does, wiping offsets and causing streaming/persistence desync. | ✅ **RESOLVED (`KAFKA_LOG_DIRS`, completing `e181b58`)** | Low (Added `kafka_data` volume) |
+| **C5-03** | Phase 5 | Orchestration & JVM Memory | Zero memory limits in `docker-compose.yml` paired with `-XX:MaxRAMPercentage=75.0` risks host OOM thrashing under load. | ✅ **RESOLVED (`8b4435d`)** | Low (Set `mem_limit: 512m`) |
 | **C5-04** | Phase 5 | GitHub Actions CI | `smoke-test.yml` only boots 2 services, leaving `enrichment`, `validation`, and `exception` unverified in CI PR checks. | 🟠 High Risk (Sprint 2) | Medium (Add full-stack test job) |
-| **C5-05** | Phase 5 | `scripts/dev-up.sh` | Fails to pass `--all` to `smoke-test.sh`, skipping health checks for 4 backend services even when requested. | 🟡 Low Risk (Sprint 2) | Trivial (Pass `${MODE}`) |
-| **C5-06** | Phase 5 | `scripts/init-kafka.sh` | Dead variable `BOOTSTRAP_SERVER` and rigid coupling to `docker compose exec kafka`. | 🟡 Low Risk (Sprint 2) | Low (Use variable parameter) |
+| **C5-05** | Phase 5 | `scripts/dev-up.sh` | Fails to pass `--all` to `smoke-test.sh`, skipping health checks for 4 backend services even when requested. | ✅ **RESOLVED (`8b4435d`)** | Trivial (Pass `${MODE}`) |
+| **C5-06** | Phase 5 | `scripts/init-kafka.sh` | Dead variable `BOOTSTRAP_SERVER` and rigid coupling to `docker compose exec kafka`. | ✅ **RESOLVED (`8b4435d`)** | Low (Use variable parameter) |
 | **C5-07** | Phase 5 | `scripts/init-couchdb.sh` & Init Container | Omits `enrichment-idempotency` database provision. | ✅ **RESOLVED (`d30e283`)** | Trivial (Added database name) |
-| **C5-08** | Phase 5 | Documentation & Docker Images | Stale `README.md` claiming services are stubs, and mutable `:latest` tag on `provectuslabs/kafka-ui`. | ✅ **RESOLVED (`fix/code-consistency`)** | Trivial (Updated README) |
+| **C5-08** | Phase 5 | Documentation & Docker Images | Stale `README.md` claiming services are stubs, and mutable `:latest` tag on `provectuslabs/kafka-ui`. | ✅ **RESOLVED (README `9f2688d`, `kafka-ui` pin `8b4435d`)** | Trivial (Updated README) |
 
 ---
 
@@ -578,7 +616,7 @@
 - [x] **Phase 4: Frontend UI Alignment, State Management & API Integration (`frontend`)** (Findings C4-01 to C4-07)
 - [x] **Phase 5: DevOps, Docker Orchestration, Shell Scripts & Consolidated System Risk Matrix** (Findings C5-01 to C5-08)
 - [x] **Showstopper Remediation Sprint:** Fixed all 7 critical blockers (C5-01, C5-02, C2-02, C1-02, C4-02, C4-03, C3-06/C5-07) on `fix/code-consistency`.
-- [ ] **Sprint 2 Remediation (in progress):** C1-01, C1-03, C1-04, C1-05 and C1-06 resolved on `fix/code-consistency`; 22 of 37 findings remain open (see the risk matrix).
+- [ ] **Sprint 2 Remediation (in progress):** C1-01, C1-03, C1-04, C1-05, C1-06, C2-01, C3-01, C3-02, C3-03, C3-09, C5-03, C5-05 and C5-06 resolved on `fix/code-consistency`, and C5-02 corrected; 14 of 37 findings remain open (see the risk matrix).
 
 ---
 
@@ -592,7 +630,7 @@
 │                                                                        │
 │  Domain Modeling & Design:   ██████████████████░░  92/100 (Strong)     │
 │  DevOps & Containerization:  ██████████████████░░  92/100 (Hardened)   │
-│  Backend Unit Test Coverage: ██████████████████░░  88/100 (482 pass)   │
+│  Backend Unit Test Coverage: ██████████████████░░  88/100 (496 pass)   │
 │  Event Contracts & Enums:    █████████████████░░░  85/100 (Aligned)    │
 │  Operations Cockpit UI:      ██████████████░░░░░░  72/100 (Live Ready) │
 │                                                                        │

@@ -53,7 +53,8 @@ dist
 
 ---
 
-### Fix 2: Mount Kafka Data Volume in Docker Compose (Audit Issue C5-02) — ✅ [COMPLETED: `e181b58`]
+### Fix 2: Mount Kafka Data Volume in Docker Compose (Audit Issue C5-02) — ✅ [COMPLETED: `e181b58`, corrected with `KAFKA_LOG_DIRS`]
+* **Correction:** the steps below were not sufficient. The broker kept writing to `/tmp/kafka-logs` and the volume stayed empty, so `KAFKA_LOG_DIRS: /var/lib/kafka/data` was added too (see Section 7).
 * **Severity:** 🔴 Critical / State Corruption
 * **File to Edit:** `docker-compose.yml`
 * **Why It's Urgent:** CouchDB persists its state in `couchdb_data`, but Kafka currently has no volume. Whenever containers are restarted, Kafka wipes all topic offsets, while CouchDB retains previous trades and idempotency keys. This causes pipeline desynchronization and consumer stalls.
@@ -255,8 +256,8 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 | :--- | :--- | :--- | :--- |
 | **Trade Ingestion** | Ingest clean new trades (`--generate 5`). | Do not ingest `CANCEL_TRADE` events. | Validation service drops cancels silently without closing work items (C2-04). |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The `ConfirmationFingerprint` party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. |
-| **Manual Review** | Walk through the Manual Review Queue UI and recommendation cards. | Do not try to show confirmation output from manual review in backend. | `validation-service` does not yet consume `workitem.linked` (C3-01). |
-| **DLQ Management** | Show the DLQ screen, payload preview, and stack traces. | Do not click replay multiple times consecutively on the same item. | Multi-attempt replays (> 1) share idempotency keys (C3-03). |
+| **Manual Review** | Walk through the Manual Review Queue UI and recommendation cards. To show the real flow, use the API (see the live demo guide). | Do not claim the UI buttons call the backend. | The frontend is a simulation (C4-01). The backend flow itself works since C3-01 was fixed. |
+| **DLQ Management** | Show the DLQ screen, payload preview, and stack traces. To show a real replay, use `POST /dlq/{id}/replay`. | Do not claim the UI replay button calls the backend. | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |
 
 ---
 
@@ -264,12 +265,12 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 
 Include a **"System Audit & Sprint 2 Hardening Roadmap"** slide in your presentation. Presenting these points proactively turns audit findings into proof of senior architectural maturity:
 
-1. **End-to-End Replay Header Propagation:**
-   - *"Our comprehensive architecture audit identified that replay headers must be strictly copied through all downstream event envelopes to achieve zero-touch DLQ item auto-closure."*
-2. **Manual Review Loop Completion:**
-   - *"In Sprint 2, a dedicated consumer in validation-service will subscribe to `workitem.linked` to issue legally binding confirmations upon human approval."*
-3. **Global Idempotency Key Standardization:**
-   - *"We are upgrading our per-service idempotency stores into a unified key structure that includes the replay count, enabling infinite idempotent replay retries."*
+1. **Frontend Wiring:**
+   - *"The operations UI runs on a simulation harness. Wiring it to the live REST APIs through the existing gateway routes is the next step (C4-01)."*
+2. **Replay Scope:**
+   - *"Replay is working end to end. The next refinement is keeping the original event type on a replayed message, so a replayed cancel is still treated as a cancel."*
+3. **CI Coverage:**
+   - *"Our CI smoke test boots a subset of services. We are extending it to the full pipeline (C5-04)."*
 4. **Schema Version Evolution:**
    - *"`SchemaVersionRouter` now guards both `enrichment-service` and `validation-service` (unsupported versions go to the DLQ with `SCHEMA_VERSION_UNSUPPORTED`). We are extending the same pattern to the remaining consumers."*
 
@@ -277,7 +278,7 @@ Include a **"System Audit & Sprint 2 Hardening Roadmap"** slide in your presenta
 
 ## 7. Sprint 2 Fixes Applied After the Showstoppers
 
-Five further findings from [`code_consistency_report.md`](./code_consistency_report.md) were fixed on `fix/code-consistency`, one commit per fix (C1-03 and C1-04 share a commit because they change the same consumer):
+Further findings from [`code_consistency_report.md`](./code_consistency_report.md) were fixed on `fix/code-consistency`:
 
 | Audit ID | Fix | Commit |
 | :--- | :--- | :--- |
@@ -286,5 +287,15 @@ Five further findings from [`code_consistency_report.md`](./code_consistency_rep
 | C1-03 (infra) | `validation-idempotency` database provisioned in `init-couchdb.sh` and `couchdb-init` | `bda73d5` |
 | C1-03 + C1-04 | `validation-service` durable `IdempotencyKey` guard and `SchemaVersionRouter` parsing | `537f353` |
 | C1-06 | Kafka listener topics standardized on `TopicNames` constants; dead `input-topic` property removed | `970ecf6` |
+| C2-01, C3-02 | Replay identity (`eventType`, `replayCount`) kept on outbound events, so DLQ entries reach `REPLAY_SUCCEEDED` | `8b4435d` |
+| C3-03 | `enrichment-service` and `ingestion-service` skip the duplicate check for `REPLAY` messages | `8b4435d` |
+| C3-01 | Approving a manual review generates the confirmation (`ManualReviewApprovalConsumer`, `HeldTradeRepository`, `WorkItem.reviewDecision`) | `8b4435d` |
+| C3-09 | `IdempotencyKey` replay Javadoc corrected | `8b4435d` |
+| C5-03, C5-05, C5-06 | `mem_limit: 768m` on JVM services, `dev-up.sh` forwards its mode, `init-kafka.sh` uses its bootstrap variable | `8b4435d` |
+| C5-02 (correction) | `KAFKA_LOG_DIRS: /var/lib/kafka/data`, so Kafka data really is on the volume | `fix/code-consistency` |
 
 **Verification:** `mvn clean verify` in `services/` passes (482 tests, 0 failures). On a clean `docker compose` stack, `./scripts/smoke-test.sh --all` passes 15 checks, a re-published `trade.enriched` message is skipped as a duplicate, and a payload with an unsupported `schemaVersion` lands in the DLQ with reason `SCHEMA_VERSION_UNSUPPORTED`.
+
+**Verification of the replay, manual review and DevOps fixes:** `mvn verify` in `services/` passes (496 tests, 0 failures). The same live scenarios were run on an isolated stack against the code before and after the fixes. Before: DLQ entries stuck in `REPLAYING`, dead letters keyed by `correlationId`, approvals producing no confirmation. After: all reach `REPLAY_SUCCEEDED`, approval produces exactly one confirmation, rejection produces none. Totals from a 500-trade seed were identical on both, so the normal pipeline is unaffected. Some dead letters in these tests were injected directly on `deadletter.trade`, and manual review items were created through the API. `smoke-test.sh --all` was not re-run because its fixed ports were in use on the test machine.
+
+**After pulling these changes:** run `docker compose up -d --build`. Kafka starts with an empty volume the first time, so topics and offsets from your old container are gone while CouchDB keeps its data. Run `./scripts/dev-down.sh --reset` once first if you want the two to start clean together.

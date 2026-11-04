@@ -133,7 +133,7 @@ The `workitem-service` consumes `deadletter.trade`, `exception.classified`, `man
 | `/workitems/{id}` | GET | One work item. |
 | `/workitems` | POST | Create a work item (`201`; `400` on invalid values). |
 | `/workitems/{id}` | PATCH | Update status, priority, owner queue or notes (`409` on terminal items). |
-| `/workitems/{id}/review` | POST | `APPROVE` or `REJECT` a `MANUAL_REVIEW` item; reject sends the trade to the DLQ. |
+| `/workitems/{id}/review` | POST | `APPROVE` or `REJECT` a `MANUAL_REVIEW` item. Approve makes `validation-service` generate the confirmation; reject sends the trade to the DLQ. |
 | `/dlq?status={STATUS}&page={P}&size={S}` | GET | Dead-letter entries (`PENDING_REPLAY`, `REPLAYING`, `REPLAY_SUCCEEDED`, `PERMANENTLY_FAILED`). |
 | `/dlq/{id}` | GET | One DLQ entry, including its failure history. |
 | `/dlq/{id}/replay` | POST | Republish the original message to the topic it failed on (max 3 attempts). |

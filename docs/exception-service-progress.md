@@ -384,6 +384,7 @@ If session context is lost, read these files in order to resume:
 5. **SLA deadlines:** CRITICAL=+4h, HIGH=+24h, MEDIUM=+72h, LOW=+7d from `capturedAt`.
 6. **ExceptionId preservation:** If inbound `ExceptionRecord.exceptionId` is non-null and non-blank, preserve it; otherwise generate via `ExceptionIdGenerator` (starts at EXC-30001).
 7. **Fire-and-forget producers:** Kafka send failures logged as warnings but not propagated to caller.
+7a. **Replay identity is preserved:** outbound `exception.classified` and `manual.review.required` headers keep the inbound `eventType` and `replayCount` (audit C3-02, commit `8b4435d`), because `workitem-service` uses them to detect a replay's outcome.
 8. **CouchDB saves are non-fatal:** All save calls (`safePersistException`, `safeSaveAudit`, `safeRecordIdempotency`) catch exceptions internally — processing always reaches the routing step.
 9. **CouchDB `exceptions` DB pre-provisioned** by `couchdb-init`. `ensureDatabaseExists` is idempotent.
 10. **`ExceptionMetricsService` wired in Phase 6:** `DefaultExceptionProcessingService` calls `metricsService.recordReceived()` at the start of every `process()` call, and `metricsService.record(result)` before every return path — ensuring 100% metrics coverage regardless of pipeline outcome.
@@ -391,4 +392,4 @@ If session context is lost, read these files in order to resume:
 
 ---
 
-*Last updated: October 2026 — All 6 phases completed. Build verified green (129/129 tests). Exception service implementation is DONE and ready for PR.*
+*Last updated: October 2026 — All 6 phases completed. Build verified green (130/130 tests after the C3-02 fix, November 2026). Exception service implementation is DONE and merged.*
