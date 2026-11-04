@@ -4,7 +4,7 @@
 **Format:** 100% Live Screen-Shared Demonstration (NO SLIDES / NO PPT)  
 **Total Duration:** ~15 Minutes (12 mins demo + 3 mins Q&A)  
 **Target Audience:** Evaluators, Enterprise Architects, and Business Stakeholders  
-**Branch:** `fix/code-consistency` (7 critical showstoppers and 13 Sprint 2 fixes resolved)  
+**Branch:** `fix/code-consistency` (7 critical showstoppers and 19 Sprint 2 fixes resolved)  
 
 ---
 
@@ -178,7 +178,7 @@ All 6 team members will actively participate, speaking to the exact service doma
 >
 > *To prepare for enterprise production readiness, our team also completed a comprehensive 37-finding architectural consistency audit. We eliminated all critical containerization showstoppers, hardened our Kafka persistence volumes, and aligned our data contracts.*
 >
-> *We have also completed end-to-end replay tracking and automated confirmation generation from manual reviews. Our roadmap now covers wiring this UI to the live APIs and full-pipeline CI coverage.*
+> *We have also completed end-to-end replay tracking, automated confirmation generation from manual reviews, and full-pipeline CI coverage. Our roadmap now covers wiring this UI to the live APIs.*
 >
 > *We are proud to present TCEM as a complete, scalable, and resilient trade confirmation exception management platform. Thank you, and we now welcome your questions."*
 
@@ -190,7 +190,7 @@ To guarantee a 100% smooth, glitch-free presentation, every team member must str
 
 | Area | Safe to Show Live ✅ | DO NOT Click / Show ❌ | Technical Reason (From Audit Report) |
 |:---|:---|:---|:---|
-| **Trade Generation** | Ingest clean synthetic batches (`--generate 5`). | Do not seed `CANCEL_TRADE` events. | `validation-service` drops cancels without publishing status to `stp.validated` (C2-04). |
+| **Trade Generation** | Ingest clean synthetic batches (`--generate 5`). | Do not replay a `CANCEL_TRADE`. | Replay overwrites the event type, so a replayed cancel runs through STP. |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. A freshly booted stack is unaffected. |
 | **Manual Review** | Showcase Manual Review queue, rule cards, and decision buttons. | Do not claim the UI buttons trigger the backend. To show a real confirmation from an approval, use the commands in Section 4.1. | The frontend is a simulation (C4-01). The backend flow works since C3-01 was fixed. The 500-trade seed creates no manual review items, so create one through the API. |
 | **DLQ Console** | Expand diagnostics and show stack traces. | Do not claim the UI replay button calls the backend. To show a real replay, use `POST /dlq/{id}/replay` (Section 4.1). | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |

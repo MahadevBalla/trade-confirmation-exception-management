@@ -9,6 +9,7 @@ This directory provides CLI helper scripts for local development, environment pr
 | Script | Command | Purpose |
 |---|---|---|
 | **Smoke Test** | `./scripts/smoke-test.sh` | Verifies health of all active services, Actuator endpoints, and gateway routes. Use `--all` to assert all 5 microservices are UP. |
+| **Pipeline Test** | `./scripts/pipeline-test.sh` | End-to-end checks against a running full stack: confirmation, missing economics, manual review approval, DLQ replay and cancellation. Run by CI. Needs `jq`, and briefly deletes the `validation-idempotency` database. |
 | **Kafka Init** | `./scripts/init-kafka.sh` | Idempotently provisions all 10 Kafka topics with 3 partitions and replication factor 1. Commands run inside the Kafka container; `INIT_KAFKA_BOOTSTRAP_SERVER` overrides the broker address as seen from there (default `localhost:9092`). |
 | **CouchDB Init** | `./scripts/init-couchdb.sh` | Idempotently creates system and application CouchDB databases with Basic Auth. |
 | **Dev Up** | `./scripts/dev-up.sh` | Boots infra, initializes Kafka & CouchDB, builds & starts services, and runs smoke checks. Supports `--infra-only` and `--all`, and passes the mode to the smoke test, so `--all` asserts all 5 services. |

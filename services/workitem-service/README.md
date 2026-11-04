@@ -15,6 +15,7 @@ POST /dlq/{id}/replay ──► ReplayService ──► original topic (REPLAY m
 trade.accepted, trade.enriched, stp.validated,
 exception.created, exception.classified,
 manual.review.required ──► ReplayOutcomeService ──► REPLAY_SUCCEEDED + work item DONE
+stp.validated (cancelled=true) ─► TradeCancellationService ──► audit CANCELLED + trade's open work items CANCELLED
 confirmation.generated ─► ConfirmationService ──► audit CONFIRMED + trade's open work items DONE
 ```
 

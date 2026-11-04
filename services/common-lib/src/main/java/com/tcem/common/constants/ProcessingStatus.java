@@ -54,5 +54,8 @@ public enum ProcessingStatus {
     DEAD_LETTER,
 
     /** Message replayed from DLQ (FR12). */
-    REPLAYED
+    REPLAYED,
+
+    /** The trade was cancelled by a CANCEL_TRADE event. */
+    CANCELLED
 }

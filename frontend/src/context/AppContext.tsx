@@ -22,6 +22,7 @@ import {
   AppContext,
   type ToastMessage,
   type StreamEventNotice,
+  isOpenReviewItem,
 } from './AppContextInstance';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -243,12 +244,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast('success', 'Exception Resolved', `Exception ${exceptionId} marked as resolved. Trade ${exc.tradeId} confirmed.`);
   }, [exceptions, userRole, pushStreamEvent, addToast]);
 
-  // Approve in Manual Review
-  const approveManualReview = useCallback((tradeId: string, notes: string) => {
+  // Approve in Manual Review. Takes the work item id, like POST /workitems/{id}/review.
+  const approveManualReview = useCallback((workItemId: string, notes: string) => {
+    const reviewItem = workItems.find((w) => isOpenReviewItem(w) && w.workItemId === workItemId);
+    if (!reviewItem) return;
+    const { tradeId } = reviewItem;
     const trade = trades.find((t) => t.tradeId === tradeId);
     if (!trade) return;
 
     const nowIso = new Date().toISOString();
+
+    // The confirmation closes the trade's open work items, including this review.
+    setWorkItems((prev) =>
+      prev.map((w) =>
+        w.tradeId === tradeId && (w.status === 'OPEN' || w.status === 'IN_PROGRESS')
+          ? { ...w, status: 'DONE', updatedAt: nowIso, resolvedAt: nowIso }
+          : w
+      )
+    );
 
     setTrades((prev) =>
       prev.map((t) =>
@@ -319,14 +332,23 @@ Settlement:               STANDARD DELIVERY (T+2)
     pushStreamEvent('confirmation.generated', 'validation-service', tradeId, 'CONFIRMED');
 
     addToast('success', 'Manual Review Approved', `Trade ${tradeId} was approved and confirmation was generated.`);
-  }, [trades, userRole, pushStreamEvent, addToast]);
+  }, [trades, workItems, userRole, pushStreamEvent, addToast]);
 
-  // Reject in Manual Review
-  const rejectManualReview = useCallback((tradeId: string, reason: string) => {
+  // Reject in Manual Review. Takes the work item id, like POST /workitems/{id}/review.
+  const rejectManualReview = useCallback((workItemId: string, reason: string) => {
+    const reviewItem = workItems.find((w) => isOpenReviewItem(w) && w.workItemId === workItemId);
+    if (!reviewItem) return;
+    const { tradeId } = reviewItem;
     const trade = trades.find((t) => t.tradeId === tradeId);
     if (!trade) return;
 
     const nowIso = new Date().toISOString();
+
+    setWorkItems((prev) =>
+      prev.map((w) =>
+        w.workItemId === workItemId ? { ...w, status: 'DONE', updatedAt: nowIso, resolvedAt: nowIso } : w
+      )
+    );
 
     setTrades((prev) =>
       prev.map((t) => (t.tradeId === tradeId ? { ...t, status: 'DEAD_LETTER' } : t))
@@ -381,7 +403,7 @@ Settlement:               STANDARD DELIVERY (T+2)
     pushStreamEvent('deadletter.trade', 'workitem-service', tradeId, 'PERMANENTLY_FAILED');
 
     addToast('warning', 'Trade Rejected', `Trade ${tradeId} was rejected and routed to Dead-Letter Queue.`);
-  }, [trades, userRole, pushStreamEvent, addToast]);
+  }, [trades, workItems, userRole, pushStreamEvent, addToast]);
 
   // Create Work Item
   const createWorkItem = useCallback((item: Partial<WorkItem>) => {
@@ -709,8 +731,23 @@ Settlement:               STANDARD DELIVERY (T+2)
         status: 'OPEN',
       };
 
+      const newWi: WorkItem = {
+        workItemId: `WI-${Date.now().toString().slice(-5)}`,
+        linkedExceptionId: excId,
+        tradeId,
+        type: 'MANUAL_REVIEW',
+        title: `Bilateral Discrepancy on Strike Rate for ${tradeId}`,
+        description: 'Internal record strike is 1.0825; counterparty affirmation states 1.0850.',
+        status: 'OPEN',
+        ownerQueue: rec.ownerQueue,
+        priority: rec.operationalImpact,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+
       setTrades((prev) => [newTrade, ...prev]);
-      setExceptions((prev) => [newExc, ...prev]);
+      setExceptions((prev) => [{ ...newExc, linkedWorkItemId: newWi.workItemId }, ...prev]);
+      setWorkItems((prev) => [newWi, ...prev]);
 
       const audit: AuditEvent = {
         auditEventId: `AUD-${Date.now()}`,

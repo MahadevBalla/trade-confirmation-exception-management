@@ -7,7 +7,7 @@ From the capstone spec's architecture diagram (Section 5) and MVP scope (Section
 | `trade.raw` | Producer / seed loader | ingestion-service | Raw FpML-inspired JSON as received |
 | `trade.accepted` | ingestion-service | enrichment-service; workitem-service (replay outcome) | Passed schema validation (FR2) |
 | `trade.enriched` | enrichment-service | validation-service; workitem-service (replay outcome) | After reference-data enrichment (FR4) |
-| `stp.validated` | validation-service | (fan-out: confirmation path); workitem-service (replay outcome) | STP decision made (FR5) |
+| `stp.validated` | validation-service | (fan-out: confirmation path); workitem-service (replay outcome; cancels open work items when `cancelled=true`) | STP decision made (FR5), or a cancelled outcome for `CANCEL_TRADE` |
 | `confirmation.generated` | validation-service | workitem-service (audit, closes the trade's open work items) | Confirmation output produced (FR6); payload `ConfirmationEvent` |
 | `exception.created` | validation-service | exception-service; workitem-service (replay outcome) | Raised when STP fails (FR7) |
 | `exception.classified` | exception-service | workitem-service (work items; replay outcome) | Theme/sub-theme + recommendation attached (FR8, FR9); payload `ExceptionEvent` |

@@ -141,6 +141,8 @@ The **Validation Service** acts as the core decision-making and confirmation iss
   - [`ManualReviewApprovalConsumer.java`](../services/validation-service/src/main/java/com/tcem/validation/consumer/ManualReviewApprovalConsumer.java): on `workitem.linked`, a closed `MANUAL_REVIEW` item with `reviewDecision=APPROVED` generates the confirmation. Other events are ignored. No held trade, or a confirmation failure, goes to the DLQ as non-replayable.
   - **Verified:** `mvn verify` -> `validation-service` 142 tests, 0 failures (496 across the reactor). Live on an isolated docker compose stack, before and after the fix. Commit: `8b4435d`.
 
+- [x] **Phase 10: Cancellation (Audit C2-04) (Completed):** `CANCEL_TRADE` publishes `StpValidatedEvent` with `cancelled=true`, after the duplicate check but before the confirmed-version guard. `validation-service`: 145 tests.
+
 ### What is REMAINING (To Be Built)
 
 - Nothing within validation-service scope. The cross-service replay and manual review flows have been verified against a live docker compose stack.

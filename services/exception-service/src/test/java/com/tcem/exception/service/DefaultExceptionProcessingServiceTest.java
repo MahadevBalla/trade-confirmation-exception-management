@@ -320,4 +320,18 @@ class DefaultExceptionProcessingServiceTest {
         verify(kafkaOperations).send(eq(TopicNames.EXCEPTION_CLASSIFIED), eq("TRD-RPL"),
                 argThat(json -> json.contains("\"eventType\":\"REPLAY\"") && json.contains("\"replayCount\":2")));
     }
+
+    @Test
+    @DisplayName("The sub-theme confirmed by the rules replaces the inbound one on the routed event")
+    void confirmedSubTheme_isCopiedOntoOutboundRecord() throws Exception {
+        when(couchDb.getDocument(eq("exceptions"), startsWith("idempotency:"), eq(IdempotencyDocument.class)))
+                .thenReturn(Optional.empty());
+        stubKafkaSend(TopicNames.EXCEPTION_CLASSIFIED);
+
+        // TemplateIssueRule confirms a null sub-theme as UNKNOWN (confidence 0.8).
+        service.process("TRD-REF", buildValidPayload("TRD-REF", ExceptionCategory.TEMPLATE_ISSUE, null, EventType.NEW_TRADE));
+
+        verify(kafkaOperations).send(eq(TopicNames.EXCEPTION_CLASSIFIED), eq("TRD-REF"),
+                argThat(json -> json.contains("\"subTheme\":\"UNKNOWN\"")));
+    }
 }

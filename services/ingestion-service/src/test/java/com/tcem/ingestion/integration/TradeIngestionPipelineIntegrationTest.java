@@ -246,7 +246,9 @@ class TradeIngestionPipelineIntegrationTest {
     @Test
     @DisplayName("End-to-End: Schema validation failure saves SCHEMA_INVALID and dispatches ExceptionEvent to exception.created")
     void testEndToEnd_SchemaInvalidTradeDispatchesException() throws Exception {
-        String payload = tradeGenerator.generateTradeJson(TradeScenarioType.MISSING_ECONOMIC_STRIKE, 3);
+        com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(tradeGenerator.generateTradeJson(TradeScenarioType.VALID_STANDARD_STP, 3));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) root.path("trade").path("fxOptionEconomics")).put("strike", -1);
+        String payload = objectMapper.writeValueAsString(root);
         TradeEvent event = objectMapper.readValue(payload, TradeEvent.class);
         String tradeId = event.getTrade().getTradeId();
 

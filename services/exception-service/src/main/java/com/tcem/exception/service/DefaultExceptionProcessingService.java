@@ -204,6 +204,12 @@ public class DefaultExceptionProcessingService implements ExceptionProcessingSer
         try {
             classificationResult = classificationRulesEngine.classify(record);
             record.setClassificationConfidence(classificationResult.getClassificationConfidence());
+            if (classificationResult.getConfirmedCategory() != null) {
+                record.setCategory(classificationResult.getConfirmedCategory());
+            }
+            if (classificationResult.getConfirmedSubTheme() != null) {
+                record.setSubTheme(classificationResult.getConfirmedSubTheme());
+            }
             log.debug("Classification result for exceptionId='{}': category={}, confidence={}",
                     record.getExceptionId(),
                     classificationResult.getConfirmedCategory(),

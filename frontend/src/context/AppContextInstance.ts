@@ -58,8 +58,8 @@ export interface AppContextType {
   triggerSyntheticScenario: (scenarioType: string) => void;
   replayDLQ: (dlqId: string) => void;
   resolveException: (exceptionId: string, notes: string) => void;
-  approveManualReview: (tradeId: string, notes: string) => void;
-  rejectManualReview: (tradeId: string, reason: string) => void;
+  approveManualReview: (workItemId: string, notes: string) => void;
+  rejectManualReview: (workItemId: string, reason: string) => void;
   createWorkItem: (item: Partial<WorkItem>) => void;
   updateWorkItemStatus: (id: string, status: WorkItem['status']) => void;
 
@@ -70,3 +70,7 @@ export interface AppContextType {
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
+
+/** An open MANUAL_REVIEW work item: what the review queue lists and what a decision acts on. */
+export const isOpenReviewItem = (item: WorkItem): boolean =>
+  item.type === 'MANUAL_REVIEW' && (item.status === 'OPEN' || item.status === 'IN_PROGRESS');

@@ -91,6 +91,11 @@ public class TradeEnricher {
             unresolved.add("FX option economics");
             return;
         }
+        if (trade.getFxOptionEconomics().getUnderlier() == null) {
+            // Reference maps reject null keys. EconomicFieldsRule raises the missing underlier at STP.
+            unresolved.add("instrument underlier");
+            return;
+        }
         InstrumentReference ref = catalog.instrument(trade.getFxOptionEconomics().getUnderlier());
         if (ref == null) {
             unresolved.add("instrument " + trade.getFxOptionEconomics().getUnderlier());

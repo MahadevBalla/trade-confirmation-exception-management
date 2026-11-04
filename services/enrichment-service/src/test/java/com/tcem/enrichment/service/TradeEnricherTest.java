@@ -106,4 +106,20 @@ class TradeEnricherTest {
     }
 
     private Party party(String role, String id) { Party party = new Party(); party.setPartyRole(role); party.setPartyId(id); return party; }
+
+    @Test
+    void tradesWithMissingEconomicsAreEnrichedForStpToReject() {
+        for (boolean noBlock : new boolean[] {true, false}) {
+            TradeEvent event = event("PTY-CP-101", "EUR/USD", "FX_OPTION_STANDARD");
+            if (noBlock) {
+                event.getTrade().setFxOptionEconomics(null);
+            } else {
+                event.getTrade().getFxOptionEconomics().setUnderlier(null);
+            }
+
+            TradeEvent enriched = enricher.enrich(event);
+
+            org.junit.jupiter.api.Assertions.assertNotNull(enriched.getTrade().getEnrichmentMetadata());
+        }
+    }
 }

@@ -174,19 +174,60 @@ class TradeEnrichedConsumerTest {
     }
 
     // -----------------------------------------------------------------------
-    // Test: CANCEL_TRADE — no STP, no confirmation
+    // Test: CANCEL_TRADE — no STP, no confirmation, but the outcome is published
     // -----------------------------------------------------------------------
 
     @Test
-    @DisplayName("CANCEL_TRADE: skipped entirely — no STP, no confirmation, no DLQ")
-    void cancelTrade_skipsProcessing() throws Exception {
+    @DisplayName("CANCEL_TRADE: publishes a cancelled outcome — no STP, no confirmation, no DLQ")
+    void cancelTrade_publishesCancelledOutcome() throws Exception {
         TradeEvent event = buildTradeEvent("TRD-003", 2, EventType.CANCEL_TRADE);
 
         consumer.onMessage(toJson(event));
 
-        verifyNoInteractions(stpRulesEngine, stpValidatedProducer,
-                confirmationService, stpExceptionMapper,
-                exceptionCreatedProducer, deadLetterProducer);
+        ArgumentCaptor<StpValidatedEvent> captor = ArgumentCaptor.forClass(StpValidatedEvent.class);
+        verify(stpValidatedProducer).sendStpValidated(eq("TRD-003"), captor.capture());
+        assertThat(captor.getValue().isCancelled()).isTrue();
+        assertThat(captor.getValue().isStpPassed()).isFalse();
+        assertThat(captor.getValue().getMessageHeader().getEventType()).isEqualTo(EventType.CANCEL_TRADE);
+        verify(idempotencyRepository).record(any());
+        verifyNoInteractions(stpRulesEngine, confirmationService, stpExceptionMapper,
+                exceptionCreatedProducer, deadLetterProducer, heldTradeRepository);
+    }
+
+    @Test
+    @DisplayName("CANCEL_TRADE: still reported when that trade version was already confirmed")
+    void cancelTrade_ofConfirmedVersion_isNotSwallowedByVersionGuard() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-004", 1, EventType.CANCEL_TRADE);
+        lenient().when(confirmationRepository.findLatestForTrade("TRD-004"))
+                .thenReturn(Optional.of(ConfirmationDocument.builder().tradeVersion(1).build()));
+
+        consumer.onMessage(toJson(event));
+
+        verify(stpValidatedProducer).sendStpValidated(eq("TRD-004"), any(StpValidatedEvent.class));
+    }
+
+    @Test
+    @DisplayName("CANCEL_TRADE: a redelivered cancel is not published twice")
+    void cancelTrade_redelivery_isSuppressed() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-005", 1, EventType.CANCEL_TRADE);
+        when(idempotencyRepository.isProcessed(any())).thenReturn(true);
+
+        consumer.onMessage(toJson(event));
+
+        verifyNoInteractions(stpValidatedProducer);
+    }
+
+    @Test
+    @DisplayName("Normal STP events are not marked cancelled")
+    void normalStpEvent_isNotCancelled() throws Exception {
+        TradeEvent event = buildTradeEvent("TRD-006", 1, EventType.NEW_TRADE);
+        when(stpRulesEngine.evaluate(any())).thenReturn(passedResult());
+
+        consumer.onMessage(toJson(event));
+
+        ArgumentCaptor<StpValidatedEvent> captor = ArgumentCaptor.forClass(StpValidatedEvent.class);
+        verify(stpValidatedProducer).sendStpValidated(eq("TRD-006"), captor.capture());
+        assertThat(captor.getValue().isCancelled()).isFalse();
     }
 
     // -----------------------------------------------------------------------

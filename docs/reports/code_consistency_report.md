@@ -1,7 +1,7 @@
 # TCEM Code Consistency & System Risk Report
 
 **Audit Mode:** Multi-Phase Architecture & Code Consistency Audit  
-**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 13 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)  
+**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 19 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)  
 **Target Repository:** `trade-confirmation-exception-management`  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Remediation Guide:** [`presentation_fixes_guide.md`](./presentation_fixes_guide.md)  
@@ -27,7 +27,7 @@
 - **Phase 4 (Completed):** Audited frontend React 19 application (`frontend`), Vite and Nginx reverse proxies, TypeScript types vs Java DTOs, `AppContext` state management, recommendation engine parity, and backend API integration.
 - **Phase 5 (Completed):** Audited DevOps infrastructure, Docker orchestration, initializers, JVM memory flags, and GitHub Actions CI.
 - **Remediation Sprint (Completed):** Fixed 7 critical demo-breaking showstoppers on `fix/code-consistency` (Docker build `.dockerignore`, Kafka persistence volume, CouchDB 25-limit cap, TypeScript enum alignment, DLQ dual-property models, enriched counterparty name display, and database provisioning). System health score upgraded from **68/100 to 86/100**.
-- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), and C5-03, C5-05 and C5-06 (DevOps) on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. **23 of 37 findings are now resolved; 14 remain** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
+- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), C5-03, C5-05 and C5-06 (DevOps), and all remaining high-severity findings: C2-03, C2-04, C3-04, C3-05, C4-04 and C5-04, on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. **29 of 37 findings are now resolved; 8 remain, all low severity or cosmetic** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
 
 ---
 
@@ -157,7 +157,7 @@
 
 ---
 
-### 10. 🟠 HIGH / MODERATE RISK: Functional Duplication & Dead Rule Between `TradeValidator` and `EconomicFieldsRule`
+### 10. 🟠 HIGH / MODERATE RISK: Functional Duplication & Dead Rule Between `TradeValidator` and `EconomicFieldsRule` — ✅ [RESOLVED in `fix/code-consistency`]
 - **Location:** [TradeValidator.java:L389-L440](../../services/ingestion-service/src/main/java/com/tcem/ingestion/validator/TradeValidator.java#L389-L440) vs [EconomicFieldsRule.java:L42-L60](../../services/validation-service/src/main/java/com/tcem/validation/rules/EconomicFieldsRule.java#L42-L60).
 - **Issue:**
   `TradeValidator` in `ingestion-service` strictly validates economic completeness (`strike`, `notionalAmount`, `optionType`, `premiumAmount`) and marks incomplete trades as `SCHEMA_INVALID`, routing them directly to `exception.created` without forwarding to `trade.accepted`.
@@ -165,10 +165,12 @@
   In a normal pipeline, `EconomicFieldsRule` in `validation-service` is largely dead code because missing economic fields are intercepted at the edge. More importantly, this blurs the boundary between schema format validation (FR2) and STP business evaluation (FR5), preventing trades with economic discrepancies from undergoing reference data enrichment.
 - **Recommended Remediation:**
   Clarify architecture: `TradeValidator` (FR2) should validate structural format, JSON types, and mandatory envelope headers, allowing well-formed trades with missing business economics to flow to `enrichment-service` and then fail STP cleanly in `validation-service` (FR5).
+- **Resolution:**
+  `TradeValidator` now rejects only *invalid* economic values (negative strike, bad currency code, unknown option type). *Absent* values pass, so the trade continues through enrichment and `EconomicFieldsRule` raises `MISSING_ECONOMIC_DATA` at STP. This keeps value checks in FR2, as the spec requires, and presence checks in FR5. `TradeEnricher` needed a guard: the reference maps reject null keys, so an absent `underlier` crashed enrichment. On the 500-trade seed, rejections at ingestion fell from 85 to 34 and confirmations were unchanged at 201.
 
 ---
 
-### 11. 🟠 HIGH / MODERATE RISK: Silent Dropping of `CANCEL_TRADE` Events in `validation-service`
+### 11. 🟠 HIGH / MODERATE RISK: Silent Dropping of `CANCEL_TRADE` Events in `validation-service` — ✅ [RESOLVED in `fix/code-consistency`]
 - **Location:** [TradeEnrichedConsumer.java:L142-L146](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L142-L146).
 - **Issue:**
   When `EventType.CANCEL_TRADE` is received on `trade.enriched`, `TradeEnrichedConsumer` simply logs and returns early.
@@ -176,6 +178,8 @@
   While suppressing confirmation generation is correct, dropping the event silently means no cancellation status is emitted to `stp.validated` or the audit log, leaving open exceptions and active work items for the trade dangling indefinitely.
 - **Recommended Remediation:**
   Publish a cancellation outcome to `stp.validated` (or a dedicated lifecycle event) so `workitem-service` can automatically close open work items and update the trade's audit state to `CANCELLED`.
+- **Resolution:**
+  `TradeEnrichedConsumer` publishes `StpValidatedEvent` with `cancelled=true`, after the duplicate check but before the confirmed-version guard, which would otherwise swallow a cancel of a confirmed trade. `TradeCancellationService` in `workitem-service` marks the trade's open work items `CANCELLED` and writes a `TRADE_CANCELLED` audit entry (new `ProcessingStatus.CANCELLED`). *Not covered:* exception records stay `OPEN`, an existing confirmation is not changed, and an exception arriving just after the cancel can still open a work item.
 
 ---
 
@@ -245,7 +249,7 @@
 
 ---
 
-### 17. 🟠 HIGH / MODERATE RISK: Discarding Refined Classification Results in `DefaultExceptionProcessingService`
+### 17. 🟠 HIGH / MODERATE RISK: Discarding Refined Classification Results in `DefaultExceptionProcessingService` — ✅ [RESOLVED in `fix/code-consistency`]
 - **Location:** [DefaultExceptionProcessingService.java:L203-L210](../../services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java#L203-L210).
 - **Issue:**
   `classificationRulesEngine.classify(record)` evaluates the exception record and returns a `ClassificationResult` containing `confirmedCategory` and `confirmedSubTheme`. However, `DefaultExceptionProcessingService` only calls `record.setClassificationConfidence(classificationResult.getClassificationConfidence())`. It forgets to call `record.setCategory(...)` and `record.setSubTheme(...)`.
@@ -253,10 +257,12 @@
   If a rule resolves an `UNKNOWN` or unmapped sub-theme to a specific failure reason, that refined classification is discarded. The unrefined record is persisted to CouchDB and emitted to `exception.classified`, degrading reporting accuracy and downstream routing.
 - **Recommended Remediation:**
   Update `record.setCategory(classificationResult.getConfirmedCategory())` and `if (classificationResult.getConfirmedSubTheme() != null) record.setSubTheme(classificationResult.getConfirmedSubTheme())`.
+- **Resolution:**
+  `DefaultExceptionProcessingService` copies the confirmed category and sub-theme onto the record. The rules mostly echo the inbound values, so the practical effect is small: mainly a null sub-theme becoming `UNKNOWN`.
 
 ---
 
-### 18. 🟠 HIGH / MODERATE RISK: Synchronous Blocking Kafka Publishing in Event-Driven Consumer Threads
+### 18. 🟠 HIGH / MODERATE RISK: Synchronous Blocking Kafka Publishing in Event-Driven Consumer Threads — ✅ [RESOLVED in `fix/code-consistency`]
 - **Location:** [TradeEnrichedProducer.java:L34-L39](../../services/enrichment-service/src/main/java/com/tcem/enrichment/producer/TradeEnrichedProducer.java#L34-L39) and [DeadLetterProducer.java:L34](../../services/enrichment-service/src/main/java/com/tcem/enrichment/producer/DeadLetterProducer.java#L34).
 - **Issue:**
   In `enrichment-service`, both `TradeEnrichedProducer.publish()` and `DeadLetterProducer.publish()` call `.join()` on Kafka `CompletableFuture<SendResult>`.
@@ -264,6 +270,8 @@
   Under high throughput or during transient Kafka latency spikes, consumer worker threads block synchronously. This can exceed Kafka consumer max poll intervals, trigger frequent consumer rebalances, and stall the enrichment pipeline.
 - **Recommended Remediation:**
   Handle Kafka publish results asynchronously using `.whenComplete()` or configure explicit bounded timeouts (`.get(3, TimeUnit.SECONDS)`).
+- **Resolution:**
+  `.join()` is replaced by a bounded wait (`KafkaSends`, `enrichment.kafka.send-timeout-ms`, default 10 seconds), and `max.block.ms` is capped at 10 seconds. The audit's `.whenComplete()` suggestion was not used: it would record the idempotency key before knowing the publish succeeded, risking silent loss. A send that times out may still be delivered later, which downstream duplicate checks should absorb; that case was not tested.
 
 ---
 
@@ -348,7 +356,7 @@
 
 ---
 
-### 26. 🟠 HIGH / MODERATE RISK: Manual Review Identifier Mismatch (`tradeId` vs `workItemId`)
+### 26. 🟠 HIGH / MODERATE RISK: Manual Review Identifier Mismatch (`tradeId` vs `workItemId`) — ✅ [RESOLVED in `fix/code-consistency`]
 - **Location:** [ManualReviewQueue.tsx:L29-L32](../../frontend/src/components/manualReview/ManualReviewQueue.tsx#L29-L32) and [AppContext.tsx:L247-L249](../../frontend/src/context/AppContext.tsx#L247-L249) vs [WorkItemController.java:L99-L100](../../services/workitem-service/src/main/java/com/tcem/workitem/controller/WorkItemController.java#L99-L100).
 - **Issue:**
   The backend manual review endpoint is `POST /workitems/{id}/review`, requiring the work item identifier (`WI-xxxxxxxx`). In the frontend, `ManualReviewQueue` binds directly to `Trade` objects and invokes `approveManualReview(currentTrade.tradeId, ...)` passing `tradeId`.
@@ -356,6 +364,8 @@
   Calling the backend endpoint with `tradeId` results in `404 NOT_FOUND` because the work item repository looks up by `workItemId`, preventing operators from approving or rejecting manual review tickets through the API.
 - **Recommended Remediation:**
   Ensure the manual review screen queries `GET /api/workitems?type=MANUAL_REVIEW` and passes `item.workItemId` to the review action.
+- **Resolution:**
+  The review queue is now built from open `MANUAL_REVIEW` work items, and `approveManualReview` / `rejectManualReview` take a `workItemId`. This also fixed visible bugs in the simulation: decisions left the work item `OPEN`, and `TRD-10005` and injected dispute trades had no work item at all. The 404 itself could not occur, because the frontend does not call the backend; live wiring is C4-01.
 
 ---
 
@@ -464,7 +474,7 @@
 
 ---
 
-### 33. 🟠 HIGH / MODERATE RISK: End-to-End Pipeline CI Blindspot in GitHub Actions
+### 33. 🟠 HIGH / MODERATE RISK: End-to-End Pipeline CI Blindspot in GitHub Actions — ✅ [RESOLVED in `fix/code-consistency`]
 - **Location:** [.github/workflows/smoke-test.yml:L31-L54](../../.github/workflows/smoke-test.yml#L31-L54).
 - **Issue:**
   The CI workflow `smoke-test.yml` starts only a subset of services:
@@ -477,6 +487,8 @@
   Critical inter-service regressions (such as the broken `workitem.linked` topic, schema router mismatches, or header propagation drops) can be committed and merged into `main` without failing any PR checks, because CI never boots or asserts the core STP validation pipeline.
 - **Recommended Remediation:**
   Add a full-stack integration step to `smoke-test.yml` that boots `docker compose up -d --build`, triggers `./scripts/seed-data.sh --generate 5`, and asserts that confirmations and exceptions appear in CouchDB.
+- **Resolution:**
+  `smoke-test.yml` now boots the full stack with `--wait`, runs `smoke-test.sh --all`, and runs the new `scripts/pipeline-test.sh` (12 checks: confirmation, missing economics, manual review approval, DLQ replay, cancellation). The script fails on code without the C2-03 and C2-04 fixes. The workflow's steps were run locally with shifted ports, but have not yet run on GitHub Actions. This needed a further fix: the frontend healthcheck called `localhost`, which resolves to IPv6 in that image while nginx listens on IPv4 only, so the container had always been reported unhealthy.
 
 ---
 
@@ -559,6 +571,7 @@ These were found while fixing and live-testing the items above. They are not par
 | DLQ API returns `_id`, not `id` | The `id` alias added for C4-02 will not match when the frontend is wired to the live API (C4-01). | 🟡 Open |
 | `BUSINESS_RULE_NON_STP` does not always fail STP | The scenario only sets a jurisdiction, which no rule checks. Outcome depends on the counterparty: `sequence` values 9103, 9403 and 9407 (counterparty 103) failed STP, while 9401 and 9402 (101, 102) were confirmed normally. | 🟡 Open |
 | The 500-trade seed produces no manual review items | Nothing in the seed routes to `manual.review.required`, so the real queue is empty after seeding. Create the item through the API to demonstrate it. | 🟡 Open |
+| Frontend healthcheck always failed | `localhost` resolves to `::1` in the image while nginx listens on IPv4 only, so the container was reported unhealthy and `docker compose up --wait` failed. | ✅ Fixed: healthcheck uses `127.0.0.1` |
 | A replayed `CANCEL_TRADE` runs through STP | Replay overwrites `eventType` with `REPLAY`, so `TradeEnrichedConsumer` no longer recognises the cancel. | 🟡 Open |
 | One approval confirms the whole trade | Approving a review closes the trade's other open work items, even a `DATA_FIX`, and can produce a confirmation with template `N/A`. | 🟡 Team to confirm this is the intended rule |
 
@@ -577,15 +590,15 @@ These were found while fixing and live-testing the items above. They are not par
 | **C1-07** | Phase 1 | `docs/architecture.md` | Stale documentation claiming 3 backend services are stubs. | ✅ **RESOLVED (`fix/code-consistency`)** | Trivial (Update markdown) |
 | **C2-01** | Phase 2 | `ConfirmationService` & `StpExceptionMapper` | Strips `eventType` and `replayCount` from outbound headers, permanently breaking DLQ replay completion in `workitem-service`. | ✅ **RESOLVED (`8b4435d`)** | Low (Copy header fields) |
 | **C2-02** | Phase 2 | `ConfirmationCouchDbRepository` | `countAll()` Mango query defaults to limit 25, capping STP metrics permanently at 25. | ✅ **RESOLVED (`2c4b3aa`)** | Low (Added explicit limit 10000) |
-| **C2-03** | Phase 2 | `TradeValidator` vs `EconomicFieldsRule` | Edge schema validation drops incomplete economic trades, making `EconomicFieldsRule` dead code. | 🟠 High Risk (Sprint 2) | Medium (Align FR2 vs FR5 boundary) |
-| **C2-04** | Phase 2 | `TradeEnrichedConsumer` | Silently drops `CANCEL_TRADE` without publishing to `stp.validated` or closing open exceptions. | 🟠 High Risk (Sprint 2) | Low (Emit cancellation outcome) |
+| **C2-03** | Phase 2 | `TradeValidator` vs `EconomicFieldsRule` | Edge schema validation drops incomplete economic trades, making `EconomicFieldsRule` dead code. | ✅ **RESOLVED (`fix/code-consistency`)** | Medium (Align FR2 vs FR5 boundary) |
+| **C2-04** | Phase 2 | `TradeEnrichedConsumer` | Silently drops `CANCEL_TRADE` without publishing to `stp.validated` or closing open exceptions. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Emit cancellation outcome) |
 | **C2-05** | Phase 2 | API Gateway / Controllers | Conflicting `GET /metrics/stp-rate` endpoint paths with differing response structures across services. | 🟡 Low Risk (Sprint 2) | Low (Rename endpoint) |
 | **C2-06** | Phase 2 | `ingestion-service/README.md` | Documents nonexistent `TERMINATE_TRADE` event type. | 🟢 Not Breaking (Sprint 2) | Trivial (Update markdown) |
 | **C3-01** | Phase 3 | `ManualReviewService` | Operator "APPROVE" decision publishes to `workitem.linked` which no service consumes; approved trades are permanently stranded. | ✅ **RESOLVED (`8b4435d`)** | Medium (Add consumer or direct confirmation) |
 | **C3-02** | Phase 3 | `exception-service` & Producers | `buildOutboundHeader` resets `eventType` to `NEW_TRADE`, dropping replay identity and preventing `ReplayOutcomeService` from detecting success. | ✅ **RESOLVED (`8b4435d`)** | Low (Preserve inbound header fields) |
 | **C3-03** | Phase 3 | `TradeAcceptedConsumer` | Multi-attempt replays (> 1) share identical `IdempotencyKey`, causing 2nd replay attempts to be silently dropped as duplicates. | ✅ **RESOLVED (`8b4435d`)** | Low (Bypass check for REPLAY / replayCount > 0) |
-| **C3-04** | Phase 3 | `DefaultExceptionProcessingService` | Discards `ClassificationResult.confirmedCategory` and `confirmedSubTheme`, keeping unrefined exception metadata. | 🟠 High Risk (Sprint 2) | Low (Copy confirmed fields to record) |
-| **C3-05** | Phase 3 | `enrichment-service` Producers | `.join()` blocks Kafka consumer threads synchronously on publish, risking consumer heartbeat timeouts and rebalances. | 🟠 High Risk (Sprint 2) | Low (Use async callback or timeout) |
+| **C3-04** | Phase 3 | `DefaultExceptionProcessingService` | Discards `ClassificationResult.confirmedCategory` and `confirmedSubTheme`, keeping unrefined exception metadata. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Copy confirmed fields to record) |
+| **C3-05** | Phase 3 | `enrichment-service` Producers | `.join()` blocks Kafka consumer threads synchronously on publish, risking consumer heartbeat timeouts and rebalances. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Use async callback or timeout) |
 | **C3-06** | Phase 3 | `scripts/init-couchdb.sh` | Omits `enrichment-idempotency` database from CouchDB provisioning script. | ✅ **RESOLVED (`d30e283`)** | Trivial (Added db name to script) |
 | **C3-07** | Phase 3 | `ExceptionCouchDbRepository` | `countAll()` caps exception counts at 1,000 and pulls full documents into heap memory. | 🟡 Low Risk (Sprint 2) | Low (Use CouchDB view / db metadata) |
 | **C3-08** | Phase 3 | Build Configuration (`pom.xml`) | Missing `-Dnet.bytebuddy.experimental=true` surefire argLine breaks tests on modern JDKs (Java 25+). | 🟡 Low Risk (Sprint 2) | Trivial (Update parent POM plugin config) |
@@ -593,14 +606,14 @@ These were found while fixing and live-testing the items above. They are not par
 | **C4-01** | Phase 4 | `AppContext.tsx` | Frontend operates in an in-browser operational simulation harness; live REST binding scheduled for hardening phase. | 🟡 Managed Demo State | Architecture Decoupling |
 | **C4-02** | Phase 4 | `types/tcem.ts` (`DeadLetterEvent`) | Property naming divergence (`dlqId`/`status` vs backend `id`/`dlqStatus`) causes rendering/action failure against live API. | ✅ **RESOLVED (`370fa98`)** | Low (Dual-mapped attributes) |
 | **C4-03** | Phase 4 | `TradeDetailModal.tsx` | Party name reads `p.partyName` instead of `p.legalEntityName`, hiding enriched counterparty names. | ✅ **RESOLVED (`d00ccb6`)** | Trivial (Reads `p.legalEntityName`) |
-| **C4-04** | Phase 4 | `ManualReviewQueue.tsx` | Review action passes `tradeId` instead of `workItemId` to backend approval endpoint. | 🟠 High Risk (Sprint 2) | Low (Look up and pass `workItemId`) |
+| **C4-04** | Phase 4 | `ManualReviewQueue.tsx` | Review action passes `tradeId` instead of `workItemId` to backend approval endpoint. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Look up and pass `workItemId`) |
 | **C4-05** | Phase 4 | Proxy Routing (`vite`/`nginx`) | Generic `/api/metrics` proxy to port 8081 conflicts with port 8084 metrics endpoint. | 🟡 Low Risk (Sprint 2) | Low (Scope metric routes by service) |
 | **C4-06** | Phase 4 | Queue Filters | Dropdowns omit `RULES_OWNER` and `SPECIALIST_REVIEW` queues from filterable options. | 🟡 Low Risk (Sprint 2) | Trivial (Add missing queue options) |
 | **C4-07** | Phase 4 | `ServiceTopology.tsx` | Displays CouchDB database names with underscores rather than actual hyphenated names. | 🟢 Not Breaking (Sprint 2) | Trivial (Update string labels) |
 | **C5-01** | Phase 5 | Docker Build (`frontend`) | Missing `frontend/.dockerignore` leaks host macOS binaries into Alpine Linux container build, breaking container builds. | ✅ **RESOLVED (`ef23e52`)** | Trivial (Added `frontend/.dockerignore`) |
 | **C5-02** | Phase 5 | Docker Compose (`kafka`) | Asymmetric persistence: Kafka has no volume mount while CouchDB does, wiping offsets and causing streaming/persistence desync. | ✅ **RESOLVED (`KAFKA_LOG_DIRS`, completing `e181b58`)** | Low (Added `kafka_data` volume) |
 | **C5-03** | Phase 5 | Orchestration & JVM Memory | Zero memory limits in `docker-compose.yml` paired with `-XX:MaxRAMPercentage=75.0` risks host OOM thrashing under load. | ✅ **RESOLVED (`8b4435d`)** | Low (Set `mem_limit: 512m`) |
-| **C5-04** | Phase 5 | GitHub Actions CI | `smoke-test.yml` only boots 2 services, leaving `enrichment`, `validation`, and `exception` unverified in CI PR checks. | 🟠 High Risk (Sprint 2) | Medium (Add full-stack test job) |
+| **C5-04** | Phase 5 | GitHub Actions CI | `smoke-test.yml` only boots 2 services, leaving `enrichment`, `validation`, and `exception` unverified in CI PR checks. | ✅ **RESOLVED (`fix/code-consistency`)** | Medium (Add full-stack test job) |
 | **C5-05** | Phase 5 | `scripts/dev-up.sh` | Fails to pass `--all` to `smoke-test.sh`, skipping health checks for 4 backend services even when requested. | ✅ **RESOLVED (`8b4435d`)** | Trivial (Pass `${MODE}`) |
 | **C5-06** | Phase 5 | `scripts/init-kafka.sh` | Dead variable `BOOTSTRAP_SERVER` and rigid coupling to `docker compose exec kafka`. | ✅ **RESOLVED (`8b4435d`)** | Low (Use variable parameter) |
 | **C5-07** | Phase 5 | `scripts/init-couchdb.sh` & Init Container | Omits `enrichment-idempotency` database provision. | ✅ **RESOLVED (`d30e283`)** | Trivial (Added database name) |
@@ -616,7 +629,7 @@ These were found while fixing and live-testing the items above. They are not par
 - [x] **Phase 4: Frontend UI Alignment, State Management & API Integration (`frontend`)** (Findings C4-01 to C4-07)
 - [x] **Phase 5: DevOps, Docker Orchestration, Shell Scripts & Consolidated System Risk Matrix** (Findings C5-01 to C5-08)
 - [x] **Showstopper Remediation Sprint:** Fixed all 7 critical blockers (C5-01, C5-02, C2-02, C1-02, C4-02, C4-03, C3-06/C5-07) on `fix/code-consistency`.
-- [ ] **Sprint 2 Remediation (in progress):** C1-01, C1-03, C1-04, C1-05, C1-06, C2-01, C3-01, C3-02, C3-03, C3-09, C5-03, C5-05 and C5-06 resolved on `fix/code-consistency`, and C5-02 corrected; 14 of 37 findings remain open (see the risk matrix).
+- [ ] **Sprint 2 Remediation (in progress):** all high-severity findings resolved on `fix/code-consistency`; 8 of 37 findings remain open, all low severity or cosmetic (see the risk matrix).
 
 ---
 
@@ -630,7 +643,7 @@ These were found while fixing and live-testing the items above. They are not par
 │                                                                        │
 │  Domain Modeling & Design:   ██████████████████░░  92/100 (Strong)     │
 │  DevOps & Containerization:  ██████████████████░░  92/100 (Hardened)   │
-│  Backend Unit Test Coverage: ██████████████████░░  88/100 (496 pass)   │
+│  Backend Unit Test Coverage: ██████████████████░░  88/100 (509 pass)   │
 │  Event Contracts & Enums:    █████████████████░░░  85/100 (Aligned)    │
 │  Operations Cockpit UI:      ██████████████░░░░░░  72/100 (Live Ready) │
 │                                                                        │

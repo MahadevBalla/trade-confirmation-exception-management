@@ -64,6 +64,7 @@ The **Ingestion Service** is the entry gateway of the entire Trade Confirmation 
     * FX Option economics (`strike > 0`, `notionalAmount > 0`, ISO 4217 currencies, `CALL`/`PUT`, `BUY`/`SELL`, currency pair `underlier`, non-negative `premiumAmount`, `premiumPaymentDate >= tradeDate`).
     * Non-economic terms (screening for non-STP jurisdictions and missing template hints).
     * Raw JSON parsing with automatic syntax error capture (`PARSE_FAILURE`).
+  - *Update (audit C2-03):* absent economic values now pass schema validation and fail at STP (`EconomicFieldsRule`); only invalid values are rejected here.
   - Unit Tests: 15 passing tests in [`TradeValidatorTest`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/test/java/com/tcem/ingestion/validator/TradeValidatorTest.java) covering standard STP, missing strike/notional/premium/underlier, inverted dates, invalid currencies, unparseable JSON, and ExceptionRecord generation. Total 42/42 tests green.
 - [x] **Phase 4: Kafka Stream Processing Pipeline & Idempotency** (Completed)
   - [`TradeAcceptedProducer`](file:///Users/mayankchauhan/Documents/trade-confirmation-exception-management/services/ingestion-service/src/main/java/com/tcem/ingestion/producer/TradeAcceptedProducer.java): Kafka publisher dispatching schema-validated canonical `TradeEvent` to `trade.accepted` partitioned by `tradeId`.

@@ -5,6 +5,7 @@ import com.tcem.common.constants.EventType;
 import com.tcem.common.constants.TopicNames;
 import com.tcem.common.event.DeadLetterEvent;
 import com.tcem.common.model.message.MessageHeader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,11 @@ import java.util.UUID;
 public class DeadLetterProducer {
     private final KafkaOperations<String, String> kafka;
     private final ObjectMapper objectMapper;
-    public DeadLetterProducer(KafkaOperations<String, String> kafka, ObjectMapper objectMapper) { this.kafka = kafka; this.objectMapper = objectMapper; }
+    private final long sendTimeoutMs;
+    public DeadLetterProducer(KafkaOperations<String, String> kafka, ObjectMapper objectMapper,
+                              @Value("${enrichment.kafka.send-timeout-ms:10000}") long sendTimeoutMs) {
+        this.kafka = kafka; this.objectMapper = objectMapper; this.sendTimeoutMs = sendTimeoutMs;
+    }
 
     public void publish(String key, String payload, MessageHeader originalHeader, Throwable error, boolean replayable) {
         try {
@@ -31,7 +36,8 @@ public class DeadLetterProducer {
                     .failureReason(error.getMessage()).exceptionClass(error.getClass().getName()).stackTraceExcerpt(stackTrace(error))
                     .failedAt(Instant.now()).replayCount(originalHeader == null ? 0 : originalHeader.getReplayCount())
                     .replayable(replayable).dlqStatus("PENDING_REPLAY").build();
-            kafka.send(TopicNames.DEADLETTER_TRADE, key == null ? "DLQ-" + UUID.randomUUID() : key, objectMapper.writeValueAsString(event)).join();
+            KafkaSends.await(kafka.send(TopicNames.DEADLETTER_TRADE, key == null ? "DLQ-" + UUID.randomUUID() : key, objectMapper.writeValueAsString(event)),
+                    sendTimeoutMs, "dead letter");
         } catch (Exception dlqError) {
             throw new IllegalStateException("Unable to publish enrichment dead letter", dlqError);
         }

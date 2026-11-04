@@ -138,6 +138,7 @@ docker compose up -d --build
 Alternatively, use the developer automation scripts in `scripts/`:
 - **Start Stack**: `./scripts/dev-up.sh` (or `./scripts/dev-up.sh --infra-only`)
 - **Run Smoke Test**: `./scripts/smoke-test.sh`
+- **Run Pipeline Test**: `./scripts/pipeline-test.sh` (full stack must be up; also run by CI. Briefly deletes the `validation-idempotency` database, so do not run it against a stack you care about.)
 - **Seed Data**: `./scripts/seed-data.sh`
 - **Stop Stack**: `./scripts/dev-down.sh` (or `./scripts/dev-down.sh --reset` to clear volumes)
 

@@ -47,9 +47,10 @@ import com.tcem.validation.rules.StpValidationResult;
  *   <li>Extract the {@link MessageHeader} and {@link Trade}; messages missing an identity
  *       field (tradeId, messageId, schemaVersion, eventType) are dead-lettered.</li>
  *   <li>Idempotency guard (unless the event type is {@code REPLAY}): skip the message if its
- *       {@link IdempotencyKey} is already recorded, or if the trade version has already
- *       been confirmed.</li>
- *   <li>Handle {@code CANCEL_TRADE}: log and skip — no STP, no confirmation.</li>
+ *       {@link IdempotencyKey} is already recorded, or (except for {@code CANCEL_TRADE}) if the trade
+ *       version has already been confirmed.</li>
+ *   <li>Handle {@code CANCEL_TRADE}: no STP and no confirmation; publish a cancelled outcome on
+ *       {@code stp.validated} so workitem-service can cancel the trade's open work items.</li>
  *   <li>Run the {@link StpRulesEngine} against the full {@link TradeEvent}.</li>
  *   <li>Always publish the STP decision to {@code stp.validated}.</li>
  *   <li>On STP pass: delegate to {@link ConfirmationService} (fingerprint check,
@@ -175,16 +176,7 @@ public class TradeEnrichedConsumer {
 
         try {
             // -----------------------------------------------------------------------
-            // Step 2: CANCEL_TRADE — no STP evaluation, no confirmation
-            // -----------------------------------------------------------------------
-            if (EventType.CANCEL_TRADE == eventType) {
-                log.info("Skipping STP evaluation for CANCEL_TRADE [tradeId={}, version={}]",
-                        tradeId, tradeVersion);
-                return;
-            }
-
-            // -----------------------------------------------------------------------
-            // Step 3: Idempotency guard
+            // Step 2: Idempotency guard
             //         REPLAY events always bypass this check so operators can force
             //         reprocessing after a data fix.
             // -----------------------------------------------------------------------
@@ -197,6 +189,22 @@ public class TradeEnrichedConsumer {
                             tradeId, header.getMessageId());
                     return;
                 }
+            }
+
+            // -----------------------------------------------------------------------
+            // Step 3: CANCEL_TRADE — no STP evaluation, no confirmation. Handled before the
+            //         confirmed-version guard: cancelling a confirmed trade must still be reported.
+            // -----------------------------------------------------------------------
+            if (EventType.CANCEL_TRADE == eventType) {
+                log.info("Publishing cancelled outcome for CANCEL_TRADE [tradeId={}, version={}]",
+                        tradeId, tradeVersion);
+                stpValidatedProducer.sendStpValidated(tradeId,
+                        StpValidatedEvent.cancelled(buildOutboundHeader(header), tradeId, tradeVersion));
+                idempotencyRepository.record(idempotencyKey);
+                return;
+            }
+
+            if (EventType.REPLAY != eventType) {
                 Optional<ConfirmationDocument> existing =
                         confirmationRepository.findLatestForTrade(tradeId);
                 if (existing.isPresent()

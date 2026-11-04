@@ -254,7 +254,7 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 
 | Action | Safe Demo Behavior ✅ | Pitfall to Avoid ❌ | Reason |
 | :--- | :--- | :--- | :--- |
-| **Trade Ingestion** | Ingest clean new trades (`--generate 5`). | Do not ingest `CANCEL_TRADE` events. | Validation service drops cancels silently without closing work items (C2-04). |
+| **Trade Ingestion** | Ingest clean new trades (`--generate 5`). | Do not replay a `CANCEL_TRADE`. | A cancel now cancels the trade's open work items (C2-04), but replay overwrites the event type, so a replayed cancel runs through STP. |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The `ConfirmationFingerprint` party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. |
 | **Manual Review** | Walk through the Manual Review Queue UI and recommendation cards. To show the real flow, use the API (see the live demo guide). | Do not claim the UI buttons call the backend. | The frontend is a simulation (C4-01). The backend flow itself works since C3-01 was fixed. |
 | **DLQ Management** | Show the DLQ screen, payload preview, and stack traces. To show a real replay, use `POST /dlq/{id}/replay`. | Do not claim the UI replay button calls the backend. | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |
@@ -269,8 +269,8 @@ Include a **"System Audit & Sprint 2 Hardening Roadmap"** slide in your presenta
    - *"The operations UI runs on a simulation harness. Wiring it to the live REST APIs through the existing gateway routes is the next step (C4-01)."*
 2. **Replay Scope:**
    - *"Replay is working end to end. The next refinement is keeping the original event type on a replayed message, so a replayed cancel is still treated as a cancel."*
-3. **CI Coverage:**
-   - *"Our CI smoke test boots a subset of services. We are extending it to the full pipeline (C5-04)."*
+3. **Cancellation Coverage:**
+   - *"A cancel now closes the trade's open work items and is audited. The next step is carrying it through to exception records and existing confirmations."*
 4. **Schema Version Evolution:**
    - *"`SchemaVersionRouter` now guards both `enrichment-service` and `validation-service` (unsupported versions go to the DLQ with `SCHEMA_VERSION_UNSUPPORTED`). We are extending the same pattern to the remaining consumers."*
 
@@ -292,6 +292,12 @@ Further findings from [`code_consistency_report.md`](./code_consistency_report.m
 | C3-01 | Approving a manual review generates the confirmation (`ManualReviewApprovalConsumer`, `HeldTradeRepository`, `WorkItem.reviewDecision`) | `8b4435d` |
 | C3-09 | `IdempotencyKey` replay Javadoc corrected | `8b4435d` |
 | C5-03, C5-05, C5-06 | `mem_limit: 768m` on JVM services, `dev-up.sh` forwards its mode, `init-kafka.sh` uses its bootstrap variable | `8b4435d` |
+| C2-03 | Ingestion rejects invalid economics only; absent values reach STP and raise the exception there | `fix/code-consistency` |
+| C2-04 | `CANCEL_TRADE` publishes a cancelled outcome; open work items become `CANCELLED` and the cancel is audited | `fix/code-consistency` |
+| C3-04 | Confirmed category and sub-theme copied onto the exception record | `fix/code-consistency` |
+| C3-05 | Enrichment waits on Kafka for a bounded time instead of `.join()` | `fix/code-consistency` |
+| C4-04 | Manual review screen and actions use `workItemId`; decisions now close the work item | `fix/code-consistency` |
+| C5-04 | CI boots the full stack and runs `smoke-test.sh --all` and `pipeline-test.sh`; frontend healthcheck fixed | `fix/code-consistency` |
 | C5-02 (correction) | `KAFKA_LOG_DIRS: /var/lib/kafka/data`, so Kafka data really is on the volume | `fix/code-consistency` |
 
 **Verification:** `mvn clean verify` in `services/` passes (482 tests, 0 failures). On a clean `docker compose` stack, `./scripts/smoke-test.sh --all` passes 15 checks, a re-published `trade.enriched` message is skipped as a duplicate, and a payload with an unsupported `schemaVersion` lands in the DLQ with reason `SCHEMA_VERSION_UNSUPPORTED`.
@@ -299,3 +305,7 @@ Further findings from [`code_consistency_report.md`](./code_consistency_report.m
 **Verification of the replay, manual review and DevOps fixes:** `mvn verify` in `services/` passes (496 tests, 0 failures). The same live scenarios were run on an isolated stack against the code before and after the fixes. Before: DLQ entries stuck in `REPLAYING`, dead letters keyed by `correlationId`, approvals producing no confirmation. After: all reach `REPLAY_SUCCEEDED`, approval produces exactly one confirmation, rejection produces none. Totals from a 500-trade seed were identical on both, so the normal pipeline is unaffected. Some dead letters in these tests were injected directly on `deadletter.trade`, and manual review items were created through the API. `smoke-test.sh --all` was not re-run because its fixed ports were in use on the test machine.
 
 **After pulling these changes:** run `docker compose up -d --build`. Kafka starts with an empty volume the first time, so topics and offsets from your old container are gone while CouchDB keeps its data. Run `./scripts/dev-down.sh --reset` once first if you want the two to start clean together.
+
+**Verification of the high-severity fixes:** `mvn verify` passes (509 tests, 0 failures). All 14 deliberately broken versions of the backend fixes were caught by tests. The CI workflow's steps pass locally with shifted ports (smoke 15 of 15, pipeline 12 of 12), and `pipeline-test.sh` fails on the code without C2-03 and C2-04. C4-04 was checked in a real browser against the old and new builds. C3-04 and C3-05 are covered by unit tests only.
+
+**C2-03 changes the demo numbers:** missing economics now show as accepted at ingestion and fail at STP. On the 500-trade seed, ingestion rejections fall from 85 to 34, STP failures rise from 199 to 250, and confirmations stay at 201.

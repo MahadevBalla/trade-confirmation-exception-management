@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/useApp';
+import { isOpenReviewItem } from '../../context/AppContextInstance';
 import { StatusBadge } from '../common/StatusBadge';
 import {
   FileCheck,
@@ -10,9 +11,13 @@ import {
 } from 'lucide-react';
 
 export const ManualReviewQueue: React.FC = () => {
-  const { trades, approveManualReview, rejectManualReview, setSelectedTradeId, setActiveTab } = useApp();
+  const { trades, workItems, approveManualReview, rejectManualReview, setSelectedTradeId, setActiveTab } = useApp();
 
-  const manualTrades = trades.filter((t) => t.status === 'MANUAL_REVIEW');
+  // The queue is driven by open MANUAL_REVIEW work items, as on the backend (GET /workitems?type=MANUAL_REVIEW).
+  const reviewItems = workItems.filter(isOpenReviewItem);
+  const manualTrades = trades.filter(
+    (t) => t.status === 'MANUAL_REVIEW' && reviewItems.some((w) => w.tradeId === t.tradeId)
+  );
   const [selectedTrade, setSelectedTrade] = useState<string | null>(
     manualTrades.length > 0 ? manualTrades[0].tradeId : null
   );
@@ -22,12 +27,13 @@ export const ManualReviewQueue: React.FC = () => {
   const [actionType, setActionType] = useState<'APPROVE' | 'REJECT' | null>(null);
 
   const currentTrade = manualTrades.find((t) => t.tradeId === selectedTrade) || manualTrades[0];
+  const currentReviewItem = reviewItems.find((w) => w.tradeId === currentTrade?.tradeId);
 
   const handleApprove = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTrade) return;
+    if (!currentReviewItem) return;
     approveManualReview(
-      currentTrade.tradeId,
+      currentReviewItem.workItemId,
       overrideNotes || 'Approved by Operations Supervisor after bilateral reconciliation'
     );
     setActionType(null);
@@ -36,9 +42,9 @@ export const ManualReviewQueue: React.FC = () => {
 
   const handleReject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTrade) return;
+    if (!currentReviewItem) return;
     rejectManualReview(
-      currentTrade.tradeId,
+      currentReviewItem.workItemId,
       rejectionReason || 'Irreconcilable economic mismatch between parties'
     );
     setActionType(null);
@@ -225,7 +231,7 @@ export const ManualReviewQueue: React.FC = () => {
                 {!actionType && (
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs text-slate-400">
-                      Determine operational verdict for trade {currentTrade.tradeId}:
+                      Determine operational verdict for trade {currentTrade.tradeId} (work item {currentReviewItem?.workItemId}):
                     </span>
 
                     <div className="flex items-center gap-2">

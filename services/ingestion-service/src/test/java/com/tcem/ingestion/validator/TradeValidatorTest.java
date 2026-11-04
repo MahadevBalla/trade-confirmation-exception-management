@@ -115,17 +115,12 @@ class TradeValidatorTest {
     }
 
     @Test
-    @DisplayName("Missing strike triggers MISSING_ECONOMIC_DATA / MISSING_STRIKE")
-    void validate_missingStrike_failsWithMissingStrike() {
+    @DisplayName("Absent strike passes schema validation; EconomicFieldsRule raises it at STP (FR5)")
+    void validate_missingStrike_passes() {
         TradeEvent event = createValidTradeEvent();
         event.getTrade().getFxOptionEconomics().setStrike(null);
 
-        ValidationResult result = validator.validate(event);
-
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.firstError().getCategory()).isEqualTo(ExceptionCategory.MISSING_ECONOMIC_DATA);
-        assertThat(result.firstError().getSubTheme()).isEqualTo(ExceptionSubTheme.MISSING_STRIKE);
-        assertThat(result.firstError().getField()).isEqualTo("trade.fxOptionEconomics.strike");
+        assertThat(validator.validate(event).isValid()).isTrue();
     }
 
     @Test
@@ -141,53 +136,39 @@ class TradeValidatorTest {
     }
 
     @Test
-    @DisplayName("Missing notional amount triggers MISSING_ECONOMIC_DATA / MISSING_NOTIONAL")
-    void validate_missingNotional_fails() {
+    @DisplayName("Absent notional amount passes schema validation")
+    void validate_missingNotional_passes() {
         TradeEvent event = createValidTradeEvent();
         event.getTrade().getFxOptionEconomics().setNotionalAmount(null);
 
-        ValidationResult result = validator.validate(event);
-
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.firstError().getCategory()).isEqualTo(ExceptionCategory.MISSING_ECONOMIC_DATA);
-        assertThat(result.firstError().getSubTheme()).isEqualTo(ExceptionSubTheme.MISSING_NOTIONAL);
+        assertThat(validator.validate(event).isValid()).isTrue();
     }
 
     @Test
-    @DisplayName("Missing premium amount triggers MISSING_ECONOMIC_DATA / MISSING_PREMIUM")
-    void validate_missingPremium_fails() {
+    @DisplayName("Absent premium amount passes schema validation")
+    void validate_missingPremium_passes() {
         TradeEvent event = createValidTradeEvent();
         event.getTrade().getFxOptionEconomics().setPremiumAmount(null);
 
-        ValidationResult result = validator.validate(event);
-
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.firstError().getCategory()).isEqualTo(ExceptionCategory.MISSING_ECONOMIC_DATA);
-        assertThat(result.firstError().getSubTheme()).isEqualTo(ExceptionSubTheme.MISSING_PREMIUM);
+        assertThat(validator.validate(event).isValid()).isTrue();
     }
 
     @Test
-    @DisplayName("Missing option type (CALL/PUT) triggers MISSING_ECONOMIC_DATA / MISSING_OPTION_TYPE")
-    void validate_missingOptionType_fails() {
+    @DisplayName("Absent option type passes schema validation")
+    void validate_missingOptionType_passes() {
         TradeEvent event = createValidTradeEvent();
         event.getTrade().getFxOptionEconomics().setOptionType(null);
 
-        ValidationResult result = validator.validate(event);
-
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.firstError().getSubTheme()).isEqualTo(ExceptionSubTheme.MISSING_OPTION_TYPE);
+        assertThat(validator.validate(event).isValid()).isTrue();
     }
 
     @Test
-    @DisplayName("Missing underlier pair triggers MISSING_ECONOMIC_DATA / MISSING_UNDERLIER")
-    void validate_missingUnderlier_fails() {
+    @DisplayName("Absent underlier passes schema validation")
+    void validate_missingUnderlier_passes() {
         TradeEvent event = createValidTradeEvent();
         event.getTrade().getFxOptionEconomics().setUnderlier(null);
 
-        ValidationResult result = validator.validate(event);
-
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.firstError().getSubTheme()).isEqualTo(ExceptionSubTheme.MISSING_UNDERLIER);
+        assertThat(validator.validate(event).isValid()).isTrue();
     }
 
     @Test
@@ -272,7 +253,7 @@ class TradeValidatorTest {
     @DisplayName("ValidationResult converts errors to platform ExceptionRecords with correct mapping")
     void toExceptionRecords_generatesValidRecords() {
         TradeEvent event = createValidTradeEvent();
-        event.getTrade().getFxOptionEconomics().setStrike(null);
+        event.getTrade().getFxOptionEconomics().setStrike(new BigDecimal("-1"));
 
         ValidationResult result = validator.validate(event);
         List<ExceptionRecord> records = result.toExceptionRecords(event);
@@ -479,15 +460,12 @@ class TradeValidatorTest {
     }
 
     @Test
-    @DisplayName("Null fxOptionEconomics block produces VAL_MISSING_FX_ECONOMICS error")
-    void validate_nullFxOptionEconomics_fails() {
+    @DisplayName("Absent fxOptionEconomics block passes schema validation")
+    void validate_nullFxOptionEconomics_passes() {
         TradeEvent event = createValidTradeEvent();
         event.getTrade().setFxOptionEconomics(null);
 
-        ValidationResult result = validator.validate(event);
-
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.getErrors()).anyMatch(e -> "VAL_MISSING_FX_ECONOMICS".equals(e.getReasonCode()));
+        assertThat(validator.validate(event).isValid()).isTrue();
     }
 
     @Test
@@ -621,7 +599,7 @@ class TradeValidatorTest {
     void validate_multipleValidationFailures_accumulatesAllErrors() {
         TradeEvent event = createValidTradeEvent();
         event.getMessageHeader().setMessageId(null); // error 1
-        event.getTrade().getFxOptionEconomics().setStrike(null); // error 2
+        event.getTrade().getFxOptionEconomics().setStrike(new BigDecimal("-1")); // error 2
         event.getTrade().getFxOptionEconomics().setNotionalAmount(BigDecimal.ZERO); // error 3
         event.getTrade().getFxOptionEconomics().setBuySell("INVALID"); // error 4
 
