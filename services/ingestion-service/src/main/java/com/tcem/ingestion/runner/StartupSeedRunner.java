@@ -1,6 +1,7 @@
 package com.tcem.ingestion.runner;
 
 import com.tcem.ingestion.config.IngestionProperties;
+import com.tcem.ingestion.service.SeedAlreadyLoadedException;
 import com.tcem.ingestion.service.TradeSeedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,11 @@ public class StartupSeedRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         if (properties.isSeedOnStartup()) {
             log.info("Startup trade seeding enabled (SEED_ON_STARTUP=true). Loading synthetic trades into trade.raw...");
-            tradeSeedService.loadSeedData();
+            try {
+                tradeSeedService.loadSeedData();
+            } catch (SeedAlreadyLoadedException ex) {
+                log.info("Seed data is already loaded; skipping startup seeding");
+            }
         } else {
             log.info("Startup trade seeding disabled. Trades can be triggered on demand via POST /trades/generate or POST /trades/seed");
         }

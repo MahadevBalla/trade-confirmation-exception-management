@@ -63,9 +63,15 @@ public class TradeProducerController {
      */
     @PostMapping("/seed")
     public ResponseEntity<Map<String, Object>> seedTrades(
-            @RequestParam(name = "publishToKafka", defaultValue = "false") boolean publishToKafka) {
-        Map<String, Object> response = tradeSeedService.loadSeedData(publishToKafka);
+            @RequestParam(name = "publishToKafka", defaultValue = "false") boolean publishToKafka,
+            @RequestParam(name = "force", defaultValue = "false") boolean force) {
+        Map<String, Object> response = tradeSeedService.loadSeedData(publishToKafka, force);
         return ResponseEntity.ok(response);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(com.tcem.ingestion.service.SeedAlreadyLoadedException.class)
+    public ResponseEntity<Map<String, Object>> seedAlreadyLoaded(com.tcem.ingestion.service.SeedAlreadyLoadedException ex) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT).body(Map.of("status", 409, "error", ex.getMessage()));
     }
 
     /**

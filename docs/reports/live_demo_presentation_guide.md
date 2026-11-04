@@ -203,7 +203,7 @@ To guarantee a 100% smooth, glitch-free presentation, every team member must str
 
 The full steps, a demo day checklist and troubleshooting are in [`live-and-demo-data-guide.md`](../live-and-demo-data-guide.md).
 
-1. On a fresh stack, sign in as `admin` / `admin-demo`, then click **Load 500 seed trades** on the banner, **once**, then wait about a minute. Seeding again raises duplicate exceptions, and work items jump to about 400. Expect 485 distinct trades, 383 confirmed (79% STP) and 17 in manual review.
+1. On a fresh stack, sign in as `admin` / `admin-demo`, then click **Load 500 seed trades** on the banner, then wait about a minute. Expect 485 distinct trades, 383 confirmed (79% STP) and 17 in manual review.
 2. To show replay, run `./scripts/demo-dlq-failure.sh` just before that part of the demo. It creates a real, replayable failure within a few seconds, and the entry appears on the Dead-Letter Queue screen.
 3. Use **Publish Clean STP** and the other buttons to show new trades arriving. Results appear within a few seconds.
 

@@ -34,7 +34,7 @@ This deletes all your local trades, so don't run it once your demo data is loade
 
 1. Go to **http://localhost:3000** and sign in. For the demo, use `admin`, which can do everything.
 2. Check the top bar shows **LIVE**, **Backend: Connected** and your name.
-3. Click **Load 500 seed trades** on the banner, **once**.
+3. Click **Load 500 seed trades** on the banner.
 4. Wait about a minute for the numbers to stop changing.
 
 | Username | Password | Can do |
@@ -57,7 +57,9 @@ You should end up with:
 | Manual review queue | 17 |
 | Dead-letter queue | 0 |
 
-> **Only seed once.** Seeding again doesn't add trades, but every message counts as a duplicate and raises a new exception. Work items jump from about 100 to about 400. If this happens, reset and start again (see [Start again from clean](#start-again-from-clean)).
+The seed can only be loaded once, so running it twice by accident is safe: you get a message and nothing changes. A second load would add no trades, and every message would raise a duplicate exception, taking work items from about 100 to about 400. To load it again anyway, use `./scripts/seed-data.sh --force`.
+
+To add trades after that, use the buttons on the site, or `./scripts/seed-data.sh --generate 5`, which creates new trades each time.
 
 The 79% is below the 85% target on the dashboard because the seed deliberately includes trades with problems.
 
@@ -106,7 +108,7 @@ The malformed message button won't work for this, because invalid JSON can never
 ./scripts/dev-up.sh --all
 ```
 
-Then load the seed once.
+Then load the seed.
 
 ## Use demo data as a backup
 
@@ -161,7 +163,7 @@ The site remembers your choice per browser. If someone finds it showing demo dat
 **Before you start:**
 
 - [ ] `./scripts/dev-down.sh --reset`, then `./scripts/dev-up.sh --all`
-- [ ] Load the seed **once**, and confirm the numbers match the table above
+- [ ] Load the seed, and confirm the numbers match the table above
 - [ ] Signed in as `admin`, and the badge says **LIVE**, in the browser you'll present from
 - [ ] Publish one clean trade and see it confirmed
 - [ ] Decide who makes the call to switch to demo data, and what they'll say
@@ -183,7 +185,8 @@ The site remembers your choice per browser. If someone finds it showing demo dat
 | The login says the backend cannot be reached | The sign-in check got no answer | Start the backend, or click **Use demo data instead** |
 | Approve, reject or replay is greyed out | Your role can't do that | Sign out, then sign in as `supervisor` (reviews) or `admin` (replay) |
 | **No trades yet** | The system is working, but it's empty | Click **Load 500 seed trades** |
-| Work items are in the hundreds | The seed was run more than once | Start again from clean |
+| `The seed data is already loaded` | The seed has already run. Nothing changed. | Nothing to fix. To start over, see [Start again from clean](#start-again-from-clean) |
+| Work items are around 400 | The seed was forced with `--force` | Start again from clean |
 | Numbers keep rising | **Auto Stream** is on, or the seed is still flowing | Stop it, or wait about a minute |
 | Trades show demo IDs such as `TRD-10001` | You're in demo mode | Click the **DEMO DATA** badge |
 | A trade isn't confirmed straight away | Screens refresh about every 3 seconds | Wait a few seconds, or check its Audit History |

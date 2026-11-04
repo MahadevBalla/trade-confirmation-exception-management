@@ -15,7 +15,7 @@ This directory provides CLI helper scripts for local development, environment pr
 | **CouchDB Init** | `./scripts/init-couchdb.sh` | Idempotently creates system and application CouchDB databases with Basic Auth. |
 | **Dev Up** | `./scripts/dev-up.sh` | Boots infra, initializes Kafka & CouchDB, builds & starts services, and runs smoke checks. Supports `--infra-only` and `--all`, and passes the mode to the smoke test, so `--all` asserts all 5 services. |
 | **Dev Down** | `./scripts/dev-down.sh` | Stops containers. Pass `--reset` (or `-v`) to wipe volume data. |
-| **Seed Data** | `./scripts/seed-data.sh` | Triggers synthetic trade generation or loads the bundled 500-trade seed dataset (`sample-trades.json`). Pass `--generate <N>` to generate N trades. Load the seed only once: a second run raises a duplicate exception for every message. |
+| **Seed Data** | `./scripts/seed-data.sh` | Triggers synthetic trade generation or loads the bundled 500-trade seed dataset (`sample-trades.json`). Pass `--generate <N>` to create N new trades. The seed can only be loaded once, because a repeat would raise a duplicate exception for every message; `--force` overrides this. |
 
 ---
 
@@ -36,7 +36,7 @@ Starts infra, init containers, `ingestion-service`, and `frontend` (Nginx Gatewa
 ### 3. Generate Synthetic Trade Data
 ```bash
 ./scripts/seed-data.sh                  # Loads 500-trade dataset
-./scripts/seed-data.sh --generate 50    # Generates 50 new random trades
+./scripts/seed-data.sh --generate 50    # Generates 50 new trades
 ```
 
 ### 4. Verify System Health

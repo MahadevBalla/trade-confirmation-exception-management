@@ -63,14 +63,31 @@ class TradeProducerControllerTest {
 
     @Test
     void seedTrades_invokesLoadSeedData() throws Exception {
-        when(tradeSeedService.loadSeedData(false))
+        when(tradeSeedService.loadSeedData(false, false))
                 .thenReturn(Map.of("status", "SUCCESS", "totalSeedTrades", 500, "publishedToKafka", false));
 
         mockMvc.perform(post("/trades/seed"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalSeedTrades").value(500));
 
-        verify(tradeSeedService).loadSeedData(false);
+        verify(tradeSeedService).loadSeedData(false, false);
+    }
+
+    @Test
+    void seedTrades_alreadyLoaded_returnsConflict() throws Exception {
+        when(tradeSeedService.loadSeedData(true, false)).thenThrow(new com.tcem.ingestion.service.SeedAlreadyLoadedException());
+
+        mockMvc.perform(post("/trades/seed").param("publishToKafka", "true"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void seedTrades_forcePassesThrough() throws Exception {
+        when(tradeSeedService.loadSeedData(true, true)).thenReturn(Map.of("status", "SUCCESS"));
+
+        mockMvc.perform(post("/trades/seed").param("publishToKafka", "true").param("force", "true"))
+                .andExpect(status().isOk());
     }
 
     @Test

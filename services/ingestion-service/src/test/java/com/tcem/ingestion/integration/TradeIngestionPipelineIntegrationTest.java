@@ -144,6 +144,7 @@ class TradeIngestionPipelineIntegrationTest {
         SeedLoaderService seedLoaderService = new SeedLoaderService(
                 tradeGenerator,
                 tradeRawProducer,
+                tradeRepository,
                 ingestionProperties,
                 objectMapper
         );
@@ -334,7 +335,7 @@ class TradeIngestionPipelineIntegrationTest {
     @Test
     @DisplayName("End-to-End: Seed loader endpoint safely previews sample-trades.json seed dataset")
     void testEndToEnd_SeedLoaderPreview() {
-        ResponseEntity<Map<String, Object>> response = producerController.seedTrades(false);
+        ResponseEntity<Map<String, Object>> response = producerController.seedTrades(false, false);
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         Map<String, Object> body = response.getBody();
         assertThat(body).isNotNull();

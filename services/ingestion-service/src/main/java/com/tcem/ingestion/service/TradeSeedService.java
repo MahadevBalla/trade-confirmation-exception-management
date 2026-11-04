@@ -40,11 +40,13 @@ public interface TradeSeedService {
      * Loads trades from the seed file and optionally publishes to trade.raw.
      *
      * @param publishToKafka whether to dispatch to Kafka topic trade.raw
+     * @param force          publish even if the seed data is already loaded
      * @return summary map
+     * @throws SeedAlreadyLoadedException if publishing would repeat the seed and force is false
      */
-    Map<String, Object> loadSeedData(boolean publishToKafka);
+    Map<String, Object> loadSeedData(boolean publishToKafka, boolean force);
 
     default Map<String, Object> loadSeedData() {
-        return loadSeedData(true);
+        return loadSeedData(true, false);
     }
 }

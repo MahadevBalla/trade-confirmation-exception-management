@@ -574,6 +574,7 @@ These were found while fixing and live-testing the items above. They are not par
 | Generator counterparties made outcomes depend on sequence | Half of `VALID_STANDARD_STP` trades used ineligible counterparties and failed STP, and `BUSINESS_RULE_NON_STP` often passed. | ✅ Fixed: valid trades use eligible counterparties, business-rule trades use `PTY-CP-103`, seed updated. Seed STP rate rose from about 44% to 79% |
 | The 500-trade seed produced no manual review items | Nothing routed to `manual.review.required`. | ✅ Fixed: `COUNTERPARTY_NOT_STP_ELIGIBLE` routes to manual review; the seed now produces 17 |
 | Frontend healthcheck always failed | `localhost` resolves to `::1` in the image while nginx listens on IPv4 only, so the container was reported unhealthy and `docker compose up --wait` failed. | ✅ Fixed: healthcheck uses `127.0.0.1` |
+| Repeating the seed, or running `--generate` after it, raised exceptions but added no trades | Both reused the seed's message ids, so every message counted as a duplicate. A second seed took work items from about 100 to about 400. Found while testing C4-01. | ✅ Fixed: a repeat seed gets a 409 unless forced, and published batches get new ids |
 | One stopped service froze the whole UI | A poll waits for all sources, and a request to a stopped service hung for 39 seconds. Found while testing C4-01. | ✅ Fixed: client request timeouts, and a connect timeout on every gateway route |
 | STP chart labelled leftovers as dead letters | The segment was calculated as the remainder, so 34 schema-invalid trades showed as dead letters. Found while testing C4-01. | ✅ Fixed: each segment is counted directly |
 | A replayed `CANCEL_TRADE` runs through STP | Replay overwrites `eventType` with `REPLAY`, so `TradeEnrichedConsumer` no longer recognises the cancel. | 🟡 Open |
@@ -647,7 +648,7 @@ These were found while fixing and live-testing the items above. They are not par
 │                                                                        │
 │  Domain Modeling & Design:   ██████████████████░░  92/100 (Strong)     │
 │  DevOps & Containerization:  ██████████████████░░  92/100 (Hardened)   │
-│  Backend Unit Test Coverage: ██████████████████░░  88/100 (532 pass)   │
+│  Backend Unit Test Coverage: ██████████████████░░  88/100 (544 pass)   │
 │  Event Contracts & Enums:    █████████████████░░░  85/100 (Aligned)    │
 │  Operations Cockpit UI:      ██████████████░░░░░░  72/100 (Live Ready) │
 │                                                                        │

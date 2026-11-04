@@ -47,6 +47,13 @@ public class SyntheticTradeGenerator {
      * @return list of serialized JSON strings ready to publish to trade.raw
      */
     public List<String> generateBatch(int count) {
+        return generateBatch(count, 0);
+    }
+
+    /**
+     * Generates a batch whose sequence numbers, and so trade and message ids, start after {@code startSequence}.
+     */
+    public List<String> generateBatch(int count, int startSequence) {
         List<String> batch = new ArrayList<>();
         int validTarget = (int) (count * 0.70); // 70% happy path
         int edgeCases = count - validTarget;
@@ -64,12 +71,12 @@ public class SyntheticTradeGenerator {
         };
 
         for (int i = 1; i <= validTarget; i++) {
-            batch.add(generateTradeJson(TradeScenarioType.VALID_STANDARD_STP, i));
+            batch.add(generateTradeJson(TradeScenarioType.VALID_STANDARD_STP, startSequence + i));
         }
 
         for (int i = 1; i <= edgeCases; i++) {
             TradeScenarioType scenario = edgeScenarios[(i - 1) % edgeScenarios.length];
-            batch.add(generateTradeJson(scenario, validTarget + i));
+            batch.add(generateTradeJson(scenario, startSequence + validTarget + i));
         }
 
         log.info("Generated batch of {} synthetic trades ({} valid STP, {} edge scenarios)",

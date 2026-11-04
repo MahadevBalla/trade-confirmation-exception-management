@@ -125,6 +125,15 @@ echo "7. The audit trail spans services"
 audit_has_trade() { curl -fsS "$INGESTION_URL/audit?size=200" | jq -e --arg t "$1" '[.content[] | select(.tradeId == $t) | .sourceService] | unique | length >= 2'; }
 wait_until "$MISSING appears in the global audit trail from at least two services" audit_has_trade "$MISSING"
 
+echo "8. Seeding is protected, and generated batches are new trades"
+curl -s -o /dev/null -u "$AUTH_OPS" -X POST "$INGESTION_URL/trades/seed?publishToKafka=true"
+[ "$(status_of -u "$AUTH_OPS" -X POST "$INGESTION_URL/trades/seed?publishToKafka=true")" = 409 ] && pass "a repeat seed is refused" || fail "a repeat seed is refused"
+BATCH_A=$(curl -fsS -u "$AUTH_OPS" -X POST "$INGESTION_URL/trades/generate?count=2&publishToKafka=true" | jq -r .sampleTrade.trade.tradeId)
+BATCH_B=$(curl -fsS -u "$AUTH_OPS" -X POST "$INGESTION_URL/trades/generate?count=2&publishToKafka=true" | jq -r .sampleTrade.trade.tradeId)
+[ "$BATCH_A" != "$BATCH_B" ] && [ "$BATCH_A" != "TRD-000001" ] && pass "generated batches get new ids ($BATCH_A, $BATCH_B)" || fail "generated batches get new ids ($BATCH_A, $BATCH_B)"
+trade_exists() { curl -fsS -o /dev/null "$INGESTION_URL/trades/$1"; }
+wait_until "$BATCH_B becomes a real trade" trade_exists "$BATCH_B"
+
 echo ""
 if [ "$FAIL" -eq 0 ]; then
   echo "PIPELINE TEST PASSED ($PASS checks)"

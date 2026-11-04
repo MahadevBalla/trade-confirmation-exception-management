@@ -15,7 +15,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * **Phase 6 (Automated Testing & Pipeline Verification):** Comprehensive test suite with 97 passing tests across unit, repository, producer, consumer, and end-to-end integration flows ([`TradeIngestionPipelineIntegrationTest`](../services/ingestion-service/src/test/java/com/tcem/ingestion/integration/TradeIngestionPipelineIntegrationTest.java)); verified full Maven reactor build.
   * Sprint 2 hardening: replays bypass the duplicate check, so a second replay is reprocessed instead of emitting a false duplicate exception (commit `8b4435d`). `ingestion-service`: 98 tests.
   * High-severity fix: schema validation rejects invalid economics only, so absent values reach STP (C2-03). `ingestion-service`: 99 tests.
-  * Live data support: `TradeLifecycleConsumer` keeps trade status and the enriched trade current, `GET /audit` added, and generator and seed counterparties corrected. `ingestion-service`: 113 tests.
+  * Live data support: `TradeLifecycleConsumer` keeps trade status and the enriched trade current, `GET /audit` added, and generator and seed counterparties corrected. `ingestion-service`: 125 tests.
 * **What is Remaining:**
   * Ready for upstream consumption! Lead team PR reviews and coordinate with Bhavik (`enrichment-service`) for consuming `trade.accepted`.
 
@@ -41,7 +41,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Implemented confirmation generation with fingerprint-based duplicate suppression and exception mapping.
   * Implemented the `trade.enriched` consumer and confirmation query/metrics REST APIs.
   * Fixed CouchDB 25-record cap in `ConfirmationCouchDbRepository.countAll()` (explicit 10,000 query limit).
-  * Added unit and embedded-Kafka integration tests: 146 tests passing in `validation-service` (532 across the Maven reactor). Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
+  * Added unit and embedded-Kafka integration tests: 146 tests passing in `validation-service` (544 across the Maven reactor). Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
   * Sprint 2 hardening: durable `IdempotencyKey` guard in `TradeEnrichedConsumer` (new `validation-idempotency` database), `SchemaVersionRouter` parsing with `SCHEMA_VERSION_UNSUPPORTED` DLQ routing, and `ConfirmationFingerprint` party-path resolution so counterparty changes trigger a new confirmation (commits `a2cb6d6`, `537f353`).
   * Added a 34-test suite to `common-lib` (commit `8b00f86`) and standardized listener topics on `TopicNames` constants (commit `970ecf6`).
   * Sprint 2 hardening: outbound events keep `eventType` and `replayCount`, and dead letters are keyed by `tradeId` (C2-01). Enriched trades that fail STP are held, and an approved manual review generates the confirmation (C3-01, commit `8b4435d`). `validation-service`: 142 tests.
