@@ -26,8 +26,8 @@ import java.util.Optional;
  *       versions for a trade, ordered newest-first.</li>
  *   <li>{@code GET /trades/{tradeId}/confirmation} — fetch the latest (highest
  *       version) confirmation for a trade.</li>
- *   <li>{@code GET /metrics/stp-rate} — simple STP throughput snapshot: total
- *       confirmations persisted.</li>
+ *   <li>{@code GET /metrics/confirmation-count} — total number of persisted
+ *       confirmation documents.</li>
  * </ul>
  *
  * <h3>Error handling</h3>
@@ -110,9 +110,9 @@ public class ConfirmationQueryController {
      *
      * @return {@code 200 OK} with a metrics map
      */
-    @GetMapping("/metrics/stp-rate")
-    public ResponseEntity<Map<String, Object>> getStpRate() {
-        log.debug("GET /metrics/stp-rate");
+    @GetMapping("/metrics/confirmation-count")
+    public ResponseEntity<Map<String, Object>> getConfirmationCount() {
+        log.debug("GET /metrics/confirmation-count");
         long total = confirmationRepository.countAll();
         Map<String, Object> metrics = new LinkedHashMap<>();
         metrics.put("totalConfirmations", total);

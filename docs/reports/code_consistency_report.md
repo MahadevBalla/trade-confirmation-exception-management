@@ -1,7 +1,7 @@
 # TCEM Code Consistency & System Risk Report
 
 **Audit Mode:** Multi-Phase Architecture & Code Consistency Audit  
-**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 19 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)  
+**Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 25 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)
 **Target Repository:** `trade-confirmation-exception-management`  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
 **Remediation Guide:** [`presentation_fixes_guide.md`](./presentation_fixes_guide.md)  
@@ -27,7 +27,7 @@
 - **Phase 4 (Completed):** Audited frontend React 19 application (`frontend`), Vite and Nginx reverse proxies, TypeScript types vs Java DTOs, `AppContext` state management, recommendation engine parity, and backend API integration.
 - **Phase 5 (Completed):** Audited DevOps infrastructure, Docker orchestration, initializers, JVM memory flags, and GitHub Actions CI.
 - **Remediation Sprint (Completed):** Fixed 7 critical demo-breaking showstoppers on `fix/code-consistency` (Docker build `.dockerignore`, Kafka persistence volume, CouchDB 25-limit cap, TypeScript enum alignment, DLQ dual-property models, enriched counterparty name display, and database provisioning). System health score upgraded from **68/100 to 86/100**.
-- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), C5-03, C5-05 and C5-06 (DevOps), and all remaining high-severity findings: C2-03, C2-04, C3-04, C3-05, C4-04 and C5-04, on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. **29 of 37 findings are now resolved; 8 remain, all low severity or cosmetic** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
+- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), C5-03, C5-05 and C5-06 (DevOps), and all remaining high-severity findings: C2-03, C2-04, C3-04, C3-05, C4-04 and C5-04, on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. The additional fixes C2-05, C2-06, C3-07, C3-08, C4-06 and C4-07 are now verified. **35 of 37 findings are resolved; C4-01 remains a managed demo-state item and C4-05 remains open** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
 
 ---
 
@@ -183,27 +183,35 @@
 
 ---
 
-### 12. 🟡 LOW RISK / INCONSISTENCY: Route Collision and Payload Discrepancy on `GET /metrics/stp-rate`
-- **Location:** [TradeQueryController.java:L140](../../services/ingestion-service/src/main/java/com/tcem/ingestion/controller/TradeQueryController.java#L140) vs [ConfirmationQueryController.java:L113](../../services/validation-service/src/main/java/com/tcem/validation/controller/ConfirmationQueryController.java#L113).
+### 12. 🟡 LOW RISK / INCONSISTENCY: Route Collision and Payload Discrepancy on `GET /metrics/stp-rate` — ✅ [RESOLVED in `fix/code-consistency`]
+
+- **Location:** [TradeQueryController.java:L140](../../services/ingestion-service/src/main/java/com/tcem/ingestion/controller/TradeQueryController.java#L140) and [ConfirmationQueryController.java:L113](../../services/validation-service/src/main/java/com/tcem/validation/controller/ConfirmationQueryController.java#L113).
 - **Issue:**
-  Both `ingestion-service:8081` and `validation-service:8083` define `GET /metrics/stp-rate`, but return completely different JSON payloads:
+  Both `ingestion-service:8081` and `validation-service:8083` originally defined `GET /metrics/stp-rate`, but returned different JSON payloads:
   - `ingestion-service`: `{"stpRate": 0.85, "acceptedTrades": 420, "totalTrades": 500}`
   - `validation-service`: `{"totalConfirmations": 25}`
 - **System Impact:**
-  Ambiguity at the API Gateway level (`nginx.conf`) and potential UI dashboard rendering failures if the frontend queries one endpoint expecting the other's schema.
+  Ambiguity at the API Gateway level (`nginx.conf`) and potential UI dashboard rendering failures if the frontend queried one endpoint expecting the other's schema.
 - **Recommended Remediation:**
-  Rename `validation-service`'s endpoint to `/confirmations/metrics/summary` or integrate confirmation metrics into `ingestion-service`'s consolidated metrics calculator.
+  Rename `validation-service`'s endpoint to `/metrics/confirmation-count` or integrate confirmation metrics into `ingestion-service`'s consolidated metrics calculator.
+
+- **Resolution:**
+  The validation endpoint has been renamed to `GET /metrics/confirmation-count`, returning the total persisted confirmation count. The ingestion endpoint remains `GET /metrics/stp-rate`. Controller mappings, Javadocs and MockMvc tests have been updated. Validation tests passed with 145 tests and zero failures or errors.
 
 ---
 
-### 13. 🟢 NOT BREAKING / COSMETIC: Documentation Inaccuracy in `ingestion-service/README.md`
-- **Location:** [ingestion-service/README.md:L188](../../services/ingestion-service/README.md#L188).
+### 13. 🟢 NOT BREAKING / COSMETIC: Documentation Inaccuracy in `ingestion-service/README.md` — ✅ [RESOLVED in `fix/code-consistency`]
+
+- **Location:** [ingestion-service/README.md](../../services/ingestion-service/README.md) and [EventType.java](../../services/common-lib/src/main/java/com/tcem/common/constants/EventType.java).
 - **Issue:**
-  Lists `TERMINATE_TRADE` as an allowed value for `eventType`. However, `EventType.java` in `common-lib` does not contain `TERMINATE_TRADE`.
+  The audit identified `TERMINATE_TRADE` as a documented event type that does not exist in the canonical `EventType.java` enum.
 - **System Impact:**
-  None on runtime unless an external client relies on the doc and sends `TERMINATE_TRADE`, causing Jackson deserialization failure.
+  None on runtime unless an external client relies on the documentation and sends `TERMINATE_TRADE`, causing Jackson deserialization failure.
 - **Recommended Remediation:**
-  Remove `TERMINATE_TRADE` from `README.md` to match `EventType.java`.
+  Remove `TERMINATE_TRADE` from the documentation to match `EventType.java`.
+
+- **Resolution:**
+  Verified that `TERMINATE_TRADE` no longer appears in the ingestion service README or other Markdown and Java files searched in the repository. The canonical event types remain defined by `EventType.java`.
 
 ---
 
@@ -286,25 +294,33 @@
 
 ---
 
-### 20. 🟡 LOW RISK / INCONSISTENCY: Inconsistent Hardcoded Pagination Limit (1000) for Aggregate Exception Counters
-- **Location:** [ExceptionCouchDbRepository.java:L118-L128](../../services/exception-service/src/main/java/com/tcem/exception/repository/ExceptionCouchDbRepository.java#L118-L128).
+### 20. 🟡 LOW RISK / INCONSISTENCY: Inconsistent Hardcoded Pagination Limit (1000) for Aggregate Exception Counters — ✅ [RESOLVED in `fix/code-consistency`]
+
+- **Location:** [ExceptionCouchDbRepository.java](../../services/exception-service/src/main/java/com/tcem/exception/repository/ExceptionCouchDbRepository.java), [CouchDbClient.java](../../services/exception-service/src/main/java/com/tcem/exception/couchdb/CouchDbClient.java), and [CouchDbOperations.java](../../services/exception-service/src/main/java/com/tcem/exception/couchdb/CouchDbOperations.java).
 - **Issue:**
-  `countAll()` and `countByStatus()` execute Mango queries fetching up to 1,000 complete documents into memory and calculate `.size()`.
+  `countAll()` and `countByStatus()` previously executed Mango queries fetching up to 1,000 complete documents into memory and calculated `.size()`.
 - **System Impact:**
-  Exception counts are artificially capped at 1,000 in large or historical datasets. Fetching 1,000 documents across HTTP for an aggregate dashboard counter creates unnecessary network and memory overhead.
+  Exception counts could be artificially capped at 1,000 in large or historical datasets. Fetching complete documents for aggregate counters also created unnecessary network and memory overhead.
 - **Recommended Remediation:**
   Use CouchDB reduce views (`_count`) or lightweight database metadata (`doc_count`) for metrics.
 
+- **Resolution:**
+  Added `countByView()` to `CouchDbOperations`. `CouchDbClient` now queries the CouchDB view endpoint and reads the reduced count. `ExceptionCouchDbRepository.countAll()` uses the `exception_counts/total` view, which filters documents with `docType === "EXCEPTION"` and uses CouchDB's `_count` reducer. The view is provisioned through `docker-compose.yml` and `scripts/init-couchdb.sh`. Added `CouchDbClientTest` and updated repository tests. The exception-service targeted test suite passed with 134 tests and zero failures or errors.
+
 ---
 
-### 21. 🟡 LOW RISK / INCONSISTENCY: Build Failure on Modern JDKs without ByteBuddy Experimental Flag
+### 21. 🟡 LOW RISK / INCONSISTENCY: Build Failure on Modern JDKs without ByteBuddy Experimental Flag — ✅ [RESOLVED in `fix/code-consistency`]
+
 - **Location:** [services/pom.xml](../../services/pom.xml).
 - **Issue:**
-  Running `mvn test` on Java 25/26 throws `java.lang.IllegalArgumentException: Java 26 (70) is not supported by the current version of Byte Buddy` during Mockito inline mock initialization in `enrichment-service`.
+  Running `mvn test` on Java 25/26 can throw `java.lang.IllegalArgumentException: Java 26 (70) is not supported by the current version of Byte Buddy` during Mockito inline mock initialization in `enrichment-service`.
 - **System Impact:**
-  Build failures when running tests in local modern developer environments.
+  Build failures when running tests on modern developer environments.
 - **Recommended Remediation:**
   Add `<argLine>-Dnet.bytebuddy.experimental=true</argLine>` to `maven-surefire-plugin` in `services/pom.xml`.
+
+- **Resolution:**
+  Added `-Dnet.bytebuddy.experimental=true` to the Maven Surefire plugin configuration in `services/pom.xml`. The Java version remains configured as 21. The full Maven reactor test suite passed on Java 25 and Java 21, with 84 tests and zero failures, errors or skipped tests.
 
 ---
 
@@ -380,23 +396,31 @@
 
 ---
 
-### 28. 🟡 LOW RISK / INCONSISTENCY: Missing Owner Queues in Filter Dropdowns
-- **Location:** [ExceptionQueue.tsx:L31-L38](../../frontend/src/components/exceptions/ExceptionQueue.tsx#L31-L38) and [WorkItemList.tsx:L81-L88](../../frontend/src/components/workitems/WorkItemList.tsx#L81-L88).
+### 28. 🟡 LOW RISK / INCONSISTENCY: Missing Owner Queues in Filter Dropdowns — ✅ [RESOLVED in `fix/code-consistency`]
+
+- **Location:** [ExceptionQueue.tsx](../../frontend/src/components/exceptions/ExceptionQueue.tsx) and [WorkItemList.tsx](../../frontend/src/components/workitems/WorkItemList.tsx).
 - **Issue:**
-  `types/tcem.ts` and backend `WorkItemRules.java` define 7 canonical owner queues (`DATA_REMEDIATION`, `OPERATIONS_REVIEW`, `TEMPLATE_MAINTENANCE`, `REFERENCE_DATA`, `TECHNOLOGY_SUPPORT`, `SPECIALIST_REVIEW`, `RULES_OWNER`). `ExceptionQueue.tsx` omits `SPECIALIST_REVIEW` and `RULES_OWNER`, while `WorkItemList.tsx` omits `RULES_OWNER`.
+  `types/tcem.ts` and backend `WorkItemRules.java` define 7 canonical owner queues (`DATA_REMEDIATION`, `OPERATIONS_REVIEW`, `TEMPLATE_MAINTENANCE`, `REFERENCE_DATA`, `TECHNOLOGY_SUPPORT`, `SPECIALIST_REVIEW`, `RULES_OWNER`). `ExceptionQueue.tsx` omitted `SPECIALIST_REVIEW` and `RULES_OWNER`, while `WorkItemList.tsx` omitted `RULES_OWNER`.
 - **System Impact:**
-  Operators cannot filter exceptions or work items assigned to the legal specialist or rules maintenance teams.
+  Operators could not filter exceptions or work items assigned to the legal specialist or rules maintenance teams.
 - **Recommended Remediation:**
   Synchronize dropdown options across all queue views to include all 7 canonical queues.
 
+- **Resolution:**
+  Added the missing `SPECIALIST_REVIEW` and `RULES_OWNER` options to the Exception Queue filter and the missing `RULES_OWNER` option to the Work Items Tracker filter and assignment dropdown. The frontend production build passed, and the updated dropdown options were visually verified.
+
 ---
 
-### 29. 🟢 NOT BREAKING / COSMETIC: Inconsistent CouchDB Database Naming in Topology View
-- **Location:** [ServiceTopology.tsx:L34-L41](../../frontend/src/components/topology/ServiceTopology.tsx#L34-L41) vs [scripts/init-couchdb.sh:L19-L27](../../scripts/init-couchdb.sh#L19-L27).
+### 29. 🟢 NOT BREAKING / COSMETIC: Inconsistent CouchDB Database Naming in Topology View — ✅ [RESOLVED in `fix/code-consistency`]
+
+- **Location:** [ServiceTopology.tsx](../../frontend/src/components/topology/ServiceTopology.tsx) and [scripts/init-couchdb.sh](../../scripts/init-couchdb.sh).
 - **Issue:**
-  `ServiceTopology.tsx` displays database names using underscores (`workitems`, `audit_events`, `dlq_entries`), whereas the actual CouchDB databases provisioned in `init-couchdb.sh` use hyphens (`work-items`, `audit-events`, `dlq-entries`).
+  `ServiceTopology.tsx` displayed database names using underscores (`workitems`, `audit_events`, `dlq_entries`), whereas the actual CouchDB databases provisioned in `init-couchdb.sh` use hyphens (`work-items`, `audit-events`, `dlq-entries`).
 - **Recommended Remediation:**
   Update labels in `ServiceTopology.tsx` to match the exact hyphenated database names.
+
+- **Resolution:**
+  Updated the topology view to display the canonical CouchDB database names using hyphens, including `work-items`, `audit-events` and `dlq-entries`. The frontend production build passed, and the displayed database names were visually verified.
 
 ---
 
@@ -592,24 +616,24 @@ These were found while fixing and live-testing the items above. They are not par
 | **C2-02** | Phase 2 | `ConfirmationCouchDbRepository` | `countAll()` Mango query defaults to limit 25, capping STP metrics permanently at 25. | ✅ **RESOLVED (`2c4b3aa`)** | Low (Added explicit limit 10000) |
 | **C2-03** | Phase 2 | `TradeValidator` vs `EconomicFieldsRule` | Edge schema validation drops incomplete economic trades, making `EconomicFieldsRule` dead code. | ✅ **RESOLVED (`fix/code-consistency`)** | Medium (Align FR2 vs FR5 boundary) |
 | **C2-04** | Phase 2 | `TradeEnrichedConsumer` | Silently drops `CANCEL_TRADE` without publishing to `stp.validated` or closing open exceptions. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Emit cancellation outcome) |
-| **C2-05** | Phase 2 | API Gateway / Controllers | Conflicting `GET /metrics/stp-rate` endpoint paths with differing response structures across services. | 🟡 Low Risk (Sprint 2) | Low (Rename endpoint) |
-| **C2-06** | Phase 2 | `ingestion-service/README.md` | Documents nonexistent `TERMINATE_TRADE` event type. | 🟢 Not Breaking (Sprint 2) | Trivial (Update markdown) |
+| **C2-05** | Phase 2 | API Gateway / Controllers | Conflicting `GET /metrics/stp-rate` endpoint paths with differing response structures across services. | ✅ **RESOLVED** | Low (Renamed validation endpoint) |
+| **C2-06** | Phase 2 | `ingestion-service/README.md` | Documents nonexistent `TERMINATE_TRADE` event type. | ✅ **RESOLVED** | Trivial (Verified documentation and enum) |
 | **C3-01** | Phase 3 | `ManualReviewService` | Operator "APPROVE" decision publishes to `workitem.linked` which no service consumes; approved trades are permanently stranded. | ✅ **RESOLVED (`8b4435d`)** | Medium (Add consumer or direct confirmation) |
 | **C3-02** | Phase 3 | `exception-service` & Producers | `buildOutboundHeader` resets `eventType` to `NEW_TRADE`, dropping replay identity and preventing `ReplayOutcomeService` from detecting success. | ✅ **RESOLVED (`8b4435d`)** | Low (Preserve inbound header fields) |
 | **C3-03** | Phase 3 | `TradeAcceptedConsumer` | Multi-attempt replays (> 1) share identical `IdempotencyKey`, causing 2nd replay attempts to be silently dropped as duplicates. | ✅ **RESOLVED (`8b4435d`)** | Low (Bypass check for REPLAY / replayCount > 0) |
 | **C3-04** | Phase 3 | `DefaultExceptionProcessingService` | Discards `ClassificationResult.confirmedCategory` and `confirmedSubTheme`, keeping unrefined exception metadata. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Copy confirmed fields to record) |
 | **C3-05** | Phase 3 | `enrichment-service` Producers | `.join()` blocks Kafka consumer threads synchronously on publish, risking consumer heartbeat timeouts and rebalances. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Use async callback or timeout) |
 | **C3-06** | Phase 3 | `scripts/init-couchdb.sh` | Omits `enrichment-idempotency` database from CouchDB provisioning script. | ✅ **RESOLVED (`d30e283`)** | Trivial (Added db name to script) |
-| **C3-07** | Phase 3 | `ExceptionCouchDbRepository` | `countAll()` caps exception counts at 1,000 and pulls full documents into heap memory. | 🟡 Low Risk (Sprint 2) | Low (Use CouchDB view / db metadata) |
-| **C3-08** | Phase 3 | Build Configuration (`pom.xml`) | Missing `-Dnet.bytebuddy.experimental=true` surefire argLine breaks tests on modern JDKs (Java 25+). | 🟡 Low Risk (Sprint 2) | Trivial (Update parent POM plugin config) |
+| **C3-07** | Phase 3 | `ExceptionCouchDbRepository` | `countAll()` caps exception counts at 1,000 and pulls full documents into heap memory. | ✅ **RESOLVED** | Low (Use CouchDB reduce view) |
+| **C3-08** | Phase 3 | Build Configuration (`pom.xml`) | Missing `-Dnet.bytebuddy.experimental=true` surefire argLine breaks tests on modern JDKs (Java 25+). | ✅ **RESOLVED** | Trivial (Added Surefire argLine) |
 | **C3-09** | Phase 3 | `IdempotencyKey` Javadoc | Documents nonexistent workitem API for manual CouchDB idempotency record purging. | ✅ **RESOLVED (`8b4435d`)** | Trivial (Update Javadoc comments) |
 | **C4-01** | Phase 4 | `AppContext.tsx` | Frontend operates in an in-browser operational simulation harness; live REST binding scheduled for hardening phase. | 🟡 Managed Demo State | Architecture Decoupling |
 | **C4-02** | Phase 4 | `types/tcem.ts` (`DeadLetterEvent`) | Property naming divergence (`dlqId`/`status` vs backend `id`/`dlqStatus`) causes rendering/action failure against live API. | ✅ **RESOLVED (`370fa98`)** | Low (Dual-mapped attributes) |
 | **C4-03** | Phase 4 | `TradeDetailModal.tsx` | Party name reads `p.partyName` instead of `p.legalEntityName`, hiding enriched counterparty names. | ✅ **RESOLVED (`d00ccb6`)** | Trivial (Reads `p.legalEntityName`) |
 | **C4-04** | Phase 4 | `ManualReviewQueue.tsx` | Review action passes `tradeId` instead of `workItemId` to backend approval endpoint. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Look up and pass `workItemId`) |
 | **C4-05** | Phase 4 | Proxy Routing (`vite`/`nginx`) | Generic `/api/metrics` proxy to port 8081 conflicts with port 8084 metrics endpoint. | 🟡 Low Risk (Sprint 2) | Low (Scope metric routes by service) |
-| **C4-06** | Phase 4 | Queue Filters | Dropdowns omit `RULES_OWNER` and `SPECIALIST_REVIEW` queues from filterable options. | 🟡 Low Risk (Sprint 2) | Trivial (Add missing queue options) |
-| **C4-07** | Phase 4 | `ServiceTopology.tsx` | Displays CouchDB database names with underscores rather than actual hyphenated names. | 🟢 Not Breaking (Sprint 2) | Trivial (Update string labels) |
+| **C4-06** | Phase 4 | Queue Filters | Dropdowns omit `RULES_OWNER` and `SPECIALIST_REVIEW` queues from filterable options. | ✅ **RESOLVED** | Trivial (Added missing queue options) |
+| **C4-07** | Phase 4 | `ServiceTopology.tsx` | Displays CouchDB database names with underscores rather than actual hyphenated names. | ✅ **RESOLVED** | Trivial (Updated database labels) |
 | **C5-01** | Phase 5 | Docker Build (`frontend`) | Missing `frontend/.dockerignore` leaks host macOS binaries into Alpine Linux container build, breaking container builds. | ✅ **RESOLVED (`ef23e52`)** | Trivial (Added `frontend/.dockerignore`) |
 | **C5-02** | Phase 5 | Docker Compose (`kafka`) | Asymmetric persistence: Kafka has no volume mount while CouchDB does, wiping offsets and causing streaming/persistence desync. | ✅ **RESOLVED (`KAFKA_LOG_DIRS`, completing `e181b58`)** | Low (Added `kafka_data` volume) |
 | **C5-03** | Phase 5 | Orchestration & JVM Memory | Zero memory limits in `docker-compose.yml` paired with `-XX:MaxRAMPercentage=75.0` risks host OOM thrashing under load. | ✅ **RESOLVED (`8b4435d`)** | Low (Set `mem_limit: 512m`) |
@@ -629,7 +653,7 @@ These were found while fixing and live-testing the items above. They are not par
 - [x] **Phase 4: Frontend UI Alignment, State Management & API Integration (`frontend`)** (Findings C4-01 to C4-07)
 - [x] **Phase 5: DevOps, Docker Orchestration, Shell Scripts & Consolidated System Risk Matrix** (Findings C5-01 to C5-08)
 - [x] **Showstopper Remediation Sprint:** Fixed all 7 critical blockers (C5-01, C5-02, C2-02, C1-02, C4-02, C4-03, C3-06/C5-07) on `fix/code-consistency`.
-- [ ] **Sprint 2 Remediation (in progress):** all high-severity findings resolved on `fix/code-consistency`; 8 of 37 findings remain open, all low severity or cosmetic (see the risk matrix).
+- [ ] **Sprint 2 Remediation (in progress):** 35 of 37 findings are resolved on `fix/code-consistency`; C4-01 remains a managed demo-state item and C4-05 remains open (see the risk matrix).
 
 ---
 

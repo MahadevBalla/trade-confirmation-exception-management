@@ -59,6 +59,31 @@ for db in "${APP_DBS[@]}"; do
 done
 
 echo ""
+echo "--- Exception count view ---"
+VIEW_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -u "$AUTH" "$COUCHDB_URL/exceptions/_design/exception_counts")
+
+if [ "$VIEW_STATUS" = "404" ]; then
+  VIEW_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+    -u "$AUTH" \
+    -X PUT "$COUCHDB_URL/exceptions/_design/exception_counts" \
+    -H "Content-Type: application/json" \
+    -d '{"_id":"_design/exception_counts","views":{"total":{"map":"function(doc) { if (doc.docType === \"EXCEPTION\") { emit(null, 1); } }","reduce":"_count"}}}')
+
+  case "$VIEW_STATUS" in
+    201|202) echo "  [CREATED] exception_counts/total" ;;
+    *)
+      echo "  [ERROR] Failed to create exception count view: HTTP $VIEW_STATUS"
+      exit 1
+      ;;
+  esac
+elif [ "$VIEW_STATUS" = "200" ]; then
+  echo "  [EXISTS] exception_counts/total"
+else
+  echo "  [ERROR] Could not check exception count view: HTTP $VIEW_STATUS"
+  exit 1
+fi
+
 echo "=== [init-couchdb] Verified Databases in CouchDB ==="
 curl -s -u "$AUTH" "$COUCHDB_URL/_all_dbs" | jq . 2>/dev/null || curl -s -u "$AUTH" "$COUCHDB_URL/_all_dbs"
 echo ""

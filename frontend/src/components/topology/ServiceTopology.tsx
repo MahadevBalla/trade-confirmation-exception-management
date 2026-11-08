@@ -35,9 +35,9 @@ export const ServiceTopology: React.FC = () => {
     { name: 'trades', desc: 'Canonical trades & version history' },
     { name: 'confirmations', desc: 'Generated confirmation documents & fingerprints' },
     { name: 'exceptions', desc: 'Classified exception records & recommendations' },
-    { name: 'workitems', desc: 'Remediation work items & defect tickets' },
-    { name: 'audit_events', desc: 'Append-only immutable audit transitions' },
-    { name: 'dlq_entries', desc: 'Dead-letter envelopes with payloads' },
+    { name: 'work-items', desc: 'Remediation work items & defect tickets' },
+    { name: 'audit-events', desc: 'Append-only immutable audit transitions' },
+    { name: 'dlq-entries', desc: 'Dead-letter envelopes with payloads' },
   ];
 
   return (

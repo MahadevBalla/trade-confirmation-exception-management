@@ -32,5 +32,9 @@ public interface CouchDbOperations {
      * Queries CouchDB using Mango _find syntax.
      */
     <T> List<T> find(String databaseName, FindQueryRequest request, Class<T> docType);
+     /**
+     * Returns the reduced count from a CouchDB view without loading documents.
+     */
+    long countByView(String databaseName, String designDocument, String viewName);
 }
 

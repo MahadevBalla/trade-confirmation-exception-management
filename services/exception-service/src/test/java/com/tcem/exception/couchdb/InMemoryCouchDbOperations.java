@@ -134,5 +134,34 @@ public class InMemoryCouchDbOperations implements CouchDbOperations {
         int toIndex = Math.min(matched.size(), skip + limit);
         return matched.subList(skip, toIndex);
     }
+    @Override
+    public long countByView(String databaseName, String designDocument, String viewName) {
+        if (!"exception_counts".equals(designDocument)
+                || !"total".equals(viewName)) {
+            throw new IllegalArgumentException(
+                    "Unsupported CouchDB view: " + designDocument + "/" + viewName);
+        }
+
+        Map<String, String> db = databases.get(databaseName);
+        if (db == null) {
+            return 0L;
+        }
+
+        long count = 0L;
+        for (String json : db.values()) {
+            try {
+                JsonNode document = objectMapper.readTree(json);
+                if ("EXCEPTION".equals(document.path("docType").asText())) {
+                    count++;
+                }
+            } catch (Exception ex) {
+                throw new IllegalStateException(
+                        "Failed to read document while counting exceptions", ex);
+            }
+        }
+
+        return count;
+    }
+
 }
 

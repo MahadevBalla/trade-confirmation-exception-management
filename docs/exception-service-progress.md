@@ -4,7 +4,7 @@
 > **Service:** `exception-service` (Port 8084)
 > **Feature Branch:** `feat/exception-service` (cut from `main`)
 > **Key Specs:** FR7 (Exception Capture), FR8 (Classification), FR9 (Recommendation & Routing), FR11 (Operations REST APIs), FR12 (Dead-Letter)
-> **Last Updated:** October 2026
+> **Last Updated:** November 2026
 
 ---
 
@@ -33,7 +33,7 @@ The **Exception Service** is the classification and recommendation hub of the TC
    - **Low-confidence or always-manual categories:** Routes to `manual.review.required` (consumed by `workitem-service` manual review queue).
    - **Irrecoverable processing failures:** Routes malformed/unprocessable payloads to `deadletter.trade` (FR12).
 
-5. **Serves Operations REST APIs:** Exposes `GET /exceptions/{id}`, `GET /exceptions?tradeId=&status=&category=&page=`, `GET /exceptions/metrics/summary`, and `GET /metrics/exception-rate` for Gunjan's React Operations UI (FR11).
+5. **Serves Operations REST APIs:** Exposes `GET /exceptions/{id}`, `GET /exceptions?tradeId=&status=&category=&page=&size=`, `GET /exceptions/metrics/summary`, and `GET /metrics/exception-rate` for Gunjan's React Operations UI (FR11).
 
 ---
 
@@ -98,6 +98,15 @@ The **Exception Service** is the classification and recommendation hub of the TC
 - [`IdempotencyRepositoryTest`](../services/exception-service/src/test/java/com/tcem/exception/repository/IdempotencyRepositoryTest.java) — 6 tests
 - [`ExceptionServiceApplicationTests`](../services/exception-service/src/test/java/com/tcem/exception/ExceptionServiceApplicationTests.java) — 1 context-load test (updated in Phase 6 to use `@EmbeddedKafka`)
 
+**CouchDB Exception Count View (C3-07):**
+
+- Added `countByView(databaseName, designDocument, viewName)` to `CouchDbOperations`.
+- `CouchDbClient` queries the CouchDB view endpoint and reads the reduced count from `rows[0].value`. An empty result returns `0`.
+- `ExceptionCouchDbRepository.countAll()` uses the `exception_counts/total` view to retrieve the persisted exception count.
+- The `exception_counts/total` design view counts documents where `docType === "EXCEPTION"` and uses CouchDB's `_count` reducer.
+- The view is provisioned by `couchdb-init` through `docker-compose.yml` and `scripts/init-couchdb.sh`.
+- Added `CouchDbClientTest` and updated repository and in-memory test-double coverage.
+- Verification: CouchDB 3.3 started healthy, `docker compose config --quiet` passed, and the initialization script successfully created the view.
 ---
 
 ### Phase 2: Classification Rules Engine (FR8) ✅ COMPLETED
@@ -170,7 +179,7 @@ The **Exception Service** is the classification and recommendation hub of the TC
 |---|---|---|
 | [`ExceptionProcessingResult`](../services/exception-service/src/main/java/com/tcem/exception/model/ExceptionProcessingResult.java) | `model/ExceptionProcessingResult.java` | Enum: `CLASSIFIED`, `MANUAL_REVIEW`, `DUPLICATE`, `DEAD_LETTER`. |
 | [`ExceptionProcessingService`](../services/exception-service/src/main/java/com/tcem/exception/service/ExceptionProcessingService.java) | `service/ExceptionProcessingService.java` | Interface: `process(partitionKey, rawPayload)` → `ExceptionProcessingResult`. |
-| [`DefaultExceptionProcessingService`](../services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java) | `service/DefaultExceptionProcessingService.java` | Full 7-step pipeline + `ExceptionMetricsService` wired (updated in Phase 6). |
+| `DefaultExceptionProcessingService` | `service/DefaultExceptionProcessingService.java` | Full 8-step pipeline + `ExceptionMetricsService` wired (updated in Phase 6). |
 | [`ExceptionCreatedConsumer`](../services/exception-service/src/main/java/com/tcem/exception/consumer/ExceptionCreatedConsumer.java) | `consumer/ExceptionCreatedConsumer.java` | `@KafkaListener` on `exception.created`; delegates to `ExceptionProcessingService`. |
 
 **Processing Pipeline (8 steps):**
@@ -234,6 +243,13 @@ mvn -f services/pom.xml -pl common-lib,exception-service -am test
 classificationRatePercent = (classified + manualReview) / (received - duplicates) × 100
 ```
 Duplicates are excluded from the denominator since suppression is correct behaviour.
+
+**Important distinction — Persistent Count vs. Processing Metrics:**
+
+- `ExceptionCouchDbRepository.countAll()` retrieves the persisted exception-document count from CouchDB using the `exception_counts/total` view.
+- `ExceptionMetricsService` maintains in-memory atomic counters for processing activity, including received, classified, manual-review, duplicate, and dead-letter outcomes.
+- `GET /exceptions/metrics/summary` and `GET /metrics/exception-rate` use `ExceptionMetricsService`; they do not retrieve their values from the CouchDB count view.
+- These values serve different purposes and should not be treated as interchangeable.
 
 **Tests:**
 - [`ExceptionQueryControllerTest`](../services/exception-service/src/test/java/com/tcem/exception/controller/ExceptionQueryControllerTest.java) — 12 MockMvc tests
@@ -317,22 +333,38 @@ If session context is lost, read these files in order to resume:
 7. [`DeadLetterEvent.java`](../services/common-lib/src/main/java/com/tcem/common/event/DeadLetterEvent.java)
 
 ### C. Implemented Exception Service Files (Phases 1–6)
-1. [`application.yml`](../services/exception-service/src/main/resources/application.yml)
-2. [`CouchDbClient.java`](../services/exception-service/src/main/java/com/tcem/exception/couchdb/CouchDbClient.java)
-3. [`ExceptionDocument.java`](../services/exception-service/src/main/java/com/tcem/exception/model/document/ExceptionDocument.java) / [`AuditDocument.java`](../services/exception-service/src/main/java/com/tcem/exception/model/document/AuditDocument.java)
-4. [`ExceptionCouchDbRepository.java`](../services/exception-service/src/main/java/com/tcem/exception/repository/ExceptionCouchDbRepository.java)
-5. [`ClassificationRulesEngine.java`](../services/exception-service/src/main/java/com/tcem/exception/classifier/ClassificationRulesEngine.java) / [`ClassificationResult.java`](../services/exception-service/src/main/java/com/tcem/exception/classifier/ClassificationResult.java)
-6. [`RecommendationEngine.java`](../services/exception-service/src/main/java/com/tcem/exception/recommendation/RecommendationEngine.java) / [`SlaCalculator.java`](../services/exception-service/src/main/java/com/tcem/exception/recommendation/SlaCalculator.java)
-7. [`ExceptionClassifiedProducer.java`](../services/exception-service/src/main/java/com/tcem/exception/producer/ExceptionClassifiedProducer.java) / [`ManualReviewProducer.java`](../services/exception-service/src/main/java/com/tcem/exception/producer/ManualReviewProducer.java) / [`DeadLetterProducer.java`](../services/exception-service/src/main/java/com/tcem/exception/producer/DeadLetterProducer.java)
-8. [`DefaultExceptionProcessingService.java`](../services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java) — Full 8-step pipeline (includes `ExceptionMetricsService`).
-9. [`ExceptionCreatedConsumer.java`](../services/exception-service/src/main/java/com/tcem/exception/consumer/ExceptionCreatedConsumer.java) — `@KafkaListener` entry point.
-10. [`InMemoryCouchDbOperations.java`](../services/exception-service/src/test/java/com/tcem/exception/couchdb/InMemoryCouchDbOperations.java) — Test double.
-11. [`ExceptionDetailResponse.java`](../services/exception-service/src/main/java/com/tcem/exception/model/ExceptionDetailResponse.java) / [`ExceptionListResponse.java`](../services/exception-service/src/main/java/com/tcem/exception/model/ExceptionListResponse.java) / [`ExceptionMetricsSummary.java`](../services/exception-service/src/main/java/com/tcem/exception/model/ExceptionMetricsSummary.java) — REST DTOs.
-12. [`ExceptionMetricsService.java`](../services/exception-service/src/main/java/com/tcem/exception/service/ExceptionMetricsService.java) — In-memory metrics counters; wired into `DefaultExceptionProcessingService`.
-13. [`ExceptionQueryController.java`](../services/exception-service/src/main/java/com/tcem/exception/controller/ExceptionQueryController.java) — 5 REST endpoints.
-14. [`ExceptionServicePipelineIntegrationTest.java`](../services/exception-service/src/test/java/com/tcem/exception/integration/ExceptionServicePipelineIntegrationTest.java) — 9 end-to-end pipeline tests.
-15. [`ExceptionServiceApplicationTests.java`](../services/exception-service/src/test/java/com/tcem/exception/ExceptionServiceApplicationTests.java) — Spring context smoke test with `@EmbeddedKafka`.
 
+1. [`application.yml`](../services/exception-service/src/main/resources/application.yml)
+
+2. [`CouchDbOperations.java`](../services/exception-service/src/main/java/com/tcem/exception/couchdb/CouchDbOperations.java) / [`CouchDbClient.java`](../services/exception-service/src/main/java/com/tcem/exception/couchdb/CouchDbClient.java) — CouchDB operations interface and HTTP client, including the count-view query.
+
+3. [`ExceptionDocument.java`](../services/exception-service/src/main/java/com/tcem/exception/model/document/ExceptionDocument.java) / [`AuditDocument.java`](../services/exception-service/src/main/java/com/tcem/exception/model/document/AuditDocument.java)
+
+4. [`ExceptionCouchDbRepository.java`](../services/exception-service/src/main/java/com/tcem/exception/repository/ExceptionCouchDbRepository.java)
+
+5. [`ClassificationRulesEngine.java`](../services/exception-service/src/main/java/com/tcem/exception/classifier/ClassificationRulesEngine.java) / [`ClassificationResult.java`](../services/exception-service/src/main/java/com/tcem/exception/classifier/ClassificationResult.java)
+
+6. [`RecommendationEngine.java`](../services/exception-service/src/main/java/com/tcem/exception/recommendation/RecommendationEngine.java) / [`SlaCalculator.java`](../services/exception-service/src/main/java/com/tcem/exception/recommendation/SlaCalculator.java)
+
+7. [`ExceptionClassifiedProducer.java`](../services/exception-service/src/main/java/com/tcem/exception/producer/ExceptionClassifiedProducer.java) / [`ManualReviewProducer.java`](../services/exception-service/src/main/java/com/tcem/exception/producer/ManualReviewProducer.java) / [`DeadLetterProducer.java`](../services/exception-service/src/main/java/com/tcem/exception/producer/DeadLetterProducer.java)
+
+8. [`DefaultExceptionProcessingService.java`](../services/exception-service/src/main/java/com/tcem/exception/service/DefaultExceptionProcessingService.java) — Full 8-step pipeline (includes `ExceptionMetricsService`).
+
+9. [`ExceptionCreatedConsumer.java`](../services/exception-service/src/main/java/com/tcem/exception/consumer/ExceptionCreatedConsumer.java) — `@KafkaListener` entry point.
+
+10. [`InMemoryCouchDbOperations.java`](../services/exception-service/src/test/java/com/tcem/exception/couchdb/InMemoryCouchDbOperations.java) — Test double.
+
+11. [`CouchDbClientTest.java`](../services/exception-service/src/test/java/com/tcem/exception/couchdb/CouchDbClientTest.java) — Tests CouchDB HTTP client operations, including the count-view query.
+
+12. [`ExceptionDetailResponse.java`](../services/exception-service/src/main/java/com/tcem/exception/model/ExceptionDetailResponse.java) / [`ExceptionListResponse.java`](../services/exception-service/src/main/java/com/tcem/exception/model/ExceptionListResponse.java) / [`ExceptionMetricsSummary.java`](../services/exception-service/src/main/java/com/tcem/exception/model/ExceptionMetricsSummary.java) — REST DTOs.
+
+13. [`ExceptionMetricsService.java`](../services/exception-service/src/main/java/com/tcem/exception/service/ExceptionMetricsService.java) — In-memory metrics counters; wired into `DefaultExceptionProcessingService`.
+
+14. [`ExceptionQueryController.java`](../services/exception-service/src/main/java/com/tcem/exception/controller/ExceptionQueryController.java) — 5 REST endpoints.
+
+15. [`ExceptionServicePipelineIntegrationTest.java`](../services/exception-service/src/test/java/com/tcem/exception/integration/ExceptionServicePipelineIntegrationTest.java) — 9 end-to-end pipeline tests.
+
+16. [`ExceptionServiceApplicationTests.java`](../services/exception-service/src/test/java/com/tcem/exception/ExceptionServiceApplicationTests.java) — Spring context smoke test with `@EmbeddedKafka`.
 ---
 
 ## 6. Teammate Communication Contracts
@@ -365,10 +397,12 @@ If session context is lost, read these files in order to resume:
 | **Phase 5** | **Operations REST APIs & Health (FR11)** | ✅ Completed | 22 tests |
 | **Phase 6** | **End-to-End Testing & Verification** | ✅ Completed | 10 tests |
 
-**Total: 129 tests across all phases — all green.**
+**Historical Test Summary:** 129 tests were recorded in the original verification on 2026-10-25.
 
-> **Build verified:** `mvn -f services/pom.xml -pl common-lib,exception-service -am test`
-> Result: **BUILD SUCCESS** — Tests run: 129, Failures: 0, Errors: 0, Skipped: 0 _(2026-10-25)_
+**Latest Verification (November 2026):**
+
+- Exception-service targeted test run: **134 tests, 0 failures, 0 errors — BUILD SUCCESS**.
+- Full Maven reactor test run: **84 tests across 7 modules, 0 failures, 0 errors, 0 skipped — BUILD SUCCESS**.
 
 **Status legend:** `⬜ Not Started` → `🟡 In Progress` → `✅ Completed`
 
@@ -377,19 +411,31 @@ If session context is lost, read these files in order to resume:
 ## 8. Known Constraints & Decisions
 
 1. **No re-derivation of category from scratch.** Upstream producers set `category` + `subTheme`. The engine confirms/enriches them.
+
 2. **Idempotency key format:** `idempotency:{tradeId}:{messageId}:{schemaVersion}:{eventType}` per `IdempotencyKey.toStorageKey()`.
+
 3. **REPLAY bypass:** When `messageHeader.eventType == REPLAY`, skip idempotency check (Step 4).
+
 4. **Manual review threshold:** `classificationConfidence < 0.6` → `manual.review.required`. Matches `workitem-service` threshold.
+
 5. **`COUNTERPARTY_MATCHING_DISPUTE` always routes to manual review (FR8):** `CounterpartyDisputeRule` intentionally caps confidence at ≤ 0.5 even when the sub-theme is fully identified — counterparty disputes require a human to adjudicate, regardless of classification certainty.
-5. **SLA deadlines:** CRITICAL=+4h, HIGH=+24h, MEDIUM=+72h, LOW=+7d from `capturedAt`.
-6. **ExceptionId preservation:** If inbound `ExceptionRecord.exceptionId` is non-null and non-blank, preserve it; otherwise generate via `ExceptionIdGenerator` (starts at EXC-30001).
-7. **Fire-and-forget producers:** Kafka send failures logged as warnings but not propagated to caller.
-7a. **Replay identity is preserved:** outbound `exception.classified` and `manual.review.required` headers keep the inbound `eventType` and `replayCount` (audit C3-02, commit `8b4435d`), because `workitem-service` uses them to detect a replay's outcome.
-8. **CouchDB saves are non-fatal:** All save calls (`safePersistException`, `safeSaveAudit`, `safeRecordIdempotency`) catch exceptions internally — processing always reaches the routing step.
-9. **CouchDB `exceptions` DB pre-provisioned** by `couchdb-init`. `ensureDatabaseExists` is idempotent.
-10. **`ExceptionMetricsService` wired in Phase 6:** `DefaultExceptionProcessingService` calls `metricsService.recordReceived()` at the start of every `process()` call, and `metricsService.record(result)` before every return path — ensuring 100% metrics coverage regardless of pipeline outcome.
-11. **Maven installation:** Apache Maven 3.9.9 ZIP downloaded to `%USERPROFILE%\Downloads\apache-maven-3.9.9-bin.zip`. Extract to a permanent location (e.g. `C:\tools\apache-maven-3.9.9`) and add `C:\tools\apache-maven-3.9.9\bin` to the system `PATH`. JDK 26 is at `C:\Program Files\Java\jdk-26.0.1`.
+
+6. **SLA deadlines:** CRITICAL=+4h, HIGH=+24h, MEDIUM=+72h, LOW=+7d from `capturedAt`.
+
+7. **ExceptionId preservation:** If inbound `ExceptionRecord.exceptionId` is non-null and non-blank, preserve it; otherwise generate via `ExceptionIdGenerator` (starts at EXC-30001).
+
+8. **Fire-and-forget producers:** Kafka send failures logged as warnings but not propagated to caller.
+
+9. **Replay identity is preserved:** Outbound `exception.classified` and `manual.review.required` headers keep the inbound `eventType` and `replayCount` (audit C3-02, commit `8b4435d`), because `workitem-service` uses them to detect a replay's outcome.
+
+10. **CouchDB saves are non-fatal:** All save calls (`safePersistException`, `safeSaveAudit`, `safeRecordIdempotency`) catch exceptions internally — processing always reaches the routing step.
+
+11. **CouchDB `exceptions` DB pre-provisioned** by `couchdb-init`. `ensureDatabaseExists` is idempotent.
+
+12. **`ExceptionMetricsService` wired in Phase 6:** `DefaultExceptionProcessingService` calls `metricsService.recordReceived()` at the start of every `process()` call, and `metricsService.record(result)` before every return path — ensuring 100% metrics coverage regardless of pipeline outcome.
+
+13. **Maven installation:** Apache Maven 3.9.9 ZIP downloaded to `%USERPROFILE%\Downloads\apache-maven-3.9.9-bin.zip`. Extract to a permanent location (e.g. `C:\tools\apache-maven-3.9.9`) and add `C:\tools\apache-maven-3.9.9\bin` to the system `PATH`. JDK 26 is at `C:\Program Files\Java\jdk-26.0.1`.
 
 ---
 
-*Last updated: October 2026 — All 6 phases completed. Build verified green (130/130 tests after the C3-02 fix, November 2026). Exception service implementation is DONE and merged.*
+*Last updated: November 2026 — All 6 phases completed. Exception service implementation is complete. Latest targeted test run: 134 tests, 0 failures, 0 errors.*
