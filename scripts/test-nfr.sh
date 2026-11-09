@@ -34,7 +34,7 @@ SEQ=$(python3 -c "import time; print(int(time.time() * 1000) % 800000 + 100000)"
 TRADE_ID=$(printf "TRD-%06d" "$SEQ")
 
 echo ">> Injecting single clean trade: $TRADE_ID (sequence=$SEQ) ..."
-GEN_RESP=$(curl -s -X POST "$INGESTION_URL/trades/generate/scenario?scenario=STANDARD_VANILLA_CALL_EUR_USD&sequence=${SEQ}&publishToKafka=true")
+GEN_RESP=$(curl -s -X POST "$INGESTION_URL/trades/generate/scenario?scenario=VALID_STANDARD_STP&sequence=${SEQ}&publishToKafka=true")
 
 # Poll until confirmation is generated (up to 10 seconds)
 CONFIRMATION=""
