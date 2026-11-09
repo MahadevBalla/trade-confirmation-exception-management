@@ -29,8 +29,10 @@ fi
 echo ""
 echo "--- [1/3] Testing End-to-End STP Latency (Spec Target: <= 10.0s) ---"
 
-# Generate a portable 6-digit integer sequence (works reliably on macOS & Linux)
-SEQ=$(python3 -c "import time; print(int(time.time() * 1000) % 800000 + 100000)")
+# Generate an STP-eligible sequence: counterparties cycle every 4 sequences.
+# sequence = 4k + 1 selects PTY-CP-101 which is 100% STP-eligible.
+BASE=$(( ($(python3 -c "import time; print(int(time.time()))") % 200000) * 4 ))
+SEQ=$(( BASE + 1 ))
 TRADE_ID=$(printf "TRD-%06d" "$SEQ")
 
 echo ">> Injecting single clean trade: $TRADE_ID (sequence=$SEQ) ..."
