@@ -28,8 +28,9 @@ frontend/                 # FR11: React 19 + TypeScript operations dashboard (po
 docs/
   architecture.md         # Event flow diagram + service boundaries
   kafka-topics.md         # Full topic list and event schemas
-  team-roles.md           # Role mapping + evaluation weighting
-  reports/                # Code consistency audit, remediation plan & live demo guide
+  devops-guide.md         # Docker orchestration & container provisioning
+  project-status.md       # Service implementation status and verification
+  reports/                # Code consistency audit & live demo guide
 docker-compose.yml         # Kafka (KRaft), Kafka UI, CouchDB, all 5 services + frontend
 .github/                   # CI workflows (backend reactor, frontend lint/build, smoke test)
 ```
@@ -152,10 +153,11 @@ npm run dev      # Vite dev server on :5173
 ## Docs
 
 - [`docs/devops-guide.md`](docs/devops-guide.md) - Docker orchestration, provisioning, container security & workflow guide
-- [`docs/phase-4-5-implementation-plan.md`](docs/phase-4-5-implementation-plan.md) - Implementation plan for Phase 4 (Nginx Gateway) & Phase 5 (CI/CD)
-- [`docs/architecture.md`](docs/architecture.md) - event flow + service boundaries
-- [`docs/kafka-topics.md`](docs/kafka-topics.md) - topics, keys, open decisions
-- [`docs/project-status.md`](docs/project-status.md) - per-service progress and what remains
-- [`services/workitem-service/README.md`](services/workitem-service/README.md) - work-item, manual review and DLQ/replay flows, rules and contracts
-- [`docs/team-roles.md`](docs/team-roles.md) - roles, evaluation weighting, suggested task split
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) - branching, PRs, definition of done
+- [`docs/architecture.md`](docs/architecture.md) - Event flow + service boundaries
+- [`docs/kafka-topics.md`](docs/kafka-topics.md) - Topics, keys, and event payload contracts
+- [`docs/project-status.md`](docs/project-status.md) - Per-service progress, verification, and implementation status
+- [`services/ingestion-service/README.md`](services/ingestion-service/README.md) - Ingestion pipeline, generator, CouchDB audit, and REST APIs
+- [`services/workitem-service/README.md`](services/workitem-service/README.md) - Work-item, manual review and DLQ/replay flows, rules and contracts
+- [`docs/reports/code_consistency_report.md`](docs/reports/code_consistency_report.md) - Multi-phase architectural audit & remediation notes
+- [`docs/reports/live_demo_presentation_guide.md`](docs/reports/live_demo_presentation_guide.md) - Master live demonstration presentation guide and script
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) - Branching, PRs, definition of done

@@ -1,6 +1,6 @@
 # Contributing / Git Workflow
 
-Team of 6. Task ownership and responsibilities are documented in [`docs/team-roles.md`](./docs/team-roles.md) and [`docs/project-status.md`](./docs/project-status.md).
+Team of 6. Task ownership, service boundaries, and implementation status are documented in [`docs/project-status.md`](./docs/project-status.md).
 
 ## Branching
 

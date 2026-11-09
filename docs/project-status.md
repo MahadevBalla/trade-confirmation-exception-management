@@ -40,7 +40,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * Implemented confirmation generation with fingerprint-based duplicate suppression and exception mapping.
   * Implemented the `trade.enriched` consumer and confirmation query/metrics REST APIs.
   * Fixed CouchDB 25-record cap in `ConfirmationCouchDbRepository.countAll()` (explicit 10,000 query limit).
-  * Added unit and embedded-Kafka integration tests: 145 tests passing in `validation-service` (509 across the Maven reactor). Details: [`docs/validation-service-progress.md`](validation-service-progress.md).
+  * Added unit and embedded-Kafka integration tests: 145 tests passing in `validation-service` (509 across the Maven reactor).
   * Sprint 2 hardening: durable `IdempotencyKey` guard in `TradeEnrichedConsumer` (new `validation-idempotency` database), `SchemaVersionRouter` parsing with `SCHEMA_VERSION_UNSUPPORTED` DLQ routing, and `ConfirmationFingerprint` party-path resolution so counterparty changes trigger a new confirmation (commits `a2cb6d6`, `537f353`).
   * Added a 34-test suite to `common-lib` (commit `8b00f86`) and standardized listener topics on `TopicNames` constants (commit `970ecf6`).
   * Sprint 2 hardening: outbound events keep `eventType` and `replayCount`, and dead letters are keyed by `tradeId` (C2-01). Enriched trades that fail STP are held, and an approved manual review generates the confirmation (C3-01, commit `8b4435d`). `validation-service`: 142 tests.
@@ -95,9 +95,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
 ---
 ## 7. Current Milestone: Presentation Ready (100% Live Demo)
 
-* **Code Consistency Audit:** Completed across all 5 services and frontend ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
-* **Showstopper Fixes:** All 7 critical fixes resolved and committed on `fix/code-consistency` ([`docs/reports/presentation_fixes_guide.md`](reports/presentation_fixes_guide.md)).
-* **Sprint 2 Fixes:** all 37 original code-consistency findings are resolved on `fix/code-consistency`; remaining follow-up observations are documented separately ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
+* **Code Consistency Audit & Fixes:** Completed across all 5 services and frontend; all 37 original code-consistency findings (including 7 critical showstoppers) resolved and verified on `fix/code-consistency` ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
 * **Frontend Data Modes:** the UI supports API-backed live data and a separate in-browser demo simulation. Live mode polls the service APIs and sends supported review, work-item, replay, and scenario actions to the backend; demo-only scenarios remain local.
 * **Live Demo Presentation Guide:** Master live demonstration script and flow for all 6 presenters ([`docs/reports/live_demo_presentation_guide.md`](reports/live_demo_presentation_guide.md)).
 * **Status:** 100% Ready for live evaluator evaluation.

@@ -4,7 +4,6 @@
 **Audit Status:** All 5 Audit Phases Complete + 7 Showstoppers + 25 Sprint 2 Fixes Remediated (Branch `fix/code-consistency`)
 **Target Repository:** `trade-confirmation-exception-management`  
 **Live Demo Guide:** [`live_demo_presentation_guide.md`](./live_demo_presentation_guide.md)  
-**Remediation Guide:** [`presentation_fixes_guide.md`](./presentation_fixes_guide.md)  
 
 ---
 
