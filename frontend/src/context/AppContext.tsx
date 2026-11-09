@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type {
   Trade,
   ExceptionRecord,
@@ -8,6 +8,8 @@ import type {
   DeadLetterEvent,
   OperationsMetrics,
   UserRole,
+  ConnectionState,
+  DataMode,
 } from '../types/tcem';
 import {
   INITIAL_TRADES,
@@ -18,6 +20,15 @@ import {
   INITIAL_AUDIT_TRAIL,
 } from '../data/mockData';
 import { evaluateExceptionRules } from '../services/recommendationEngine';
+import { api } from '../services/api';
+import {
+  adaptAudit,
+  adaptConfirmation,
+  adaptDlq,
+  adaptException,
+  adaptTrade,
+  adaptWorkItem,
+} from '../services/adapters';
 import {
   AppContext,
   type ToastMessage,
@@ -25,7 +36,24 @@ import {
   isOpenReviewItem,
 } from './AppContextInstance';
 
+const INITIAL_STREAM_EVENTS: StreamEventNotice[] = [
+  { id: 'ev-1', topic: 'trade.raw', service: 'ingestion-service', tradeId: 'TRD-10001', status: 'RECEIVED', timestamp: '10:30:00' },
+  { id: 'ev-2', topic: 'trade.accepted', service: 'ingestion-service', tradeId: 'TRD-10001', status: 'ACCEPTED', timestamp: '10:30:01' },
+  { id: 'ev-3', topic: 'trade.enriched', service: 'enrichment-service', tradeId: 'TRD-10001', status: 'ENRICHED', timestamp: '10:30:03' },
+  { id: 'ev-4', topic: 'stp.validated', service: 'validation-service', tradeId: 'TRD-10001', status: 'STP_PASSED', timestamp: '10:30:05' },
+  { id: 'ev-5', topic: 'confirmation.generated', service: 'validation-service', tradeId: 'TRD-10001', status: 'CONFIRMED', timestamp: '10:30:08' },
+];
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [dataMode, setCurrentDataMode] = useState<DataMode>('demo');
+  const dataModeRef = useRef<DataMode>('demo');
+  const modeGeneration = useRef(0);
+  const scenarioSequence = useRef(0);
+  const [connection, setConnection] = useState<ConnectionState>({
+    status: 'connected',
+    unavailable: [],
+    lastUpdated: null,
+  });
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [userRole, setUserRole] = useState<UserRole>('OPERATIONS_SPECIALIST');
 
@@ -35,18 +63,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [confirmations, setConfirmations] = useState<ConfirmationRecord[]>(INITIAL_CONFIRMATIONS);
   const [dlqEntries, setDlqEntries] = useState<DeadLetterEvent[]>(INITIAL_DLQ_ENTRIES);
   const [auditTrail, setAuditTrail] = useState<AuditEvent[]>(INITIAL_AUDIT_TRAIL);
-  const [streamEvents, setStreamEvents] = useState<StreamEventNotice[]>([
-    { id: 'ev-1', topic: 'trade.raw', service: 'ingestion-service', tradeId: 'TRD-10001', status: 'RECEIVED', timestamp: '10:30:00' },
-    { id: 'ev-2', topic: 'trade.accepted', service: 'ingestion-service', tradeId: 'TRD-10001', status: 'ACCEPTED', timestamp: '10:30:01' },
-    { id: 'ev-3', topic: 'trade.enriched', service: 'enrichment-service', tradeId: 'TRD-10001', status: 'ENRICHED', timestamp: '10:30:03' },
-    { id: 'ev-4', topic: 'stp.validated', service: 'validation-service', tradeId: 'TRD-10001', status: 'STP_PASSED', timestamp: '10:30:05' },
-    { id: 'ev-5', topic: 'confirmation.generated', service: 'validation-service', tradeId: 'TRD-10001', status: 'CONFIRMED', timestamp: '10:30:08' },
-  ]);
+  const [streamEvents, setStreamEvents] = useState<StreamEventNotice[]>(INITIAL_STREAM_EVENTS);
 
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [selectedExceptionId, setSelectedExceptionId] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  const setDataMode = useCallback((mode: DataMode) => {
+    if (dataModeRef.current === mode) return;
+    dataModeRef.current = mode;
+    modeGeneration.current += 1;
+    setCurrentDataMode(mode);
+    setSelectedTradeId(null);
+    setSelectedExceptionId(null);
+    setIsStreaming(false);
+    if (mode === 'demo') {
+      setTrades(INITIAL_TRADES);
+      setExceptions(INITIAL_EXCEPTIONS);
+      setWorkItems(INITIAL_WORK_ITEMS);
+      setConfirmations(INITIAL_CONFIRMATIONS);
+      setDlqEntries(INITIAL_DLQ_ENTRIES);
+      setAuditTrail(INITIAL_AUDIT_TRAIL);
+      setStreamEvents(INITIAL_STREAM_EVENTS);
+      setConnection({ status: 'connected', unavailable: [], lastUpdated: null });
+    } else {
+      setTrades([]);
+      setExceptions([]);
+      setWorkItems([]);
+      setConfirmations([]);
+      setDlqEntries([]);
+      setAuditTrail([]);
+      setStreamEvents([]);
+      setConnection({ status: 'connecting', unavailable: [], lastUpdated: null });
+    }
+  }, []);
 
   const addToast = useCallback((type: ToastMessage['type'], title: string, message: string) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -60,6 +112,99 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const refreshLiveData = useCallback(async () => {
+    const generation = modeGeneration.current;
+    const results = await Promise.allSettled([
+      api.trades(),
+      api.confirmations(),
+      api.exceptions(),
+      api.workItems(),
+      api.dlq(),
+      api.audit(),
+    ]);
+    if (dataModeRef.current !== 'live' || generation !== modeGeneration.current) return;
+    const names = ['trades', 'confirmations', 'exceptions', 'work items', 'DLQ', 'audit'] as const;
+    const unavailable = results.flatMap((result, index) => result.status === 'rejected' ? [names[index]] : []);
+    const workItemDocs = results[3].status === 'fulfilled' ? results[3].value : undefined;
+
+    if (results[0].status === 'fulfilled') setTrades(results[0].value.map(adaptTrade));
+    if (results[1].status === 'fulfilled') setConfirmations(results[1].value.map(adaptConfirmation));
+    if (results[2].status === 'fulfilled') {
+      setExceptions(results[2].value.map((item) => adaptException(item, workItemDocs ?? [])));
+    }
+    if (workItemDocs) setWorkItems(workItemDocs.map(adaptWorkItem));
+    if (results[4].status === 'fulfilled') {
+      setDlqEntries(results[4].value.filter((entry) => !entry.aliasOf).map(adaptDlq));
+    }
+    if (results[5].status === 'fulfilled') {
+      const events = results[5].value.map(adaptAudit);
+      setAuditTrail(events);
+      const topicByStatus: Partial<Record<AuditEvent['toStatus'], string>> = {
+        RECEIVED: 'trade.raw',
+        ACCEPTED: 'trade.accepted',
+        ENRICHED: 'trade.enriched',
+        STP_PASSED: 'stp.validated',
+        STP_FAILED: 'stp.validated',
+        CONFIRMED: 'confirmation.generated',
+        EXCEPTION_CAPTURED: 'exception.classified',
+        MANUAL_REVIEW: 'manual.review.required',
+        DEAD_LETTER: 'deadletter.trade',
+        REPLAYED: 'deadletter.trade',
+      };
+      setStreamEvents(events.filter((event) => event.tradeId).slice(0, 50).map((event) => ({
+        id: event.auditEventId,
+        topic: topicByStatus[event.toStatus] ?? event.stage ?? 'pipeline',
+        service: event.serviceName,
+        tradeId: event.tradeId,
+        status: event.toStatus,
+        timestamp: event.occurredAt ? new Date(event.occurredAt).toLocaleTimeString() : '',
+      })));
+    }
+
+    setConnection((previous) => ({
+      status: unavailable.length === names.length ? 'offline' : unavailable.length > 0 ? 'partial' : 'connected',
+      unavailable: [...unavailable],
+      lastUpdated: unavailable.length === names.length ? previous.lastUpdated : new Date().toLocaleTimeString(),
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (dataMode !== 'live') return;
+
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      await refreshLiveData();
+      if (!cancelled) timer = setTimeout(poll, 5000);
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [dataMode, refreshLiveData]);
+
+  useEffect(() => {
+    if (dataMode !== 'live') return;
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, [dataMode]);
+
+  const performLiveAction = useCallback(async (
+    action: () => Promise<unknown>,
+    title: string,
+    successMessage: string,
+    type: ToastMessage['type'] = 'success'
+  ) => {
+    try {
+      await action();
+      addToast(type, title, successMessage);
+      await refreshLiveData();
+    } catch (error) {
+      addToast('error', `${title} failed`, error instanceof Error ? error.message : 'The API request failed.');
+    }
+  }, [addToast, refreshLiveData]);
+
   // Compute Operations Metrics
   const metrics: OperationsMetrics = useMemo(() => {
     const totalTrades = trades.length;
@@ -69,13 +214,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const activeWorkItemsCount = workItems.filter((w) => w.status === 'OPEN' || w.status === 'IN_PROGRESS').length;
     const dlqCount = dlqEntries.filter((d) => d.status === 'PENDING_REPLAY').length;
 
-    // SLA risk count (deadline within next 3 hours or already passed)
-    const now = new Date('2026-01-15T12:00:00Z').getTime();
+    // SLA risk count (deadline within the next two hours or already passed)
+    const now = dataMode === 'live' ? currentTime : new Date('2026-01-15T12:00:00Z').getTime();
     const slaBreachRiskCount = exceptions.filter((e) => {
       if (e.status === 'RESOLVED' || e.status === 'CLOSED') return false;
       const deadline = new Date(e.slaDeadline).getTime();
       return deadline - now <= 2 * 60 * 60 * 1000;
     }).length;
+
+    const resolvedWorkItems = workItems.filter(
+      (item): item is WorkItem & { resolvedAt: string } => Boolean(item.resolvedAt && item.createdAt)
+    );
+    const avgResolutionTimeMinutes = resolvedWorkItems.length > 0
+      ? resolvedWorkItems.reduce((total, item) => {
+          const minutes = (new Date(item.resolvedAt).getTime() - new Date(item.createdAt).getTime()) / 60000;
+          return total + minutes;
+        }, 0) / resolvedWorkItems.length
+      : dataMode === 'live' ? 0 : 14.5;
 
     return {
       totalTrades,
@@ -86,9 +241,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       activeWorkItemsCount,
       dlqCount,
       slaBreachRiskCount,
-      avgResolutionTimeMinutes: 14.5,
+      avgResolutionTimeMinutes: Math.round(avgResolutionTimeMinutes * 10) / 10,
     };
-  }, [trades, exceptions, workItems, dlqEntries]);
+  }, [currentTime, dataMode, trades, exceptions, workItems, dlqEntries]);
 
   // Push new event into the streaming monitor
   const pushStreamEvent = useCallback((topic: string, service: string, tradeId: string, status: string) => {
@@ -101,6 +256,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Controlled Replay (FR12)
   const replayDLQ = useCallback((dlqId: string) => {
+    if (dataMode === 'live') {
+      void performLiveAction(
+        () => api.replay(dlqId),
+        'Replay requested',
+        `Replay request for ${dlqId} was accepted by the backend.`,
+        'info'
+      );
+      return;
+    }
     const dlq = dlqEntries.find((d) => (d.dlqId || d.id) === dlqId);
     if (!dlq) return;
 
@@ -177,12 +341,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     pushStreamEvent('confirmation.generated', 'validation-service', dlq.tradeId, 'CONFIRMED');
 
     addToast('success', 'Replay Dispatched Successfully', `Trade ${dlq.tradeId} replayed, idempotency key cleared, and confirmation generated.`);
-  }, [dlqEntries, userRole, pushStreamEvent, addToast]);
+  }, [dataMode, performLiveAction, dlqEntries, userRole, pushStreamEvent, addToast]);
 
   // Resolve Exception
   const resolveException = useCallback((exceptionId: string, notes: string) => {
     const exc = exceptions.find((e) => e.exceptionId === exceptionId);
     if (!exc) return;
+    if (dataMode === 'live') {
+      const workItemId = exc.linkedWorkItemId;
+      if (!workItemId) {
+        addToast('warning', 'Cannot resolve exception', `Exception ${exceptionId} has no linked work item in the backend.`);
+        return;
+      }
+      void performLiveAction(
+        () => api.updateWorkItem(workItemId, { status: 'DONE', notes }),
+        'Exception resolution requested',
+        `Work item ${workItemId} was marked done.`
+      );
+      return;
+    }
 
     const nowIso = new Date().toISOString();
 
@@ -242,12 +419,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     pushStreamEvent('confirmation.generated', 'validation-service', exc.tradeId, 'CONFIRMED');
 
     addToast('success', 'Exception Resolved', `Exception ${exceptionId} marked as resolved. Trade ${exc.tradeId} confirmed.`);
-  }, [exceptions, userRole, pushStreamEvent, addToast]);
+  }, [dataMode, exceptions, performLiveAction, userRole, pushStreamEvent, addToast]);
 
   // Approve in Manual Review. Takes the work item id, like POST /workitems/{id}/review.
   const approveManualReview = useCallback((workItemId: string, notes: string) => {
     const reviewItem = workItems.find((w) => isOpenReviewItem(w) && w.workItemId === workItemId);
     if (!reviewItem) return;
+    if (dataMode === 'live') {
+      void performLiveAction(
+        () => api.review(workItemId, 'APPROVE', notes),
+        'Manual review approval requested',
+        `Approval for ${workItemId} was accepted by the backend.`
+      );
+      return;
+    }
     const { tradeId } = reviewItem;
     const trade = trades.find((t) => t.tradeId === tradeId);
     if (!trade) return;
@@ -332,12 +517,21 @@ Settlement:               STANDARD DELIVERY (T+2)
     pushStreamEvent('confirmation.generated', 'validation-service', tradeId, 'CONFIRMED');
 
     addToast('success', 'Manual Review Approved', `Trade ${tradeId} was approved and confirmation was generated.`);
-  }, [trades, workItems, userRole, pushStreamEvent, addToast]);
+  }, [dataMode, performLiveAction, trades, workItems, userRole, pushStreamEvent, addToast]);
 
   // Reject in Manual Review. Takes the work item id, like POST /workitems/{id}/review.
   const rejectManualReview = useCallback((workItemId: string, reason: string) => {
     const reviewItem = workItems.find((w) => isOpenReviewItem(w) && w.workItemId === workItemId);
     if (!reviewItem) return;
+    if (dataMode === 'live') {
+      void performLiveAction(
+        () => api.review(workItemId, 'REJECT', reason),
+        'Manual review rejection requested',
+        `Rejection for ${workItemId} was accepted by the backend.`,
+        'warning'
+      );
+      return;
+    }
     const { tradeId } = reviewItem;
     const trade = trades.find((t) => t.tradeId === tradeId);
     if (!trade) return;
@@ -403,10 +597,26 @@ Settlement:               STANDARD DELIVERY (T+2)
     pushStreamEvent('deadletter.trade', 'workitem-service', tradeId, 'PERMANENTLY_FAILED');
 
     addToast('warning', 'Trade Rejected', `Trade ${tradeId} was rejected and routed to Dead-Letter Queue.`);
-  }, [trades, workItems, userRole, pushStreamEvent, addToast]);
+  }, [dataMode, performLiveAction, trades, workItems, userRole, pushStreamEvent, addToast]);
 
   // Create Work Item
   const createWorkItem = useCallback((item: Partial<WorkItem>) => {
+    if (dataMode === 'live') {
+      void performLiveAction(
+        () => api.createWorkItem({
+          tradeId: item.tradeId || 'TRD-GENERAL',
+          type: item.type || 'DATA_FIX',
+          title: item.title || 'Manual Work Item',
+          description: item.description || '',
+          ownerQueue: item.ownerQueue || 'DATA_REMEDIATION',
+          priority: item.priority || 'MEDIUM',
+          linkedExceptionId: item.linkedExceptionId,
+        }),
+        'Work item creation requested',
+        item.title || 'New work item was created.'
+      );
+      return;
+    }
     const id = `WI-${Date.now().toString().slice(-5)}`;
     const nowIso = new Date().toISOString();
 
@@ -426,10 +636,19 @@ Settlement:               STANDARD DELIVERY (T+2)
 
     setWorkItems((prev) => [newItem, ...prev]);
     addToast('success', 'Work Item Created', `Work Item ${id} created for ${newItem.ownerQueue}.`);
-  }, [addToast]);
+  }, [dataMode, performLiveAction, addToast]);
 
   // Update Work Item Status
   const updateWorkItemStatus = useCallback((id: string, status: WorkItem['status']) => {
+    if (dataMode === 'live') {
+      void performLiveAction(
+        () => api.updateWorkItem(id, { status }),
+        'Work item update requested',
+        `Work item ${id} was updated to ${status}.`,
+        'info'
+      );
+      return;
+    }
     const nowIso = new Date().toISOString();
     setWorkItems((prev) =>
       prev.map((w) =>
@@ -444,10 +663,31 @@ Settlement:               STANDARD DELIVERY (T+2)
       )
     );
     addToast('info', 'Work Item Updated', `Work Item ${id} status changed to ${status}.`);
-  }, [addToast]);
+  }, [dataMode, performLiveAction, addToast]);
 
   // Synthetic Scenario Injector (Adheres to FR1: simulated message stream without UI trade creation)
   const triggerSyntheticScenario = useCallback((scenarioType: string) => {
+    if (dataMode === 'live') {
+      const scenarios: Record<string, string> = {
+        CLEAN_STP: 'VALID_STANDARD_STP',
+        MISSING_STRIKE: 'MISSING_ECONOMIC_STRIKE',
+        TECHNICAL_DLQ: 'MALFORMED_JSON',
+      };
+      const scenario = scenarios[scenarioType];
+      if (!scenario) {
+        addToast('warning', 'Scenario unavailable in live mode', 'Switch to demo mode to run this simulation.');
+        return;
+      }
+      scenarioSequence.current += 1;
+      const sequence = 1000 + ((Math.floor(Date.now() / 1000) + scenarioSequence.current) % 900000);
+      void performLiveAction(
+        () => api.generateScenario(scenario, sequence),
+        'Scenario published',
+        'The trade was published to the live Kafka pipeline.',
+        'info'
+      );
+      return;
+    }
     const tradeNum = 10000 + trades.length + 1;
     const tradeId = `TRD-${tradeNum}`;
     const nowIso = new Date().toISOString();
@@ -768,11 +1008,11 @@ Settlement:               STANDARD DELIVERY (T+2)
 
       addToast('warning', 'Scenario Ingested: Matching Dispute', `Trade ${tradeId} has terms discrepancy and requires Manual Review.`);
     }
-  }, [trades, pushStreamEvent, addToast]);
+  }, [dataMode, performLiveAction, trades, pushStreamEvent, addToast]);
 
   // Automated background streaming simulation
   useEffect(() => {
-    if (!isStreaming) return;
+    if (!isStreaming || dataMode !== 'demo') return;
 
     const interval = setInterval(() => {
       const scenarios = ['CLEAN_STP', 'CLEAN_STP', 'MISSING_STRIKE', 'CLEAN_STP'];
@@ -781,11 +1021,14 @@ Settlement:               STANDARD DELIVERY (T+2)
     }, 4500);
 
     return () => clearInterval(interval);
-  }, [isStreaming, triggerSyntheticScenario]);
+  }, [dataMode, isStreaming, triggerSyntheticScenario]);
 
   return (
     <AppContext.Provider
       value={{
+        dataMode,
+        setDataMode,
+        connection,
         activeTab,
         setActiveTab,
         userRole,

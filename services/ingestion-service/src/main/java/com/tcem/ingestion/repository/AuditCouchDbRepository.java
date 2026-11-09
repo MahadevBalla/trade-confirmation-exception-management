@@ -1,6 +1,7 @@
 package com.tcem.ingestion.repository;
 
 import com.tcem.ingestion.config.CouchDbProperties;
+import com.tcem.ingestion.couchdb.CouchDbException;
 import com.tcem.ingestion.couchdb.CouchDbOperations;
 import com.tcem.ingestion.couchdb.CouchDbResponse;
 import com.tcem.ingestion.couchdb.FindQueryRequest;
@@ -13,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Comparator;
 
 /**
  * CouchDB repository for immutable audit event records in 'audit-events'.
@@ -65,5 +67,34 @@ public class AuditCouchDbRepository {
                 .limit(100)
                 .build();
         return couchDb.find(properties.getAuditEventsDatabase(), query, AuditDocument.class);
+    }
+
+    /**
+     * Retrieves the most recent audit records across all trades.
+     */
+    public List<AuditDocument> findRecent(int limit, int skip) {
+        FindQueryRequest query = FindQueryRequest.builder()
+                .selector(Map.of("docType", "AUDIT_EVENT", "timestamp", Map.of("$gt", "")))
+                .limit(limit)
+                .skip(skip)
+                .sort(List.of(Map.of("timestamp", "desc")))
+                .build();
+        try {
+            return couchDb.find(properties.getAuditEventsDatabase(), query, AuditDocument.class);
+        } catch (CouchDbException ex) {
+            log.warn("Sorted audit query failed; returning an unsorted page: {}", ex.getMessage());
+            List<AuditDocument> records = couchDb.find(
+                    properties.getAuditEventsDatabase(),
+                    FindQueryRequest.builder()
+                            .selector(Map.of("docType", "AUDIT_EVENT"))
+                            .limit(limit)
+                            .skip(skip)
+                            .build(),
+                    AuditDocument.class);
+            return records.stream()
+                    .sorted(Comparator.comparing(AuditDocument::getTimestamp,
+                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .toList();
+        }
     }
 }

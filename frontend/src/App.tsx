@@ -13,10 +13,21 @@ import { AuditTrailView } from './components/audit/AuditTrailView';
 import { ServiceTopology } from './components/topology/ServiceTopology';
 
 const MainContent: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, dataMode, connection } = useApp();
 
   return (
     <main className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-950/40">
+      {dataMode === 'live' && connection.status !== 'connected' && (
+        <div className={`mb-4 rounded-xl border px-4 py-3 text-xs ${
+          connection.status === 'connecting' ? 'border-slate-700 bg-slate-800/60 text-slate-300'
+            : connection.status === 'offline' ? 'border-red-500/40 bg-red-500/10 text-red-200'
+              : 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+        }`}>
+          {connection.status === 'connecting' && 'Loading live data from the service APIs…'}
+          {connection.status === 'offline' && `All service APIs are unavailable. ${connection.lastUpdated ? `Last successful refresh: ${connection.lastUpdated}.` : 'No live data has loaded yet.'}`}
+          {connection.status === 'partial' && `Some live data may be out of date. Unavailable sources: ${connection.unavailable.join(', ')}.`}
+        </div>
+      )}
       {activeTab === 'dashboard' && <DashboardView />}
       {activeTab === 'trades' && <TradeList />}
       {activeTab === 'exceptions' && <ExceptionQueue />}

@@ -4,6 +4,15 @@ The operations dashboard for the **Trade Confirmation Exception Management Platf
 
 Built with **React 19**, **TypeScript 5.8+**, **Vite 8**, and **Tailwind CSS v4**.
 
+## Data Modes
+
+The navbar shows the current data source and lets operators switch between:
+
+- **Demo:** the original in-browser simulation, with mock data and local-only actions.
+- **Live:** polls the proxied service APIs for trades, confirmations, exceptions, work items, DLQ entries, and audit events. Supported review, replay, work-item, and scenario actions are sent to the backend; API failures are surfaced in the UI and retried.
+
+Automatic synthetic streaming and the manual-dispute simulation are demo-only. Live mode shows connection status and never silently falls back to mock records.
+
 ---
 
 ## 🚀 Key Features & Architectural Compliance

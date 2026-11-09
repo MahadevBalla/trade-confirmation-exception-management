@@ -97,7 +97,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
 
 * **Code Consistency Audit:** Completed across all 5 services and frontend ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
 * **Showstopper Fixes:** All 7 critical fixes resolved and committed on `fix/code-consistency` ([`docs/reports/presentation_fixes_guide.md`](reports/presentation_fixes_guide.md)).
-* **Sprint 2 Fixes:** all high-severity findings are resolved on `fix/code-consistency`; 29 of 37 audit findings resolved and 8 open, all low severity or cosmetic ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
-* **Known Gap:** the frontend is still a simulation and does not call these APIs (C4-01), so the replay and manual-review fixes are visible through the API, Kafka UI and CouchDB, not through UI buttons.
+* **Sprint 2 Fixes:** all 37 original code-consistency findings are resolved on `fix/code-consistency`; remaining follow-up observations are documented separately ([`docs/reports/code_consistency_report.md`](reports/code_consistency_report.md)).
+* **Frontend Data Modes:** the UI supports API-backed live data and a separate in-browser demo simulation. Live mode polls the service APIs and sends supported review, work-item, replay, and scenario actions to the backend; demo-only scenarios remain local.
 * **Live Demo Presentation Guide:** Master live demonstration script and flow for all 6 presenters ([`docs/reports/live_demo_presentation_guide.md`](reports/live_demo_presentation_guide.md)).
 * **Status:** 100% Ready for live evaluator evaluation.

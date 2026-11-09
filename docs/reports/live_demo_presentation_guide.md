@@ -192,9 +192,9 @@ To guarantee a 100% smooth, glitch-free presentation, every team member must str
 |:---|:---|:---|:---|
 | **Trade Generation** | Ingest clean synthetic batches (`--generate 5`). | Do not replay a `CANCEL_TRADE`. | Replay overwrites the event type, so a replayed cancel runs through STP. |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. A freshly booted stack is unaffected. |
-| **Manual Review** | Showcase Manual Review queue, rule cards, and decision buttons. | Do not claim the UI buttons trigger the backend. To show a real confirmation from an approval, use the commands in Section 4.1. | The frontend is a simulation (C4-01). The backend flow works since C3-01 was fixed. The 500-trade seed creates no manual review items, so create one through the API. |
-| **DLQ Console** | Expand diagnostics and show stack traces. | Do not claim the UI replay button calls the backend. To show a real replay, use `POST /dlq/{id}/replay` (Section 4.1). | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |
-| **Frontend State** | Filter queues, search counterparties, and inspect modals. | Do not refresh the browser mid-demo if you want to keep seeded session data. | Frontend runs state simulation with mock fallback (C4-01). |
+| **Manual Review** | In Live mode, showcase backend review items and approval/rejection actions. | Explain that the UI refreshes after the backend accepts the decision. To show a generated confirmation, use Section 4.1. | The 500-trade seed creates no manual review items, so create one through the API. Demo mode retains the local simulation (C4-01). |
+| **DLQ Console** | In Live mode, inspect diagnostics and replay replayable entries. | Explain that replay acceptance is distinct from downstream completion; the UI polls for state changes. | Demo mode retains simulated replay behavior (C4-01). |
+| **Frontend State** | Filter live queues, search counterparties, and inspect modals; switch to Demo for preloaded state. | Check the data-source and API connection indicators before presenting live records. | API-backed Live and separate mock Demo modes are available (C4-01). |
 
 
 ### 4.1 Showing the Real Backend Flow (Optional)
@@ -262,4 +262,3 @@ When evaluators ask technical architectural questions, use these senior engineer
 │ 14:00   │ All Team          │ Q&A Defense                              │
 └─────────┴───────────────────┴──────────────────────────────────────────┘
 ```
-

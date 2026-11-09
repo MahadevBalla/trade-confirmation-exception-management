@@ -183,13 +183,10 @@ provision_db "enrichment-idempotency"
 
 ## 3. The 3-Day Presentation Strategy (Decoupled Demo Architecture)
 
-### Why You Should NOT Rewire the Frontend Right Now (Issue C4-01)
-The frontend (`AppContext.tsx`) currently runs with rich, pre-loaded mock simulations (`INITIAL_TRADES`, `INITIAL_EXCEPTIONS`, live-event streaming ticker, SLA countdowns, and rule evaluation). 
+### Use Live and Demo Data Modes for C4-01
+The frontend now offers separate API-backed Live and in-browser Demo modes. Use Demo mode for the pre-loaded, repeatable mock scenarios and Live mode to inspect backend records and invoke supported API actions. Live mode reports unavailable services instead of presenting mock records as live data.
 
-Attempting to replace this with 15+ live REST hooks in 3 days introduces risk of:
-- CORS or proxy gateway routing failures
-- Asynchronous race conditions breaking table re-renders
-- Empty screens if CouchDB has no seeded data during the demo
+Live mode requires the backend services and seeded or generated data. The mode switch remains available so the existing demo flow is still usable if a service is unavailable.
 
 ### The Winning Two-Tier Demo Flow:
 
@@ -210,7 +207,7 @@ Attempting to replace this with 15+ live REST hooks in 3 days introduces risk of
 ```
 
 **How to Explain This to Evaluators:**
-> *"We implemented a decoupled, contract-first design. The React frontend features an interactive operational harness allowing operations specialists to validate UX, exception triage, and recommendation workflows. Simultaneously, our Spring Boot microservices run a live, fully reactive Kafka event pipeline. The Nginx API gateway proxies are already in place for full synchronization in our hardening phase."*
+> *"We implemented a decoupled, contract-first design. The React frontend offers both an API-backed operations view and an interactive demo harness for repeatable triage scenarios. The Spring Boot microservices run the live Kafka event pipeline, and the UI can read operational records and submit supported actions through the API gateway."*
 
 ---
 
@@ -256,8 +253,8 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 | :--- | :--- | :--- | :--- |
 | **Trade Ingestion** | Ingest clean new trades (`--generate 5`). | Do not replay a `CANCEL_TRADE`. | A cancel now cancels the trade's open work items (C2-04), but replay overwrites the event type, so a replayed cancel runs through STP. |
 | **Trade Types** | Showcase FX Options and Equity Swaps. | Avoid counterparty-change amendments on trades confirmed before the fingerprint fix when running on an old CouchDB volume. | The `ConfirmationFingerprint` party-path bug (C1-01) is fixed, but fingerprints stored before the fix lack party IDs, so the first amend of such a trade re-confirms once. |
-| **Manual Review** | Walk through the Manual Review Queue UI and recommendation cards. To show the real flow, use the API (see the live demo guide). | Do not claim the UI buttons call the backend. | The frontend is a simulation (C4-01). The backend flow itself works since C3-01 was fixed. |
-| **DLQ Management** | Show the DLQ screen, payload preview, and stack traces. To show a real replay, use `POST /dlq/{id}/replay`. | Do not claim the UI replay button calls the backend. | The frontend is a simulation (C4-01). Backend replay works since C2-01, C3-02 and C3-03 were fixed. |
+| **Manual Review** | In Live mode, review backend work items and use the approval/rejection actions. | Explain that results refresh after the backend accepts the decision. | Demo mode retains simulated local decisions; Live mode calls the work-item review API. |
+| **DLQ Management** | In Live mode, inspect entries and invoke replay for replayable messages. | Distinguish replay acceptance from downstream completion; the UI polls for updated state. | Demo mode retains simulated replay; Live mode calls `POST /dlq/{id}/replay`. |
 
 ---
 
@@ -266,7 +263,7 @@ To prevent triggering unresolved edge cases during your 15-minute presentation:
 Include a **"System Audit & Sprint 2 Hardening Roadmap"** slide in your presentation. Presenting these points proactively turns audit findings into proof of senior architectural maturity:
 
 1. **Frontend Wiring:**
-   - *"The operations UI runs on a simulation harness. Wiring it to the live REST APIs through the existing gateway routes is the next step (C4-01)."*
+   - *"The operations UI supports separate live API and demo simulation modes. In live mode, operational records and supported actions use the service APIs; demo mode remains available for repeatable scenarios."*
 2. **Replay Scope:**
    - *"Replay is working end to end. The next refinement is keeping the original event type on a replayed message, so a replayed cancel is still treated as a cancel."*
 3. **Cancellation Coverage:**

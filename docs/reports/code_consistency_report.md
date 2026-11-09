@@ -27,7 +27,7 @@
 - **Phase 4 (Completed):** Audited frontend React 19 application (`frontend`), Vite and Nginx reverse proxies, TypeScript types vs Java DTOs, `AppContext` state management, recommendation engine parity, and backend API integration.
 - **Phase 5 (Completed):** Audited DevOps infrastructure, Docker orchestration, initializers, JVM memory flags, and GitHub Actions CI.
 - **Remediation Sprint (Completed):** Fixed 7 critical demo-breaking showstoppers on `fix/code-consistency` (Docker build `.dockerignore`, Kafka persistence volume, CouchDB 25-limit cap, TypeScript enum alignment, DLQ dual-property models, enriched counterparty name display, and database provisioning). System health score upgraded from **68/100 to 86/100**.
-- **Sprint 2 Remediation (In Progress):** Resolved C1-01 (fingerprint party paths), C1-03 (validation idempotency), C1-04 (`SchemaVersionRouter` in validation), C1-05 (`common-lib` test suite), C1-06 (Kafka topic wiring), C2-01, C3-02 and C3-03 (DLQ replay loop), C3-01 (manual review approval), C3-09 (`IdempotencyKey` Javadoc), C5-03, C5-05 and C5-06 (DevOps), and all remaining high-severity findings: C2-03, C2-04, C3-04, C3-05, C4-04 and C5-04, on `fix/code-consistency`. C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. The additional fixes C2-05, C2-06, C3-07, C3-08, C4-06 and C4-07 are now verified. **35 of 37 findings are resolved; C4-01 remains a managed demo-state item and C4-05 remains open** (see the risk matrix). Remediation also found further issues, recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
+- **Sprint 2 Remediation (In Progress):** Resolved all 37 original findings on `fix/code-consistency`, including API-backed frontend live mode with an explicit demo fallback (C4-01) and service-scoped proxy routing (C4-05). C5-02 was reopened and fixed properly, and the C5-08 `kafka-ui` tag is now pinned. Additional follow-up observations are recorded in [Findings Added During Sprint 2 Remediation](#findings-added-during-sprint-2-remediation).
 
 ---
 
@@ -339,14 +339,16 @@
 
 ### Phase 4 Findings: Frontend UI Alignment, State Management & API Integration
 
-### 23. 🔴 BREAKS THE SYSTEM: Frontend Operates in 100% In-Memory Mock Isolation Without Backend API Wiring
+### 23. 🔴 BREAKS THE SYSTEM: Frontend Operates in 100% In-Memory Mock Isolation Without Backend API Wiring — ✅ RESOLVED
 - **Location:** [AppContext.tsx:L1-L786](../../frontend/src/context/AppContext.tsx#L1-L786), [vite.config.ts:L14-L22](../../frontend/vite.config.ts#L14-L22), and [nginx.conf:L11-L82](../../frontend/nginx.conf#L11-L82).
 - **Issue:**
   Both `vite.config.ts` and `nginx.conf` define detailed proxy rules for `/api/trades`, `/api/metrics`, `/api/enrichment`, `/api/validation`, `/api/exceptions`, `/api/workitems`, and `/api/dlq`. However, the React frontend contains **zero network calls** (`fetch`, `axios`, `WebSocket`, or `EventSource`). All data collections (`trades`, `exceptions`, `workItems`, `confirmations`, `dlqEntries`, `auditTrail`) are initialized from `mockData.ts`. User mutations (DLQ replay, manual review sign-off, work item status update, exception resolution) mutate only local component state in `AppContext.tsx`.
 - **System Impact:**
   The frontend is completely disconnected from the live Spring Boot microservices, Kafka topics, and CouchDB databases. In a running environment, trades ingested by backend services never appear in the dashboard, and operational actions taken in the UI never dispatch to the backend Kafka pipeline.
 - **Recommended Remediation:**
-  Create a backend API service layer (`frontend/src/services/apiClient.ts`) that calls the proxied `/api/...` endpoints on mount and dispatches actual REST mutations (`POST /api/dlq/{id}/replay`, `POST /api/workitems/{id}/review`), retaining mock data as an offline fallback.
+  Create a backend API service layer that calls the proxied `/api/...` endpoints and dispatches actual REST mutations, retaining mock data as an explicit demo mode.
+- **Resolution:**
+  Added explicit Live and Demo modes. Live mode polls backend APIs for the operational data sets, refreshes after supported REST actions, and surfaces partial/offline states without mixing in mock data. Demo mode retains the original simulation. Global audit and paginated confirmation read endpoints were added for the live views.
 
 ---
 
@@ -381,18 +383,18 @@
 - **Recommended Remediation:**
   Ensure the manual review screen queries `GET /api/workitems?type=MANUAL_REVIEW` and passes `item.workItemId` to the review action.
 - **Resolution:**
-  The review queue is now built from open `MANUAL_REVIEW` work items, and `approveManualReview` / `rejectManualReview` take a `workItemId`. This also fixed visible bugs in the simulation: decisions left the work item `OPEN`, and `TRD-10005` and injected dispute trades had no work item at all. The 404 itself could not occur, because the frontend does not call the backend; live wiring is C4-01.
+  The review queue is built from open `MANUAL_REVIEW` work items, and approval/rejection actions use the backend `workItemId` endpoint in Live mode. Demo mode retains local simulation behavior.
 
 ---
 
-### 27. 🟡 LOW RISK / INCONSISTENCY: Proxy Routing Collisions for Metrics Endpoints
+### 27. 🟡 LOW RISK / INCONSISTENCY: Proxy Routing Collisions for Metrics Endpoints — ✅ RESOLVED
 - **Location:** [vite.config.ts:L16](../../frontend/vite.config.ts#L16) and [nginx.conf:L23-L31](../../frontend/nginx.conf#L23-L31).
 - **Issue:**
-  Both proxies route `/api/metrics` to `ingestion-service:8081`. However, `exception-service` exposes `/metrics/exception-rate` on port 8084, and `validation-service` exposes `/metrics/stp-rate` on port 8083. If the frontend requests `/api/metrics/exception-rate`, the request is misrouted to `ingestion-service:8081`, returning HTTP 404.
+  Both proxies previously routed `/api/metrics` to `ingestion-service:8081`, which misrouted other services' metrics.
 - **System Impact:**
-  Dashboard metric widgets cannot fetch exception rates or validation metrics through the generic `/api/metrics` path.
+  Dashboard metric widgets could not fetch exception rates or validation metrics through the generic `/api/metrics` path.
 - **Recommended Remediation:**
-  Scope proxy routes explicitly by service: `/api/exceptions/metrics/...` &rarr; port 8084; `/api/validation/metrics/...` &rarr; port 8083; `/api/trades/metrics/...` &rarr; port 8081.
+  Removed the generic `/api/metrics` proxy. Metrics now use the service-scoped routes: `/api/trades/metrics/...` &rarr; port 8081; `/api/exceptions/metrics/...` &rarr; port 8084; `/api/validation/metrics/...` &rarr; port 8083. Added `/api/audit` routing for the live audit view.
 
 ---
 
@@ -592,7 +594,7 @@ These were found while fixing and live-testing the items above. They are not par
 | `ingestion-service` had no `REPLAY` bypass | A second replay emitted a duplicate exception still carrying the replay marker, which was misread as a successful replay. | ✅ Fixed in `8b4435d` |
 | Replays routed to `manual.review.required` were not counted as success | The DLQ entry stayed in `REPLAYING`. | ✅ Fixed in `8b4435d` |
 | The original C5-02 fix did not persist Kafka data | See finding 31. | ✅ Fixed with `KAFKA_LOG_DIRS` |
-| DLQ API returns `_id`, not `id` | The `id` alias added for C4-02 will not match when the frontend is wired to the live API (C4-01). | 🟡 Open |
+| DLQ API returns `_id`, not `id` | The adapter must map CouchDB `_id` and `dlqStatus` to the UI contract. | ✅ Fixed in the C4-01 live API adapter |
 | `BUSINESS_RULE_NON_STP` does not always fail STP | The scenario only sets a jurisdiction, which no rule checks. Outcome depends on the counterparty: `sequence` values 9103, 9403 and 9407 (counterparty 103) failed STP, while 9401 and 9402 (101, 102) were confirmed normally. | 🟡 Open |
 | The 500-trade seed produces no manual review items | Nothing in the seed routes to `manual.review.required`, so the real queue is empty after seeding. Create the item through the API to demonstrate it. | 🟡 Open |
 | Frontend healthcheck always failed | `localhost` resolves to `::1` in the image while nginx listens on IPv4 only, so the container was reported unhealthy and `docker compose up --wait` failed. | ✅ Fixed: healthcheck uses `127.0.0.1` |
@@ -627,11 +629,11 @@ These were found while fixing and live-testing the items above. They are not par
 | **C3-07** | Phase 3 | `ExceptionCouchDbRepository` | `countAll()` caps exception counts at 1,000 and pulls full documents into heap memory. | ✅ **RESOLVED** | Low (Use CouchDB reduce view) |
 | **C3-08** | Phase 3 | Build Configuration (`pom.xml`) | Missing `-Dnet.bytebuddy.experimental=true` surefire argLine breaks tests on modern JDKs (Java 25+). | ✅ **RESOLVED** | Trivial (Added Surefire argLine) |
 | **C3-09** | Phase 3 | `IdempotencyKey` Javadoc | Documents nonexistent workitem API for manual CouchDB idempotency record purging. | ✅ **RESOLVED (`8b4435d`)** | Trivial (Update Javadoc comments) |
-| **C4-01** | Phase 4 | `AppContext.tsx` | Frontend operates in an in-browser operational simulation harness; live REST binding scheduled for hardening phase. | 🟡 Managed Demo State | Architecture Decoupling |
+| **C4-01** | Phase 4 | `AppContext.tsx` | Frontend needs to distinguish API-backed operational data/actions from the in-browser simulation. | ✅ **RESOLVED** | Low (Explicit live API mode with demo fallback) |
 | **C4-02** | Phase 4 | `types/tcem.ts` (`DeadLetterEvent`) | Property naming divergence (`dlqId`/`status` vs backend `id`/`dlqStatus`) causes rendering/action failure against live API. | ✅ **RESOLVED (`370fa98`)** | Low (Dual-mapped attributes) |
 | **C4-03** | Phase 4 | `TradeDetailModal.tsx` | Party name reads `p.partyName` instead of `p.legalEntityName`, hiding enriched counterparty names. | ✅ **RESOLVED (`d00ccb6`)** | Trivial (Reads `p.legalEntityName`) |
 | **C4-04** | Phase 4 | `ManualReviewQueue.tsx` | Review action passes `tradeId` instead of `workItemId` to backend approval endpoint. | ✅ **RESOLVED (`fix/code-consistency`)** | Low (Look up and pass `workItemId`) |
-| **C4-05** | Phase 4 | Proxy Routing (`vite`/`nginx`) | Generic `/api/metrics` proxy to port 8081 conflicts with port 8084 metrics endpoint. | 🟡 Low Risk (Sprint 2) | Low (Scope metric routes by service) |
+| **C4-05** | Phase 4 | Proxy Routing (`vite`/`nginx`) | Generic `/api/metrics` proxy to port 8081 conflicts with metrics endpoints hosted by other services. | ✅ **RESOLVED** | Low (Use service-scoped API routes) |
 | **C4-06** | Phase 4 | Queue Filters | Dropdowns omit `RULES_OWNER` and `SPECIALIST_REVIEW` queues from filterable options. | ✅ **RESOLVED** | Trivial (Added missing queue options) |
 | **C4-07** | Phase 4 | `ServiceTopology.tsx` | Displays CouchDB database names with underscores rather than actual hyphenated names. | ✅ **RESOLVED** | Trivial (Updated database labels) |
 | **C5-01** | Phase 5 | Docker Build (`frontend`) | Missing `frontend/.dockerignore` leaks host macOS binaries into Alpine Linux container build, breaking container builds. | ✅ **RESOLVED (`ef23e52`)** | Trivial (Added `frontend/.dockerignore`) |
@@ -653,7 +655,7 @@ These were found while fixing and live-testing the items above. They are not par
 - [x] **Phase 4: Frontend UI Alignment, State Management & API Integration (`frontend`)** (Findings C4-01 to C4-07)
 - [x] **Phase 5: DevOps, Docker Orchestration, Shell Scripts & Consolidated System Risk Matrix** (Findings C5-01 to C5-08)
 - [x] **Showstopper Remediation Sprint:** Fixed all 7 critical blockers (C5-01, C5-02, C2-02, C1-02, C4-02, C4-03, C3-06/C5-07) on `fix/code-consistency`.
-- [ ] **Sprint 2 Remediation (in progress):** 35 of 37 findings are resolved on `fix/code-consistency`; C4-01 remains a managed demo-state item and C4-05 remains open (see the risk matrix).
+- [ ] **Sprint 2 Remediation (in progress):** 37 of 37 original findings are resolved on `fix/code-consistency` (see the risk matrix).
 
 ---
 

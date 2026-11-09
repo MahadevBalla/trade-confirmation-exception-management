@@ -185,6 +185,7 @@ export interface Trade {
   nonEconomicTerms?: NonEconomicTerms;
   enrichmentMetadata?: ReferenceDataEnrichment;
   status: ProcessingStatus;
+  receivedAt?: string;
 }
 
 export interface TradeEvent {
@@ -275,6 +276,15 @@ export interface AuditEvent {
   detail: string;
   actorUserId?: string;
   isReplay: boolean;
+  stage?: string;
+}
+
+export type DataMode = 'demo' | 'live';
+
+export interface ConnectionState {
+  status: 'connecting' | 'connected' | 'partial' | 'offline';
+  unavailable: string[];
+  lastUpdated: string | null;
 }
 
 // ---------------------------------------------------------------------------

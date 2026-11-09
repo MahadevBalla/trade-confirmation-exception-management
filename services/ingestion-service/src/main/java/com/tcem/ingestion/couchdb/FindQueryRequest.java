@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
+import java.util.List;
 
 /**
  * CouchDB Mango _find query request payload.
@@ -19,6 +20,9 @@ public class FindQueryRequest {
 
     @JsonProperty("skip")
     private Integer skip;
+
+    @JsonProperty("sort")
+    private List<Map<String, String>> sort;
 
     public FindQueryRequest() {}
 
@@ -41,17 +45,24 @@ public class FindQueryRequest {
     public Integer getSkip() { return skip; }
     public void setSkip(Integer skip) { this.skip = skip; }
 
+    public List<Map<String, String>> getSort() { return sort; }
+    public void setSort(List<Map<String, String>> sort) { this.sort = sort; }
+
     public static class Builder {
         private Map<String, Object> selector;
         private Integer limit;
         private Integer skip;
+        private List<Map<String, String>> sort;
 
         public Builder selector(Map<String, Object> selector) { this.selector = selector; return this; }
         public Builder limit(Integer limit) { this.limit = limit; return this; }
         public Builder skip(Integer skip) { this.skip = skip; return this; }
+        public Builder sort(List<Map<String, String>> sort) { this.sort = sort; return this; }
 
         public FindQueryRequest build() {
-            return new FindQueryRequest(selector, limit, skip);
+            FindQueryRequest request = new FindQueryRequest(selector, limit, skip);
+            request.setSort(sort);
+            return request;
         }
     }
 }

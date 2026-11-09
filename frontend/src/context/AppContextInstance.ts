@@ -8,6 +8,8 @@ import type {
   DeadLetterEvent,
   OperationsMetrics,
   UserRole,
+  DataMode,
+  ConnectionState,
 } from '../types/tcem';
 
 export interface ToastMessage {
@@ -28,6 +30,10 @@ export interface StreamEventNotice {
 }
 
 export interface AppContextType {
+  dataMode: DataMode;
+  setDataMode: (mode: DataMode) => void;
+  connection: ConnectionState;
+
   // Navigation & Role
   activeTab: string;
   setActiveTab: (tab: string) => void;

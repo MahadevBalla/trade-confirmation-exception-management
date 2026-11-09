@@ -51,6 +51,19 @@ class ConfirmationQueryControllerTest {
     // -----------------------------------------------------------------------
 
     @Test
+    @DisplayName("GET /confirmations returns a paginated list")
+    void listConfirmations_returnsPage() throws Exception {
+        when(confirmationRepository.findPage(10, 0))
+                .thenReturn(List.of(buildDoc("CONF-PAGE", "TRD-PAGE", 1)));
+
+        mockMvc.perform(get("/confirmations?page=0&size=10")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(1))
+                .andExpect(jsonPath("$.content[0].confirmationId").value("CONF-PAGE"));
+    }
+
+    @Test
     @DisplayName("GET /confirmations/{id}: found → 200 with body")
     void getById_found_returns200() throws Exception {
         ConfirmationDocument doc = buildDoc("CONF-AABBCCDD", "TRD-001", 1);
