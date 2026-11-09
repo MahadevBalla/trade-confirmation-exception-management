@@ -11,7 +11,7 @@ store) · **Java / Spring Boot** (microservices) · **React + TypeScript**
 (operations UI) · **Docker Compose** (local orchestration).
 
 > **Status:** All 5 backend microservices, shared library (`common-lib`), and React Operations Dashboard are **100% implemented, tested, and verified** across Docker Compose and CI pipelines. 
-> See [`docs/project-status.md`](docs/project-status.md) for detailed service verification, [`docs/reports/code_consistency_report.md`](docs/reports/code_consistency_report.md) for architectural audit notes, and [`docs/reports/live_demo_presentation_guide.md`](docs/reports/live_demo_presentation_guide.md) for the live demonstration script.
+> See [`docs/project-status.md`](docs/project-status.md) for detailed service verification, [`docs/reports/capstone_spec_compliance_report.md`](docs/reports/capstone_spec_compliance_report.md) for Capstone specification compliance & NFR assessment, [`docs/reports/code_consistency_report.md`](docs/reports/code_consistency_report.md) for architectural audit notes, and [`docs/reports/live_demo_presentation_guide.md`](docs/reports/live_demo_presentation_guide.md) for the live demonstration script.
 
 ## Repo layout
 
@@ -196,6 +196,7 @@ npm run dev      # Vite dev server on :5173
 - [`services/validation-service/README.md`](services/validation-service/README.md) - STP rules engine, confirmation generation, SHA-256 fingerprinting, and held trades
 - [`services/exception-service/README.md`](services/exception-service/README.md) - Exception classification, dynamic SLAs (+4h to +7d), and recommendations
 - [`services/workitem-service/README.md`](services/workitem-service/README.md) - Work-item, manual review and DLQ/replay flows, rules and contracts
+- [`docs/reports/capstone_spec_compliance_report.md`](docs/reports/capstone_spec_compliance_report.md) - Capstone specification 1-to-1 compliance, NFR assessment & production roadmap
 - [`docs/reports/code_consistency_report.md`](docs/reports/code_consistency_report.md) - Multi-phase architectural audit & remediation notes
 - [`docs/reports/live_demo_presentation_guide.md`](docs/reports/live_demo_presentation_guide.md) - Master live demonstration presentation guide and script
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - Branching, PRs, definition of done
