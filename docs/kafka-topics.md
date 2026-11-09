@@ -21,11 +21,11 @@ A replayed message has `eventType=REPLAY` and keeps its original `messageId`, so
 
 Consumers bind their input topic through the `TopicNames` constants in `common-lib` (there are no `*.input-topic` property overrides), so a topic rename is a single code change and a consumer can never drift from what its producers publish to.
 
-## Decisions still open for the team
+## Finalized Architectural Decisions
 
-- Exact key strategy (likely `tradeId` for ordering/partitioning per trade).
-- Number of partitions per topic (tie to the partitioning-strategy stretch goal).
-- Consumer group naming convention (suggest one group per service, e.g. `enrichment-service-group`).
-- Whether `confirmation.generated` and `exception.created` should be two separate topics or a single `stp.outcome` topic with a status field - spec allows either; pick one before wiring producers/consumers to avoid churn later.
-
-Record the final decision here once made, with a one-line rationale.
+- **Partition Key Strategy:** Keyed by `tradeId` across all 10 topics to guarantee strict per-trade causal ordering across partitions.
+- **Partition Count:** Exactly **3 partitions per topic** pre-provisioned via `tcem-kafka-init` (single replication factor for local KRaft cluster; enables horizontal consumer scaling).
+- **Consumer Group Naming:** Standardized per-service groups: `ingestion-service-group`, `enrichment-service-group`, `validation-service-group`, `exception-service-group`, and `workitem-service-group` (with isolated dedicated listener groups for manual review and progress tracking).
+- **Topic Separation:** `confirmation.generated` and `exception.created` are separate topics (rather than a unified outcome topic) to maintain clean service boundaries and prevent domain event pollution.
+- **Replay & Idempotency Strategy:** Replayed records preserve original headers with `eventType=REPLAY` and `replayCount` incremented; downstream consumers (`ingestion`, `enrichment`, `validation`, `exception`) skip duplicate checks on `REPLAY`.
+- **Cancellation Event Cascading:** `CANCEL_TRADE` publishes an `StpValidatedEvent` on `stp.validated` with `cancelled=true`, which cascades to cancel open work items in `workitem-service` and emits audit logs.

@@ -122,6 +122,41 @@ The `ingestion-service` exposes comprehensive REST endpoints for synthetic trade
 | `/metrics/stp-rate` | GET | Returns Straight-Through Processing (STP) rate for React Operations UI (FR11). |
 | `/actuator/health` | GET | Spring Boot Actuator health check (includes custom CouchDB health indicator). |
 
+Through the gateway, these are mapped under `/api/ingestion/...`. Full documentation in [`services/ingestion-service/README.md`](services/ingestion-service/README.md).
+
+### Enrichment Service (Port 8082)
+
+The `enrichment-service` consumes `trade.accepted`, enriches trades against reference datasets (`counterparties.json`, `instruments.json`, `templates.json`, `counterparty-products.json`), and publishes to `trade.enriched` (FR4).
+Full documentation in [`services/enrichment-service/README.md`](services/enrichment-service/README.md).
+
+### Validation Service REST APIs (Port 8083)
+
+The `validation-service` runs the STP rules engine, generates plain-text ISDA confirmation documents, calculates SHA-256 fingerprints to suppress duplicate confirmations on amendments, and confirms held trades approved via manual review (FR5, FR6).
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/confirmations/{id}` | GET | Returns a single confirmation document by `confirmationId` (404 if not found). |
+| `/trades/{tradeId}/confirmations` | GET | Returns all confirmation versions for a trade, ordered newest-first. |
+| `/trades/{tradeId}/confirmation` | GET | Returns the latest active confirmation document for a trade. |
+| `/metrics/confirmation-count` | GET | Returns total count of persisted confirmations for operations dashboards. |
+| `/actuator/health` | GET | Spring Boot Actuator health check (includes CouchDB connectivity). |
+
+Through the gateway, these are mapped under `/api/validation/...`. Full documentation in [`services/validation-service/README.md`](services/validation-service/README.md).
+
+### Exception Service REST APIs (Port 8084)
+
+The `exception-service` consumes `exception.created`, classifies root causes across standard taxonomies, calculates confidence scores and dynamic SLA deadlines (+4h to +7d), and produces actionable recommendations (FR7, FR8, FR9).
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/exceptions/{id}` | GET | Returns a single exception detail document and its complete CouchDB audit trail. |
+| `/exceptions?tradeId=&status=&category=&page=&size=` | GET | Returns a paginated list of exceptions with multi-field filtering. |
+| `/exceptions/{id}/audit` | GET | Returns chronological audit trail for a specific exception ID. |
+| `/exceptions/metrics/summary` | GET | Returns in-memory operational metrics (total received, classified, manual review, duplicates, DLQ). |
+| `/metrics/exception-rate` | GET | Returns classification rate percentage for the executive dashboard. |
+| `/actuator/health` | GET | Spring Boot Actuator health check (includes CouchDB connectivity). |
+
+Through the gateway, these are mapped under `/api/exception/...`. Full documentation in [`services/exception-service/README.md`](services/exception-service/README.md).
 
 ### Workitem Service REST APIs (Port 8085)
 
@@ -156,7 +191,10 @@ npm run dev      # Vite dev server on :5173
 - [`docs/architecture.md`](docs/architecture.md) - Event flow + service boundaries
 - [`docs/kafka-topics.md`](docs/kafka-topics.md) - Topics, keys, and event payload contracts
 - [`docs/project-status.md`](docs/project-status.md) - Per-service progress, verification, and implementation status
-- [`services/ingestion-service/README.md`](services/ingestion-service/README.md) - Ingestion pipeline, generator, CouchDB audit, and REST APIs
+- [`services/ingestion-service/README.md`](services/ingestion-service/README.md) - Ingestion pipeline, synthetic generator, CouchDB audit, and REST APIs
+- [`services/enrichment-service/README.md`](services/enrichment-service/README.md) - Reference data enrichment, LEI mapping, and template resolution
+- [`services/validation-service/README.md`](services/validation-service/README.md) - STP rules engine, confirmation generation, SHA-256 fingerprinting, and held trades
+- [`services/exception-service/README.md`](services/exception-service/README.md) - Exception classification, dynamic SLAs (+4h to +7d), and recommendations
 - [`services/workitem-service/README.md`](services/workitem-service/README.md) - Work-item, manual review and DLQ/replay flows, rules and contracts
 - [`docs/reports/code_consistency_report.md`](docs/reports/code_consistency_report.md) - Multi-phase architectural audit & remediation notes
 - [`docs/reports/live_demo_presentation_guide.md`](docs/reports/live_demo_presentation_guide.md) - Master live demonstration presentation guide and script

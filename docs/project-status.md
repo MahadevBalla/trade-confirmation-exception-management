@@ -58,7 +58,7 @@ This document tracks the progress of the Trade Confirmation Exception Management
   * CouchDB persistence for `exceptions` database with conflict retry handling.
   * REST query APIs for exception filtering, queue aggregations, and metrics.
   * Sprint 2 hardening: outbound events keep `eventType` and `replayCount` instead of resetting to `NEW_TRADE` (C3-02, commit `8b4435d`). `exception-service`: 130 tests.
-  * High-severity fix: confirmed category and sub-theme are copied onto the exception record (C3-04). `exception-service`: 131 tests.
+  * High-severity fix: confirmed category and sub-theme are copied onto the exception record (C3-04). `exception-service`: 134 tests.
 * **What is Remaining:**
   * Ready for live demonstration.
 
