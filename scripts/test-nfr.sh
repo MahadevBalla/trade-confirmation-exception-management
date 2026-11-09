@@ -65,11 +65,14 @@ GEN_TS=$(echo "$CONFIRMATION" | jq -r '.generatedAt // empty' 2>/dev/null || tru
 echo ">> Ingested At  (trade.raw intake): $RECV_TS"
 echo ">> Confirmed At (confirmation gen): $GEN_TS"
 
-# Compute latency via python
+# Compute latency via python (handles Java 21 nanosecond timestamps portably)
 LATENCY_MS=$(python3 -c "
+import re
 from datetime import datetime
-t1 = datetime.fromisoformat('$RECV_TS'.replace('Z', '+00:00'))
-t2 = datetime.fromisoformat('$GEN_TS'.replace('Z', '+00:00'))
+s1 = re.sub(r'(\.\d{6})\d*', r'\1', '$RECV_TS'.replace('Z', '+00:00'))
+s2 = re.sub(r'(\.\d{6})\d*', r'\1', '$GEN_TS'.replace('Z', '+00:00'))
+t1 = datetime.fromisoformat(s1)
+t2 = datetime.fromisoformat(s2)
 delta = (t2 - t1).total_seconds() * 1000
 print(f'{delta:.1f}')
 ")
