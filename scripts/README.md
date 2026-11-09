@@ -15,6 +15,7 @@ This directory provides CLI helper scripts for local development, environment pr
 | **Dev Up** | `./scripts/dev-up.sh` | Boots infra, initializes Kafka & CouchDB, builds & starts services, and runs smoke checks. Supports `--infra-only` and `--all`, and passes the mode to the smoke test, so `--all` asserts all 5 services. |
 | **Dev Down** | `./scripts/dev-down.sh` | Stops containers. Pass `--reset` (or `-v`) to wipe volume data. |
 | **Seed Data** | `./scripts/seed-data.sh` | Triggers synthetic trade generation or loads the bundled 500-trade seed dataset (`sample-trades.json`). Pass `--generate <N>` to generate N trades. |
+| **NFR Benchmark** | `./scripts/test-nfr.sh` | Benchmarks end-to-end STP latency ($\le 10$s target), daily volume rate (1M/day), and peak hourly burst (100k/hr). |
 
 ---
 
