@@ -29,16 +29,16 @@ fi
 echo ""
 echo "--- [1/3] Testing End-to-End STP Latency (Spec Target: <= 10.0s) ---"
 
-# Generate a unique sequence based on epoch millis
-SEQ=$(date +%s%3N | tail -c 6)
-TRADE_ID="TRD-0${SEQ}"
+# Generate a portable 6-digit integer sequence (works reliably on macOS & Linux)
+SEQ=$(python3 -c "import time; print(int(time.time() * 1000) % 800000 + 100000)")
+TRADE_ID=$(printf "TRD-%06d" "$SEQ")
 
-echo ">> Injecting single clean trade: $TRADE_ID ..."
-curl -s -X POST "$INGESTION_URL/trades/generate/scenario?scenario=STANDARD_VANILLA_CALL_EUR_USD&sequence=${SEQ}&publishToKafka=true" > /dev/null
+echo ">> Injecting single clean trade: $TRADE_ID (sequence=$SEQ) ..."
+GEN_RESP=$(curl -s -X POST "$INGESTION_URL/trades/generate/scenario?scenario=STANDARD_VANILLA_CALL_EUR_USD&sequence=${SEQ}&publishToKafka=true")
 
-# Poll until confirmation is generated (max 10 seconds)
+# Poll until confirmation is generated (up to 10 seconds)
 CONFIRMATION=""
-for i in {1..50}; do
+for i in {1..100}; do
   RESP=$(curl -s "$VALIDATION_URL/trades/${TRADE_ID}/confirmation" || true)
   if echo "$RESP" | grep -q "ALLEGED"; then
     CONFIRMATION="$RESP"
@@ -48,7 +48,10 @@ for i in {1..50}; do
 done
 
 if [ -z "$CONFIRMATION" ]; then
-  echo "❌ FAILED: Confirmation was not generated within 5 seconds for $TRADE_ID"
+  echo "❌ FAILED: Confirmation was not generated within 10 seconds for $TRADE_ID"
+  echo "Diagnostic info:"
+  echo "  Ingestion scenario response: $GEN_RESP"
+  echo "  Validation confirmation check: $(curl -s "$VALIDATION_URL/trades/${TRADE_ID}/confirmation" || true)"
   exit 1
 fi
 
@@ -85,12 +88,12 @@ echo "--- [2/3] Testing Daily Target Throughput (Target: 1M/day ~= 11.57 trades/
 BATCH_SIZE=50
 echo ">> Ingesting batch of $BATCH_SIZE trades into Kafka stream..."
 
-START_TIME=$(date +%s%N)
+START_TIME=$(python3 -c "import time; print(time.time())")
 curl -s -X POST "$INGESTION_URL/trades/generate?count=$BATCH_SIZE&publishToKafka=true" > /dev/null
-END_TIME=$(date +%s%N)
+END_TIME=$(python3 -c "import time; print(time.time())")
 
-ELAPSED_SEC=$(python3 -c "print(f'{($END_TIME - $START_TIME) / 1e9:.3f}')")
-THROUGHPUT=$(python3 -c "print(f'{$BATCH_SIZE / float($ELAPSED_SEC):.1f}')")
+ELAPSED_SEC=$(python3 -c "print(f'{$END_TIME - $START_TIME:.3f}')")
+THROUGHPUT=$(python3 -c "print(f'{$BATCH_SIZE / max(float($ELAPSED_SEC), 0.001):.1f}')")
 
 echo ">> Ingested $BATCH_SIZE trades in ${ELAPSED_SEC}s"
 echo ">> Ingestion Throughput = ${THROUGHPUT} trades/sec"
@@ -109,12 +112,12 @@ echo "--- [3/3] Testing Peak Hourly Burst Target (Target: 100k/hr ~= 27.78 trade
 BURST_SIZE=100
 echo ">> Firing peak burst of $BURST_SIZE trades..."
 
-START_TIME=$(date +%s%N)
+START_TIME=$(python3 -c "import time; print(time.time())")
 curl -s -X POST "$INGESTION_URL/trades/generate?count=$BURST_SIZE&publishToKafka=true" > /dev/null
-END_TIME=$(date +%s%N)
+END_TIME=$(python3 -c "import time; print(time.time())")
 
-BURST_ELAPSED_SEC=$(python3 -c "print(f'{($END_TIME - $START_TIME) / 1e9:.3f}')")
-BURST_THROUGHPUT=$(python3 -c "print(f'{$BURST_SIZE / float($BURST_ELAPSED_SEC):.1f}')")
+BURST_ELAPSED_SEC=$(python3 -c "print(f'{$END_TIME - $START_TIME:.3f}')")
+BURST_THROUGHPUT=$(python3 -c "print(f'{$BURST_SIZE / max(float($BURST_ELAPSED_SEC), 0.001):.1f}')")
 
 echo ">> Ingested $BURST_SIZE trades burst in ${BURST_ELAPSED_SEC}s"
 echo ">> Peak Burst Throughput = ${BURST_THROUGHPUT} trades/sec"
