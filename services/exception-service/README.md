@@ -96,3 +96,4 @@ The service exposes comprehensive REST query endpoints for the React Operations 
 mvn -f services/pom.xml -pl common-lib,exception-service -am test
 ```
 * **Coverage:** 134 passing unit and integration tests covering taxonomy classification rules, SLA calculations, recommendation enrichment, CouchDB persistence, and REST endpoints.
+

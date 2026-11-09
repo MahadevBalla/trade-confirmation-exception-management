@@ -85,3 +85,4 @@ The **`enrichment-service`** fulfills **Functional Requirement 4 (FR4)**:
 mvn -f services/pom.xml -pl common-lib,enrichment-service -am test
 ```
 * **Coverage:** 16 passing unit and consumer tests covering reference catalog joins, party enrichment, idempotency deduplication, replay bypass, and DLQ dispatch.
+

@@ -94,3 +94,4 @@ The **`validation-service`** acts as the core decision-making and confirmation i
 mvn -f services/pom.xml -pl common-lib,validation-service -am test
 ```
 * **Coverage:** 145 passing unit and embedded-Kafka integration tests covering STP rule evaluation, fingerprint deduplication, plain-text rendering, held-trade manual reviews, and CouchDB persistence.
+
