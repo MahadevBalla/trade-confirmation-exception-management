@@ -1,5 +1,6 @@
 package com.tcem.validation.exception;
 
+import com.tcem.common.constants.EventType;
 import com.tcem.common.constants.ExceptionCategory;
 import com.tcem.common.constants.ExceptionSubTheme;
 import com.tcem.common.constants.ProductType;
@@ -340,5 +341,21 @@ class StpExceptionMapperTest {
 
         assertThat(events.get(0).getException().getCapturedAt()).isNotNull();
     }
-}
 
+    @Test
+    @DisplayName("Replay identity (eventType, replayCount) survives onto exception.created")
+    void testReplayIdentityPropagated() {
+        MessageHeader header = buildHeader("MSG-RPL", "CORR-RPL");
+        header.setEventType(EventType.REPLAY);
+        header.setReplayCount(2);
+        StpValidationResult result = resultWithSingleFailure(
+                ExceptionCategory.MISSING_ECONOMIC_DATA, ExceptionSubTheme.MISSING_STRIKE,
+                "Strike price missing", "fxOptionEconomics.strike");
+
+        MessageHeader outbound = mapper.mapToExceptionEvents(header, buildTrade("TRD-RPL"), result)
+                .get(0).getMessageHeader();
+
+        assertThat(outbound.getEventType()).isEqualTo(EventType.REPLAY);
+        assertThat(outbound.getReplayCount()).isEqualTo(2);
+    }
+}

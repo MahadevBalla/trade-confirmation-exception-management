@@ -27,10 +27,9 @@ import java.util.Objects;
  *
  * <h3>DLQ replay</h3>
  * When a message is replayed from the DLQ (FR12), its {@code replayCount}
- * is incremented in the {@code MessageHeader} but the idempotency key stays
- * the same. Services must clear the idempotency record before replay is triggered
- * so the message is reprocessed (the replay UI button does this via the
- * workitem-service API).
+ * is incremented in the {@code MessageHeader} and its {@code eventType} becomes
+ * {@code REPLAY}. Every attempt therefore shares one key, so services must skip the
+ * duplicate check for {@code REPLAY} messages rather than rely on this key.
  *
  * <h3>Storage key format</h3>
  * {@code idempotency:{tradeId}:{messageId}:{schemaVersion}:{eventType}}

@@ -20,8 +20,8 @@ import static com.tcem.workitem.service.WorkItemException.Reason.INVALID_REQUEST
 /**
  * Decisions on the manual review queue (MANUAL_REVIEW work items).
  * <ul>
- *   <li>APPROVE closes the item as DONE. Generating the confirmation stays with validation-service,
- *       which can react to the closed item on 'workitem.linked'.</li>
+ *   <li>APPROVE closes the item as DONE. validation-service sees the decision on 'workitem.linked'
+ *       and generates the confirmation.</li>
  *   <li>REJECT closes the item and sends the trade to 'deadletter.trade' as non-replayable, mirroring
  *       the simulated flow in the frontend. The DLQ consumer then records it like any other dead letter.</li>
  * </ul>

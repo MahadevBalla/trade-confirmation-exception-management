@@ -67,4 +67,32 @@ class TradeAcceptedConsumerTest {
         Trade trade = new Trade(); trade.setTradeId("TRD-1"); trade.setProductType(ProductType.FX_OPTION);
         return new TradeEvent(header, trade);
     }
+
+    @Test
+    void replayIsReprocessedEvenWhenAnEarlierReplayRecordedTheKey() throws Exception {
+        TradeEvent event = event();
+        event.getMessageHeader().setEventType(EventType.REPLAY);
+        event.getMessageHeader().setReplayCount(2);
+        when(idempotency.isProcessed(any())).thenReturn(true);
+        when(enricher.enrich(any(TradeEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        consumer.onMessage(new ConsumerRecord<>("trade.accepted", 0, 0L, "TRD-1", mapper.writeValueAsString(event)));
+
+        verify(enrichedProducer).publish(eq("TRD-1"), any(TradeEvent.class));
+        // The marker document already exists and the repository PUTs without a _rev, so re-recording would 409.
+        verify(idempotency, never()).record(any());
+    }
+
+    @Test
+    void aPublishFailureLeavesTheKeyUnrecordedSoTheMessageIsRetried() throws Exception {
+        TradeEvent event = event();
+        when(idempotency.isProcessed(any())).thenReturn(false);
+        when(enricher.enrich(any(TradeEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        org.mockito.Mockito.doThrow(new IllegalStateException("timed out")).when(enrichedProducer).publish(any(), any());
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () ->
+                consumer.onMessage(new ConsumerRecord<>("trade.accepted", 0, 0L, "TRD-1", mapper.writeValueAsString(event))));
+
+        verify(idempotency, never()).record(any());
+    }
 }

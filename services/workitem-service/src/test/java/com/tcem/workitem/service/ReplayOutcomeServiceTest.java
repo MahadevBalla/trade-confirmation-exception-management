@@ -145,4 +145,17 @@ class ReplayOutcomeServiceTest {
 
         assertEquals(2, wiring.dlqRepository.findPage(null, 0, 50).size());
     }
+
+    @Test
+    @DisplayName("a replayed exception.created that is routed to manual review counts as processed")
+    void manualReviewRoutingIsSuccess() throws Exception {
+        DeadLetterEvent failure = DlqTestSupport.deadLetter("DLQ-MR", true, 0);
+        failure.setFailedOnTopic(TopicNames.EXCEPTION_CREATED);
+        DlqEntryDocument entry = wiring.replayService.replay(
+                wiring.dlqService.handleDeadLetter(TRADE, DlqTestSupport.json(failure)).getId());
+
+        wiring.replayOutcomeService.onPipelineMessage(TopicNames.MANUAL_REVIEW_REQUIRED, TRADE, REPLAYED_ACCEPTED, false);
+
+        assertEquals("REPLAY_SUCCEEDED", wiring.dlqRepository.findById(entry.getId()).orElseThrow().getDlqStatus());
+    }
 }

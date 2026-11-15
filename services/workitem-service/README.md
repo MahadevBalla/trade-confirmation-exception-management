@@ -1,107 +1,132 @@
-# workitem-service
+# Workitem Service (`workitem-service`)
 
-Mock work-item tracker, manual review queue, audit trail and DLQ/replay handling (FR10, FR12). Port `8085`.
+> **Remediation Work-Item Tracking, 4-Eyes Manual Review Queue, Audit Trail & Dead-Letter Replay Engine for the TCEM Platform**  
+> **Service Port:** `8085` · **Runtime:** Java 21 / Spring Boot 3.3 · **Storage:** Apache CouchDB 3.3 · **Streaming:** Apache Kafka 3.8
 
-## Flows
+---
+
+## 1. Overview & Purpose
+
+The **`workitem-service`** serves as the operational remediation and exception lifecycle backbone of the TCEM platform:
+
+1. **Remediation Work-Item Management:** Automatically generates and links trackable operational remediation tickets (`WI-40001` format) when exceptions are classified by `exception-service`.
+2. **Four-Eyes Manual Review Queue:** Provides a secure workflow for low-confidence classifications, held trades, and counterparty disputes. When a supervisor signs off (`APPROVE`), it triggers `validation-service` to immediately generate the legal confirmation.
+3. **Dead-Letter Queue (DLQ) & Replay Engine:** Captures malformed payloads, unhandled pipeline crashes, and processing failures from `deadletter.trade`. Manages bounded, idempotent replays back into upstream Kafka topics.
+4. **Cross-Service Audit Ledger:** Persists chronological, immutable lifecycle audit records in CouchDB `audit-events` using the shared schema, enabling seamless timeline queries from ingestion to settlement.
+
+---
+
+## 2. Event Flows & Lifecycle
 
 ```
-exception.classified ───► ExceptionLinkingService ──► work item (create or link)
-manual.review.required ─► ExceptionLinkingService ──► MANUAL_REVIEW work item ─► POST /workitems/{id}/review
-                                                                                   ├ APPROVE → DONE
-                                                                                   └ REJECT  → DONE + deadletter.trade
-deadletter.trade ───────► DlqService ──► dlq-entries + DATA_FIX work item
-                            └ trade has a REPLAYING entry? → merged into it (ReplayOutcomeService)
-POST /dlq/{id}/replay ──► ReplayService ──► original topic (REPLAY message)
+exception.classified ───► ExceptionLinkingService ──► Work Item (Create or Link)
+manual.review.required ─► ExceptionLinkingService ──► MANUAL_REVIEW Work Item ──► POST /workitems/{id}/review
+                                                                                    ├ APPROVE → Status DONE → validation-service confirms trade
+                                                                                    └ REJECT  → Status DONE → Emits to deadletter.trade
+deadletter.trade ───────► DlqService ───────────────► CouchDB dlq-entries + DATA_FIX Work Item
+                            └ Replaying Entry? ─────► Merges into existing entry (ReplayOutcomeService)
+POST /dlq/{id}/replay ──► ReplayService ────────────► Original Kafka Topic (REPLAY message)
 trade.accepted, trade.enriched, stp.validated,
-exception.created, exception.classified ──► ReplayOutcomeService ──► REPLAY_SUCCEEDED + work item DONE
-confirmation.generated ─► ConfirmationService ──► audit CONFIRMED + trade's open work items DONE
+exception.created, exception.classified,
+manual.review.required ──► ReplayOutcomeService ──► REPLAY_SUCCEEDED + Work Item DONE
+stp.validated (cancelled=true) ─► CancellationService ──► Audit CANCELLED + Open Work Items CANCELLED
+confirmation.generated ──► ConfirmationService ─────► Audit CONFIRMED + Open Work Items DONE
 ```
 
-Every work-item create, link and update is written to `work-items`, audited in `audit-events` (same
-`AUDIT_EVENT` shape as ingestion-service, so `GET /trades/{id}/audit` on ingestion shows both services'
-entries) and published as a `WorkItemEvent` on `workitem.linked`.
+Every work-item creation, linkage, and status change is written to CouchDB `work-items`, recorded in `audit-events`, and published as a `WorkItemEvent` on `workitem.linked`.
 
-## Rules
+---
 
-**Exception → work item** (`WorkItemRules`, owner-queue fallbacks mirror `frontend/src/services/recommendationEngine.ts`):
+## 3. Business Rules & Queue Mapping
 
-| Category | Type | Default queue |
-| --- | --- | --- |
-| MISSING_ECONOMIC_DATA | DATA_FIX | DATA_REMEDIATION |
-| MISSING_STATIC_REFERENCE_DATA | DATA_FIX | REFERENCE_DATA |
-| TEMPLATE_ISSUE | TEMPLATE_FIX | TEMPLATE_MAINTENANCE |
-| BUSINESS_RULE_FAILURE | RULE_UPDATE | OPERATIONS_REVIEW |
-| TECHNICAL_PROCESSING_FAILURE | ENHANCEMENT | TECHNOLOGY_SUPPORT |
-| COUNTERPARTY_MATCHING_DISPUTE | MANUAL_REVIEW | OPERATIONS_REVIEW |
-| LEGAL_DOCUMENTATION_GAP | MANUAL_REVIEW | SPECIALIST_REVIEW |
-| FALSE_POSITIVE_CONFIRMABLE_EVENT | RULE_UPDATE | RULES_OWNER |
+### Exception to Work-Item Mapping (`WorkItemRules`)
 
-- The queue is the recommendation's `ownerQueue` when it is a known queue, else the default above.
-- Priority = `operationalImpact` when it is LOW/MEDIUM/HIGH/CRITICAL, else HIGH/LOW from `resolutionDifficulty`, else MEDIUM.
-- `classificationConfidence < workitem.low-confidence-threshold` (0.6) → MANUAL_REVIEW in OPERATIONS_REVIEW, so a person confirms the classification.
-- **Link vs create**: an exception joins an OPEN/IN_PROGRESS item of the same type for the same trade (`linkedExceptionIds`, higher priority kept); otherwise a new item is created. Each (exception, type) pair is handled once.
+When an exception arrives, it is mapped to a designated operational work queue and priority based on its taxonomy:
 
-**Work-item status**: `OPEN ↔ IN_PROGRESS → DONE | CANCELLED`. DONE and CANCELLED are terminal; `resolvedAt` is set on entry.
+| Exception Category | Work-Item Type | Default Queue |
+|---|---|---|
+| `MISSING_ECONOMIC_DATA` | `DATA_FIX` | `DATA_REMEDIATION` |
+| `MISSING_STATIC_REFERENCE_DATA` | `DATA_FIX` | `REFERENCE_DATA` |
+| `TEMPLATE_ISSUE` | `TEMPLATE_FIX` | `TEMPLATE_MAINTENANCE` |
+| `BUSINESS_RULE_FAILURE` | `RULE_UPDATE` | `OPERATIONS_REVIEW` |
+| `TECHNICAL_PROCESSING_FAILURE` | `ENHANCEMENT` | `TECHNOLOGY_SUPPORT` |
+| `COUNTERPARTY_MATCHING_DISPUTE` | `MANUAL_REVIEW` | `OPERATIONS_REVIEW` |
+| `LEGAL_DOCUMENTATION_GAP` | `MANUAL_REVIEW` | `SPECIALIST_REVIEW` |
+| `FALSE_POSITIVE_CONFIRMABLE_EVENT` | `RULE_UPDATE` | `RULES_OWNER` |
 
-**DLQ entries**: replayable → `PENDING_REPLAY` + MEDIUM DATA_FIX item; not replayable or already at the limit → `PERMANENTLY_FAILED` + HIGH item. Owner queue `workitem.dlq-owner-queue` (TECHNOLOGY_SUPPORT).
+- **Queue Assignment:** If the upstream recommendation specifies a recognized `ownerQueue`, that queue takes precedence; otherwise, the taxonomy default above is assigned.
+- **Priority Resolution:** Inherits `operationalImpact` (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`); falls back to `resolutionDifficulty` or defaults to `MEDIUM`.
+- **Low-Confidence Gating:** If `classificationConfidence < 0.6`, the issue is routed to `MANUAL_REVIEW` in `OPERATIONS_REVIEW` so a human specialist validates the root cause before data modifications take place.
+- **Link vs. Create:** If an active (`OPEN` or `IN_PROGRESS`) ticket of the same type already exists for the trade, the new exception is appended to `linkedExceptionIds` (retaining the higher priority). Otherwise, a new work item is provisioned.
 
-**Replay**:
-1. `POST /dlq/{id}/replay` marks the entry `REPLAYING` (count + 1) *before* publishing, then republishes `originalPayload` to `failedOnTopic` with `messageHeader.eventType=REPLAY`, the new `replayCount`, and the `tcem.replayCount` / `tcem.eventType` Kafka headers. The idempotency key includes the event type, so the REPLAY is not suppressed as a duplicate. A failed publish restores the previous state.
-2. **Success**: a replay-marked record for the trade appears on a topic downstream of the failed one (`trade.raw` → `trade.accepted`/`exception.created`, `trade.accepted` → `trade.enriched`/`exception.created`, …). The entry becomes `REPLAY_SUCCEEDED` and its work item DONE.
-3. **Failure**: a new dead letter for a trade whose entry is `REPLAYING` is merged into that entry (back to `PENDING_REPLAY`, count kept, appended to `failureHistory`) instead of creating a second entry. A `DLQ_ALIAS` marker under the new dead letter's id keeps redelivery idempotent and makes `GET /dlq/{thatId}` resolve to the merged entry.
-4. When the failure is not replayable, or the count has reached `workitem.max-replay-attempts` (3), the entry becomes `PERMANENTLY_FAILED` and its existing work item is escalated to HIGH.
+### Lifecycle Status State Machine
+$$\text{OPEN} \longleftrightarrow \text{IN\_PROGRESS} \longrightarrow \mathbf{\text{DONE}} \quad | \quad \mathbf{\text{CANCELLED}}$$
+- `DONE` and `CANCELLED` are terminal states. Upon transition to a terminal state, `resolvedAt` is stamped and the ticket is locked.
 
-**Confirmation**: `confirmation.generated` is audited (CONFIRMED) and the trade's open work items are closed as DONE.
+---
 
-## REST API
+## 4. Dead-Letter Queue (DLQ) & Controlled Replay Engine
 
-| Method | Path | Notes |
-| --- | --- | --- |
-| GET | `/workitems?status=&type=&ownerQueue=&priority=&tradeId=&page=&size=` | newest first |
-| GET | `/workitems/summary` | counts by status and type, open counts by queue and priority, `agedOpen` (older than `workitem.aged-hours`) |
-| GET | `/workitems/{id}` | `404` if unknown |
-| POST | `/workitems` | `{tradeId, type, title, description, ownerQueue, priority, linkedExceptionId}`; `201`, `400` on invalid values |
-| PATCH | `/workitems/{id}` | `{status, priority, ownerQueue, notes, actor}`, any subset; `409` on terminal items or invalid transitions |
-| POST | `/workitems/{id}/review` | `{decision: APPROVE\|REJECT, notes, reviewer}`; MANUAL_REVIEW items only (`409` otherwise); notes required to reject |
-| GET | `/dlq?status=&page=&size=` | `status`: `PENDING_REPLAY`, `REPLAYING`, `REPLAY_SUCCEEDED`, `PERMANENTLY_FAILED` |
-| GET | `/dlq/{id}` | follows merge aliases; `404` if unknown |
-| POST | `/dlq/{id}/replay` | `404` unknown; `409` not replayable / already replaying / already succeeded / limit reached; `502` publish failed |
-| GET | `/actuator/health` | includes CouchDB connectivity |
+When unparseable or unhandled payloads arrive on `deadletter.trade`:
+1. **Entry Provisioning:** Replayable errors enter `PENDING_REPLAY` status with an associated `DATA_FIX` work item. Non-replayable errors (or those exceeding maximum retries) are marked `PERMANENTLY_FAILED` and escalated to `HIGH` priority.
+2. **Replay Triggering (`POST /dlq/{id}/replay`):**
+   - Atomically updates status to `REPLAYING` and increments `replayCount` *before* publishing to prevent duplicate inflight replays.
+   - Republishes the payload to the original topic (`failedOnTopic`) with `messageHeader.eventType = REPLAY` and tracking headers (`tcem.replayCount`, `tcem.eventType`).
+   - The composite idempotency key incorporates the event type, ensuring downstream services process the replayed event rather than discarding it as a duplicate.
+3. **Success Detection:** When downstream services process the replayed trade and emit progress events (e.g. `trade.accepted`, `trade.enriched`, `confirmation.generated`), `ReplayOutcomeService` transitions the DLQ entry to `REPLAY_SUCCEEDED` and marks its associated work item as `DONE`.
+4. **Failure Merging & Retry Limits:** If a replayed trade fails again, the new dead-letter event is automatically merged into the existing DLQ history rather than creating duplicate entries. Once `workitem.max-replay-attempts` (default: 3) is reached, the entry transitions to `PERMANENTLY_FAILED`.
 
-Through the gateway these are `/api/workitems/...` and `/api/dlq/...`.
+---
 
-## Contracts with other services
+## 5. Operations REST APIs (Port 8085)
 
-- `exception.classified` and `manual.review.required`: `ExceptionEvent` (`{messageHeader, exception}`), keyed by tradeId.
-- `confirmation.generated`: `ConfirmationEvent`; the trade id is taken from `confirmation.tradeId`, falling back to the key.
-- Replay outcome detection needs downstream producers to key by tradeId and keep the incoming `messageHeader` (at least `eventType`/`replayCount`) on their output. See `docs/kafka-topics.md`.
-- Approving a manual review only closes the item; generating the confirmation stays with validation-service, which can react to the DONE item on `workitem.linked`.
+The service exposes comprehensive REST management endpoints:
 
-## Configuration
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/workitems?status=&type=&ownerQueue=&priority=&tradeId=&page=&size=` | Paginated query of work items, ordered newest-first. |
+| `GET` | `/workitems/summary` | Summary counters by status, type, priority, and aged open items (>24h). |
+| `GET` | `/workitems/{id}` | Retrieves a single work-item document by ID. |
+| `POST` | `/workitems` | Creates a manual work item (`tradeId`, `type`, `title`, `description`, `ownerQueue`, `priority`). |
+| `PATCH` | `/workitems/{id}` | Updates ticket status, priority, owner queue, or operator notes. |
+| `POST` | `/workitems/{id}/review` | Four-Eyes Review: submits supervisor `decision` (`APPROVE` or `REJECT`) with rationale notes. |
+| `GET` | `/dlq?status=&page=&size=` | Paginated DLQ entries (`PENDING_REPLAY`, `REPLAYING`, `REPLAY_SUCCEEDED`, `PERMANENTLY_FAILED`). |
+| `GET` | `/dlq/{id}` | Retrieves dead-letter document by ID (automatically resolves merge aliases). |
+| `POST` | `/dlq/{id}/replay` | Initiates a controlled replay to the original Kafka topic. |
+| `GET` | `/actuator/health` | Spring Boot Actuator health check (verifies CouchDB connectivity). |
 
-| Property | Env var | Default |
-| --- | --- | --- |
-| `workitem.max-replay-attempts` | `WORKITEM_MAX_REPLAY_ATTEMPTS` | `3` |
-| `workitem.dlq-owner-queue` | `WORKITEM_DLQ_OWNER_QUEUE` | `TECHNOLOGY_SUPPORT` |
-| `workitem.low-confidence-threshold` | `WORKITEM_LOW_CONFIDENCE_THRESHOLD` | `0.6` |
-| `workitem.aged-hours` | `WORKITEM_AGED_HOURS` | `24` |
-| `couchdb.url` / `username` / `password` | `COUCHDB_URL` / `COUCHDB_USER` / `COUCHDB_PASSWORD` | `http://localhost:5984` / `admin` / `password` |
-| `spring.kafka.consumer.group-id` | `SPRING_KAFKA_CONSUMER_GROUP_ID` | `workitem-service-group` (plus `-exceptions`, `-manual-review`, `-progress` for the other listeners) |
+*Note: Through the Nginx API gateway, these endpoints are mapped under `/api/workitems/*` and `/api/dlq/*`.*
 
-## Run and test
+---
+
+## 6. Downstream & Peer Contracts
+
+- **`exception.classified` & `manual.review.required`:** Consumes `ExceptionEvent` keyed by `tradeId`.
+- **`confirmation.generated`:** Consumes `ConfirmationEvent`, logs `CONFIRMED` audit entry, and automatically resolves any remaining open work items for the trade.
+- **`workitem.linked`:** When an operator approves a manual review, publishes `reviewDecision = APPROVED` on `workitem.linked`. `validation-service` listens to this event, fetches the held trade from CouchDB, and automatically generates the confirmation.
+- **Replay Handshake:** Downstream microservices preserve the `messageHeader` (`eventType=REPLAY` and `replayCount`) when processing, allowing `ReplayOutcomeService` to accurately correlate outcomes.
+
+---
+
+## 7. Configuration Properties
+
+| Property | Default Value | Environment Variable | Description |
+|---|---|---|---|
+| Server Port | `8085` | `SERVER_PORT` | HTTP port for REST APIs. |
+| Kafka Bootstrap | `localhost:9092` | `SPRING_KAFKA_BOOTSTRAP_SERVERS` | Kafka broker connection string. |
+| Consumer Group | `workitem-service-group` | `SPRING_KAFKA_CONSUMER_GROUP_ID` | Base consumer group ID. |
+| CouchDB URL | `http://localhost:5984` | `COUCHDB_URL` | CouchDB endpoint. |
+| Max Replay Attempts | `3` | `WORKITEM_MAX_REPLAY_ATTEMPTS` | Maximum allowed DLQ replay retries before permanent failure. |
+| DLQ Owner Queue | `TECHNOLOGY_SUPPORT` | `WORKITEM_DLQ_OWNER_QUEUE` | Default queue for technical dead-letter tickets. |
+| Low-Confidence Threshold | `0.6` | `WORKITEM_LOW_CONFIDENCE_THRESHOLD` | Threshold triggering 4-eyes manual review routing. |
+| Aged Hours Threshold | `24` | `WORKITEM_AGED_HOURS` | Age in hours after which open tickets are flagged as aged. |
+
+---
+
+## 8. Automated Testing & Verification
 
 ```bash
-mvn -f services/pom.xml -pl common-lib,workitem-service -am verify   # no broker or CouchDB needed
-docker compose up -d kafka kafka-ui couchdb kafka-init couchdb-init
-docker compose up -d --build ingestion-service workitem-service
-curl -s localhost:8085/workitems/summary | jq
+mvn -f services/pom.xml -pl common-lib,workitem-service -am verify
 ```
-
-Tests run the real service graph (`TestWiring`) on `InMemoryCouchDbOperations` (a copy of ingestion-service's
-test double) with a mocked `KafkaOperations`.
-
-## Known limitations
-
-- An entry stays `REPLAYING` until a downstream success or failure is seen; there is no timeout yet.
-- Work items are linked per trade and type; systemic issues across trades (e.g. one missing template behind many trades) are not grouped.
-- `GET /workitems/summary` scans up to 1000 work items.
+* **Coverage:** 118 passing unit and integration tests covering work-item creation, rule mapping, review approvals, DLQ aliasing, idempotency keys, and REST controller operations.
+* **Hermetic Execution:** Utilizes `InMemoryCouchDbOperations` and mocked Kafka producers to run the entire service graph in memory without requiring external daemon dependencies.

@@ -85,6 +85,7 @@ export const WorkItemList: React.FC = () => {
             <option value="REFERENCE_DATA">REFERENCE_DATA</option>
             <option value="TECHNOLOGY_SUPPORT">TECHNOLOGY_SUPPORT</option>
             <option value="SPECIALIST_REVIEW">SPECIALIST_REVIEW</option>
+            <option value="RULES_OWNER">RULES_OWNER</option>
           </select>
 
           <select
@@ -287,6 +288,7 @@ export const WorkItemList: React.FC = () => {
                     <option value="REFERENCE_DATA">REFERENCE_DATA</option>
                     <option value="TECHNOLOGY_SUPPORT">TECHNOLOGY_SUPPORT</option>
                     <option value="SPECIALIST_REVIEW">SPECIALIST_REVIEW</option>
+                    <option value="RULES_OWNER">RULES_OWNER</option>
                   </select>
                 </div>
 

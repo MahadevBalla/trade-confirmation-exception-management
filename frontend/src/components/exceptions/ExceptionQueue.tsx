@@ -35,6 +35,8 @@ export const ExceptionQueue: React.FC = () => {
     { id: 'TEMPLATE_MAINTENANCE', label: 'Template Maintenance' },
     { id: 'REFERENCE_DATA', label: 'Reference Data' },
     { id: 'TECHNOLOGY_SUPPORT', label: 'Technology Support' },
+    { id: 'SPECIALIST_REVIEW', label: 'Specialist Review' },
+    { id: 'RULES_OWNER', label: 'Rules Owner' },
   ];
 
   return (

@@ -160,6 +160,38 @@ public class CouchDbClient implements CouchDbOperations {
         }
     }
 
+    @Override
+    public long countByView(String databaseName, String designDocument, String viewName) {
+        try {
+            String rawResponse = restClient.get()
+                    .uri("/{db}/_design/{design}/_view/{view}",
+                            databaseName, designDocument, viewName)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .body(String.class);
+
+            if (rawResponse == null) {
+                return 0L;
+            }
+
+            JsonNode root = objectMapper.readTree(rawResponse);
+            JsonNode rows = root.get("rows");
+
+            if (rows == null || !rows.isArray() || rows.isEmpty()) {
+                return 0L;
+            }
+
+            return rows.get(0).path("value").asLong(0L);
+
+        } catch (Exception ex) {
+            throw new CouchDbException(
+                    "Failed to count documents using CouchDB view '"
+                            + designDocument + "/" + viewName
+                            + "' in database '" + databaseName + "'",
+                    ex);
+        }
+    }
+
     private CouchDbResponse executePut(String databaseName, String docId, ObjectNode payload) {
         return restClient.put()
                 .uri("/{db}/{id}", databaseName, docId)

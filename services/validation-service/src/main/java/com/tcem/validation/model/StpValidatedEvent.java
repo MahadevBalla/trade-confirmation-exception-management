@@ -23,6 +23,9 @@ public class StpValidatedEvent {
     private int tradeVersion;
     private boolean stpPassed;
 
+    /** True when this event reports a CANCEL_TRADE, which is not evaluated by STP. */
+    private boolean cancelled;
+
     /**
      * Human-readable summary of all rule failures.
      * Null when STP passed.
@@ -58,6 +61,16 @@ public class StpValidatedEvent {
                             f.getAffectedFields()))
                     .collect(Collectors.toList());
         }
+        return event;
+    }
+
+    /** Outcome for a CANCEL_TRADE: no STP decision was made. */
+    public static StpValidatedEvent cancelled(MessageHeader header, String tradeId, int tradeVersion) {
+        StpValidatedEvent event = new StpValidatedEvent();
+        event.messageHeader = header;
+        event.tradeId = tradeId;
+        event.tradeVersion = tradeVersion;
+        event.cancelled = true;
         return event;
     }
 
@@ -102,6 +115,9 @@ public class StpValidatedEvent {
 
     public int getTradeVersion() { return tradeVersion; }
     public void setTradeVersion(int tradeVersion) { this.tradeVersion = tradeVersion; }
+
+    public boolean isCancelled() { return cancelled; }
+    public void setCancelled(boolean cancelled) { this.cancelled = cancelled; }
 
     public boolean isStpPassed() { return stpPassed; }
     public void setStpPassed(boolean stpPassed) { this.stpPassed = stpPassed; }

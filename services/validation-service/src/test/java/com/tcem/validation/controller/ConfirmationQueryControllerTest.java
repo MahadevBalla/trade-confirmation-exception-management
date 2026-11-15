@@ -1,3 +1,4 @@
+
 package com.tcem.validation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,13 +22,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * MockMvc slice tests for {@link ConfirmationQueryController}.
- * <p>
- * Uses {@code @WebMvcTest} to load only the web layer; all repository
- * dependencies are mocked via {@code @MockBean}.
- * </p>
- */
 @WebMvcTest(ConfirmationQueryController.class)
 class ConfirmationQueryControllerTest {
 
@@ -55,6 +49,19 @@ class ConfirmationQueryControllerTest {
     // -----------------------------------------------------------------------
     // GET /confirmations/{id}
     // -----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("GET /confirmations returns a paginated list")
+    void listConfirmations_returnsPage() throws Exception {
+        when(confirmationRepository.findPage(10, 0))
+                .thenReturn(List.of(buildDoc("CONF-PAGE", "TRD-PAGE", 1)));
+
+        mockMvc.perform(get("/confirmations?page=0&size=10")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(1))
+                .andExpect(jsonPath("$.content[0].confirmationId").value("CONF-PAGE"));
+    }
 
     @Test
     @DisplayName("GET /confirmations/{id}: found → 200 with body")
@@ -140,29 +147,28 @@ class ConfirmationQueryControllerTest {
     }
 
     // -----------------------------------------------------------------------
-    // GET /metrics/stp-rate
+    // GET /metrics/confirmation-count
     // -----------------------------------------------------------------------
 
     @Test
-    @DisplayName("GET /metrics/stp-rate: returns totalConfirmations count")
-    void getStpRate_returnsMetrics() throws Exception {
+    @DisplayName("GET /metrics/confirmation-count: returns totalConfirmations count")
+    void getConfirmationCount_returnsMetrics() throws Exception {
         when(confirmationRepository.countAll()).thenReturn(42L);
 
-        mockMvc.perform(get("/metrics/stp-rate")
+        mockMvc.perform(get("/metrics/confirmation-count")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalConfirmations").value(42));
     }
 
     @Test
-    @DisplayName("GET /metrics/stp-rate: zero confirmations → returns 0")
-    void getStpRate_zeroConfirmations_returnsZero() throws Exception {
+    @DisplayName("GET /metrics/confirmation-count: zero confirmations → returns 0")
+    void getConfirmationCount_zeroConfirmations_returnsZero() throws Exception {
         when(confirmationRepository.countAll()).thenReturn(0L);
 
-        mockMvc.perform(get("/metrics/stp-rate")
+        mockMvc.perform(get("/metrics/confirmation-count")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalConfirmations").value(0));
     }
 }
-

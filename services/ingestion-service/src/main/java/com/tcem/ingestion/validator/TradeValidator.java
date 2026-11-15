@@ -374,23 +374,21 @@ public class TradeValidator {
     // FX Option Economics Validation
     // -----------------------------------------------------------------------
 
+    /**
+     * Checks that the economic values present are well-formed (FR2). Absent values are not an error here:
+     * the trade continues through enrichment and fails STP on EconomicFieldsRule (FR5), which raises the
+     * MISSING_ECONOMIC_DATA exception.
+     */
     private void validateFxOptionEconomics(FxOptionEconomics economics, String tradeDateStr, ValidationResult result) {
         if (economics == null) {
-            result.addError(new ValidationError(
-                    "trade.fxOptionEconomics",
-                    "FX Option economics block is mandatory for FX_OPTION trades",
-                    ExceptionCategory.MISSING_ECONOMIC_DATA,
-                    ExceptionSubTheme.MISSING_NOTIONAL,
-                    "VAL_MISSING_FX_ECONOMICS"
-            ));
             return;
         }
 
         // 1. Strike Rate
-        if (economics.getStrike() == null || economics.getStrike().compareTo(BigDecimal.ZERO) <= 0) {
+        if (economics.getStrike() != null && economics.getStrike().compareTo(BigDecimal.ZERO) <= 0) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.strike",
-                    "Strike rate is mandatory and must be strictly positive",
+                    "Strike rate must be strictly positive",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_STRIKE,
                     "VAL_INVALID_STRIKE"
@@ -398,10 +396,10 @@ public class TradeValidator {
         }
 
         // 2. Notional Amount
-        if (economics.getNotionalAmount() == null || economics.getNotionalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (economics.getNotionalAmount() != null && economics.getNotionalAmount().compareTo(BigDecimal.ZERO) <= 0) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.notionalAmount",
-                    "Notional amount is mandatory and must be strictly positive",
+                    "Notional amount must be strictly positive",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_NOTIONAL,
                     "VAL_INVALID_NOTIONAL"
@@ -409,10 +407,10 @@ public class TradeValidator {
         }
 
         // 3. Notional Currency
-        if (isBlank(economics.getNotionalCurrency()) || economics.getNotionalCurrency().length() != 3) {
+        if (!isBlank(economics.getNotionalCurrency()) && economics.getNotionalCurrency().length() != 3) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.notionalCurrency",
-                    "Notional currency is mandatory and must be a 3-character ISO code",
+                    "Notional currency must be a 3-character ISO code",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_NOTIONAL,
                     "VAL_INVALID_NOTIONAL_CCY"
@@ -420,10 +418,10 @@ public class TradeValidator {
         }
 
         // 4. Option Type (CALL / PUT)
-        if (isBlank(economics.getOptionType()) || !VALID_OPTION_TYPES.contains(economics.getOptionType().toUpperCase())) {
+        if (!isBlank(economics.getOptionType()) && !VALID_OPTION_TYPES.contains(economics.getOptionType().toUpperCase())) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.optionType",
-                    "Option type is mandatory and must be CALL or PUT (found: '" + economics.getOptionType() + "')",
+                    "Option type must be CALL or PUT (found: '" + economics.getOptionType() + "')",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_OPTION_TYPE,
                     "VAL_INVALID_OPTION_TYPE"
@@ -431,10 +429,10 @@ public class TradeValidator {
         }
 
         // 5. Buy / Sell
-        if (isBlank(economics.getBuySell()) || !VALID_BUY_SELL.contains(economics.getBuySell().toUpperCase())) {
+        if (!isBlank(economics.getBuySell()) && !VALID_BUY_SELL.contains(economics.getBuySell().toUpperCase())) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.buySell",
-                    "Buy/Sell indicator is mandatory and must be BUY or SELL",
+                    "Buy/Sell indicator must be BUY or SELL",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_OPTION_TYPE,
                     "VAL_INVALID_BUY_SELL"
@@ -442,10 +440,10 @@ public class TradeValidator {
         }
 
         // 6. Underlier Currency Pair
-        if (isBlank(economics.getUnderlier()) || !economics.getUnderlier().contains("/")) {
+        if (!isBlank(economics.getUnderlier()) && !economics.getUnderlier().contains("/")) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.underlier",
-                    "Underlier currency pair is mandatory (e.g., EUR/USD)",
+                    "Underlier must be a currency pair (e.g., EUR/USD)",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_UNDERLIER,
                     "VAL_INVALID_UNDERLIER"
@@ -453,10 +451,10 @@ public class TradeValidator {
         }
 
         // 7. Premium Amount
-        if (economics.getPremiumAmount() == null || economics.getPremiumAmount().compareTo(BigDecimal.ZERO) < 0) {
+        if (economics.getPremiumAmount() != null && economics.getPremiumAmount().compareTo(BigDecimal.ZERO) < 0) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.premiumAmount",
-                    "Premium amount is mandatory and must be non-negative",
+                    "Premium amount must be non-negative",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_PREMIUM,
                     "VAL_INVALID_PREMIUM"
@@ -464,10 +462,10 @@ public class TradeValidator {
         }
 
         // 8. Premium Currency
-        if (isBlank(economics.getPremiumCurrency()) || economics.getPremiumCurrency().length() != 3) {
+        if (!isBlank(economics.getPremiumCurrency()) && economics.getPremiumCurrency().length() != 3) {
             result.addError(new ValidationError(
                     "trade.fxOptionEconomics.premiumCurrency",
-                    "Premium currency is mandatory and must be a 3-character ISO code",
+                    "Premium currency must be a 3-character ISO code",
                     ExceptionCategory.MISSING_ECONOMIC_DATA,
                     ExceptionSubTheme.MISSING_PREMIUM_CURRENCY,
                     "VAL_INVALID_PREMIUM_CCY"

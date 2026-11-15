@@ -1,25 +1,28 @@
-# TCEM Developer Tooling Scripts (`scripts/`)
+# TCEM Platform — Automation & Developer Tooling Scripts (`scripts/`)
 
-This directory provides CLI helper scripts for local development, environment provisioning, and automated testing.
+> **Environment Provisioning, Synthetic Seeding, Smoke Testing & NFR Performance Benchmarking Suite**
 
 ---
 
-## Script Inventory
+## 1. Script Inventory
 
 | Script | Command | Purpose |
 |---|---|---|
-| **Smoke Test** | `./scripts/smoke-test.sh` | Verifies health of all active services, Actuator endpoints, and gateway routes. Use `--all` to assert all 5 microservices are UP. |
+| **Smoke Test** | `./scripts/smoke-test.sh` | Verifies health of active services, Actuator endpoints, and gateway routes. Use `--all` to assert all 5 microservices are UP. |
+| **Pipeline Test** | `./scripts/pipeline-test.sh` | End-to-end checks against a running full stack: confirmation, missing economics, manual review approval, DLQ replay, and cancellation. |
 | **Kafka Init** | `./scripts/init-kafka.sh` | Idempotently provisions all 10 Kafka topics with 3 partitions and replication factor 1. |
-| **CouchDB Init** | `./scripts/init-couchdb.sh` | Idempotently creates system and application CouchDB databases with Basic Auth. |
-| **Dev Up** | `./scripts/dev-up.sh` | Boots infra, initializes Kafka & CouchDB, builds & starts services, and runs smoke checks. Supports `--infra-only` and `--all`. |
-| **Dev Down** | `./scripts/dev-down.sh` | Stops containers. Pass `--reset` (or `-v`) to wipe volume data. |
+| **CouchDB Init** | `./scripts/init-couchdb.sh` | Idempotently creates system and application CouchDB databases with Basic Auth credentials. |
+| **Dev Up** | `./scripts/dev-up.sh` | Boots infrastructure, initializes Kafka & CouchDB, builds & starts services, and runs smoke checks (`--infra-only` or `--all`). |
+| **Dev Down** | `./scripts/dev-down.sh` | Stops containers. Pass `--reset` (or `-v`) to wipe persistent volume storage. |
 | **Seed Data** | `./scripts/seed-data.sh` | Triggers synthetic trade generation or loads the bundled 500-trade seed dataset (`sample-trades.json`). Pass `--generate <N>` to generate N trades. |
+| **NFR Benchmark** | `./scripts/test-nfr.sh` | Automated benchmark verifying end-to-end STP latency ($\le 10$s target), daily volume rate (1M/day), and peak hourly burst (100k/hr). |
+| **Benchmark Suite** | `python3 scripts/benchmark_suite.py` | Multi-sample latency statistical profiler (Min, p50, Mean, p95, Max) and multi-scenario high-volume load generator. |
 
 ---
 
-## Quick Usage Examples
+## 2. Quick Usage Examples
 
-### 1. Daily Development (Infra Only + Local IDE)
+### 1. Daily Development (Infrastructure Only + Local IDE)
 ```bash
 ./scripts/dev-up.sh --infra-only
 ```
@@ -45,5 +48,5 @@ Starts infra, init containers, `ingestion-service`, and `frontend` (Nginx Gatewa
 ### 5. Tear Down & Clean
 ```bash
 ./scripts/dev-down.sh          # Stops containers, preserves data
-./scripts/dev-down.sh --reset  # Stops containers, wipes CouchDB volumes
+./scripts/dev-down.sh --reset  # Stops containers, wipes CouchDB and Kafka volumes
 ```

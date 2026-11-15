@@ -112,12 +112,15 @@ public class ExceptionCouchDbRepository {
         return couchDb.find(properties.getExceptionsDatabase(), query, ExceptionDocument.class);
     }
 
-    /**
+        /**
      * Returns total count of exception documents (used for metrics).
      */
     public int countAll() {
-        List<ExceptionDocument> all = findByStatus(null, 1000, 0);
-        return all.size();
+        return Math.toIntExact(couchDb.countByView(
+                properties.getExceptionsDatabase(),
+                "exception_counts",
+                "total"
+        ));
     }
 
     /**

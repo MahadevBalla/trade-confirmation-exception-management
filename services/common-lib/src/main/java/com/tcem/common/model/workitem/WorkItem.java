@@ -66,4 +66,7 @@ public class WorkItem {
 
     /** UTC timestamp of resolution. Null while open. */
     private Instant resolvedAt;
+
+    /** Manual-review outcome: {@code APPROVED} or {@code REJECTED}. Null when no review decision was made. */
+    private String reviewDecision;
 }

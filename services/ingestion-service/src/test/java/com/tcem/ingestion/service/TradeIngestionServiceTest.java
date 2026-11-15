@@ -148,8 +148,10 @@ class TradeIngestionServiceTest {
 
     @Test
     @DisplayName("Schema invalid trade is saved as SCHEMA_INVALID, records idempotency, and dispatches ExceptionEvent")
-    void testProcessSchemaInvalidTrade() {
-        String payload = generator.generateTradeJson(TradeScenarioType.MISSING_ECONOMIC_STRIKE, 3);
+    void testProcessSchemaInvalidTrade() throws Exception {
+        com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(generator.generateTradeJson(TradeScenarioType.VALID_STANDARD_STP, 3));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) root.path("trade").path("fxOptionEconomics")).put("strike", -1);
+        String payload = objectMapper.writeValueAsString(root);
 
         when(couchDb.getDocument(eq("trades"), startsWith("idempotency:"), eq(IdempotencyDocument.class)))
                 .thenReturn(Optional.empty());
@@ -225,5 +227,42 @@ class TradeIngestionServiceTest {
 
         assertThat(result.isAccepted()).isTrue();
         verify(kafkaOperations).send(eq(TopicNames.TRADE_ACCEPTED), eq(result.getTradeId()), any());
+    }
+
+    @Test
+    @DisplayName("A second replay of the same message is reprocessed, not suppressed as a duplicate")
+    void testReplayBypassesDuplicateSuppression() throws Exception {
+        com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode)
+                objectMapper.readTree(generator.generateTradeJson(TradeScenarioType.VALID_STANDARD_STP, 3));
+        com.fasterxml.jackson.databind.node.ObjectNode header =
+                (com.fasterxml.jackson.databind.node.ObjectNode) root.get("messageHeader");
+        header.put("eventType", "REPLAY");
+        header.put("replayCount", 2);
+
+        org.mockito.Mockito.lenient().when(couchDb.getDocument(eq("trades"), startsWith("idempotency:"), eq(IdempotencyDocument.class)))
+                .thenReturn(Optional.of(new IdempotencyDocument()));
+        when(kafkaOperations.send(eq(TopicNames.TRADE_ACCEPTED), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(mockSendResult(TopicNames.TRADE_ACCEPTED)));
+
+        service.processRawTrade("TRD-REPLAY-1", objectMapper.writeValueAsString(root));
+
+        verify(kafkaOperations).send(eq(TopicNames.TRADE_ACCEPTED), any(), any());
+        verify(kafkaOperations, never()).send(eq(TopicNames.EXCEPTION_CREATED), any(), any());
+    }
+
+    @Test
+    @DisplayName("A trade with an absent economic field is accepted, so STP can raise the exception (FR5)")
+    void testMissingEconomicsAreAcceptedForStp() {
+        String payload = generator.generateTradeJson(TradeScenarioType.MISSING_ECONOMIC_STRIKE, 3);
+
+        when(couchDb.getDocument(eq("trades"), startsWith("idempotency:"), eq(IdempotencyDocument.class)))
+                .thenReturn(Optional.empty());
+        when(kafkaOperations.send(eq(TopicNames.TRADE_ACCEPTED), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(mockSendResult(TopicNames.TRADE_ACCEPTED)));
+
+        service.processRawTrade("TRD-MISSING-STRIKE", payload);
+
+        verify(kafkaOperations).send(eq(TopicNames.TRADE_ACCEPTED), any(), any());
+        verify(kafkaOperations, never()).send(eq(TopicNames.EXCEPTION_CREATED), any(), any());
     }
 }

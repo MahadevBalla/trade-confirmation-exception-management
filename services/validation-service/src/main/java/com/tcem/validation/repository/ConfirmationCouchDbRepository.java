@@ -92,12 +92,26 @@ public class ConfirmationCouchDbRepository {
     }
 
     /**
+     * Returns a page of persisted confirmations across all trades.
+     */
+    public List<ConfirmationDocument> findPage(int limit, int skip) {
+        Map<String, Object> selector = new HashMap<>();
+        selector.put("docType", "CONFIRMATION");
+        FindQueryRequest query = new FindQueryRequest(selector, limit, skip);
+        return couchDb.find(database, query, ConfirmationDocument.class).stream()
+                .sorted(java.util.Comparator.comparing(
+                        ConfirmationDocument::getGeneratedAt,
+                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
+                .toList();
+    }
+
+    /**
      * Counts total confirmations — used by metrics endpoint.
      */
     public long countAll() {
         Map<String, Object> selector = new HashMap<>();
         selector.put("docType", "CONFIRMATION");
-        FindQueryRequest query = new FindQueryRequest(selector);
+        FindQueryRequest query = new FindQueryRequest(selector, 10000, null);
         return couchDb.find(database, query, ConfirmationDocument.class).size();
     }
 }

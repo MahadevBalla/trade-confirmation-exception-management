@@ -17,6 +17,7 @@ import com.tcem.workitem.service.ExceptionLinkingService;
 import com.tcem.workitem.service.ManualReviewService;
 import com.tcem.workitem.service.ReplayOutcomeService;
 import com.tcem.workitem.service.ReplayService;
+import com.tcem.workitem.service.TradeCancellationService;
 import com.tcem.workitem.service.WorkItemService;
 import org.springframework.kafka.core.KafkaOperations;
 
@@ -43,6 +44,7 @@ public final class TestWiring {
     public final ExceptionLinkingService exceptionLinkingService;
     public final ManualReviewService manualReviewService;
     public final ConfirmationService confirmationService;
+    public final TradeCancellationService tradeCancellationService;
 
     public TestWiring(KafkaOperations<String, String> kafka) {
         DlqTestSupport.stubSendsSucceed(kafka);
@@ -54,6 +56,7 @@ public final class TestWiring {
                 auditService, properties);
         exceptionLinkingService = new ExceptionLinkingService(objectMapper, workItemService, auditService, properties);
         manualReviewService = new ManualReviewService(workItemService, new DeadLetterPublisher(kafka, objectMapper), objectMapper);
+        tradeCancellationService = new TradeCancellationService(objectMapper, workItemService, auditService);
         confirmationService = new ConfirmationService(objectMapper, workItemService, auditService);
     }
 }

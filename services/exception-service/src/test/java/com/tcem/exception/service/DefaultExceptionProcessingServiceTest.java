@@ -305,5 +305,33 @@ class DefaultExceptionProcessingServiceTest {
         CompletableFuture<SendResult<String, String>> future = CompletableFuture.completedFuture(sr);
         when(kafkaOperations.send(eq(topic), anyString(), anyString())).thenReturn(future);
     }
-}
 
+    @Test
+    @DisplayName("Replay identity (eventType, replayCount) survives onto exception.classified")
+    void replay_keepsReplayIdentityOnOutboundHeader() throws Exception {
+        stubKafkaSend(TopicNames.EXCEPTION_CLASSIFIED);
+        ExceptionRecord rec = buildRecord("TRD-RPL", ExceptionCategory.TEMPLATE_ISSUE,
+                ExceptionSubTheme.NO_MATCHING_TEMPLATE, EventType.REPLAY);
+        ExceptionEvent event = buildEvent(rec, EventType.REPLAY);
+        event.getMessageHeader().setReplayCount(2);
+
+        service.process("TRD-RPL", objectMapper.writeValueAsString(event));
+
+        verify(kafkaOperations).send(eq(TopicNames.EXCEPTION_CLASSIFIED), eq("TRD-RPL"),
+                argThat(json -> json.contains("\"eventType\":\"REPLAY\"") && json.contains("\"replayCount\":2")));
+    }
+
+    @Test
+    @DisplayName("The sub-theme confirmed by the rules replaces the inbound one on the routed event")
+    void confirmedSubTheme_isCopiedOntoOutboundRecord() throws Exception {
+        when(couchDb.getDocument(eq("exceptions"), startsWith("idempotency:"), eq(IdempotencyDocument.class)))
+                .thenReturn(Optional.empty());
+        stubKafkaSend(TopicNames.EXCEPTION_CLASSIFIED);
+
+        // TemplateIssueRule confirms a null sub-theme as UNKNOWN (confidence 0.8).
+        service.process("TRD-REF", buildValidPayload("TRD-REF", ExceptionCategory.TEMPLATE_ISSUE, null, EventType.NEW_TRADE));
+
+        verify(kafkaOperations).send(eq(TopicNames.EXCEPTION_CLASSIFIED), eq("TRD-REF"),
+                argThat(json -> json.contains("\"subTheme\":\"UNKNOWN\"")));
+    }
+}

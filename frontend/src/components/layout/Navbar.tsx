@@ -19,6 +19,9 @@ export const Navbar: React.FC = () => {
     setIsStreaming,
     triggerSyntheticScenario,
     metrics,
+    dataMode,
+    setDataMode,
+    connection,
   } = useApp();
 
   const [showScenarioMenu, setShowScenarioMenu] = useState(false);
@@ -49,15 +52,19 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Kafka Broker Live Pill */}
-        <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-xs">
+        {/* Data source and connection state */}
+        <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-xs">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${dataMode === 'demo' || connection.status === 'connected' ? 'bg-emerald-500' : 'bg-amber-400'}`}></span>
           </span>
-          <span className="text-slate-300 font-mono">Kafka: Online</span>
+          <span className="text-slate-300 font-mono">{dataMode === 'live' ? `API: ${connection.status}` : 'Demo data'}</span>
           <span className="text-slate-500">•</span>
-          <span className="text-slate-400">CouchDB: Connected</span>
+          <button
+            onClick={() => setDataMode(dataMode === 'live' ? 'demo' : 'live')}
+            className="text-indigo-300 hover:text-indigo-200 font-semibold"
+          >
+            Switch to {dataMode === 'live' ? 'demo' : 'live'}
+          </button>
         </div>
       </div>
 
@@ -71,7 +78,7 @@ export const Navbar: React.FC = () => {
             title="Simulate synthetic trade message batch through Kafka"
           >
             <Sparkles size={14} />
-            <span className="hidden sm:inline">Ingest Synthetic Batch</span>
+            <span className="hidden sm:inline">{dataMode === 'live' ? 'Publish Scenario' : 'Ingest Synthetic Batch'}</span>
             <ChevronDown size={14} className="hidden sm:block" />
           </button>
 
@@ -81,7 +88,7 @@ export const Navbar: React.FC = () => {
               onMouseLeave={() => setShowScenarioMenu(false)}
             >
               <div className="px-3 py-1.5 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Simulate Kafka Inbound Event
+                {dataMode === 'live' ? 'Publish to Kafka' : 'Simulate Kafka Inbound Event'}
               </div>
               {scenarios.map((sc) => (
                 <button
@@ -103,12 +110,15 @@ export const Navbar: React.FC = () => {
         {/* Live Auto-Stream Toggle */}
         <button
           onClick={() => setIsStreaming(!isStreaming)}
+          disabled={dataMode === 'live'}
           className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
-            isStreaming
+            dataMode === 'live'
+              ? 'cursor-not-allowed border-slate-800 bg-slate-900 text-slate-600'
+              : isStreaming
               ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
               : 'bg-slate-800 hover:bg-slate-700/80 border-slate-700 text-slate-300'
           }`}
-          title={isStreaming ? 'Stop streaming simulator' : 'Start auto-generating synthetic trade events'}
+          title={dataMode === 'live' ? 'Automatic simulation is available only in demo mode' : isStreaming ? 'Stop streaming simulator' : 'Start auto-generating synthetic trade events'}
         >
           {isStreaming ? (
             <>
@@ -118,7 +128,7 @@ export const Navbar: React.FC = () => {
           ) : (
             <>
               <Play size={12} className="fill-current text-emerald-400" />
-              <span className="hidden sm:inline">Auto Stream</span>
+              <span className="hidden sm:inline">{dataMode === 'live' ? 'Live Polling' : 'Auto Stream'}</span>
             </>
           )}
         </button>

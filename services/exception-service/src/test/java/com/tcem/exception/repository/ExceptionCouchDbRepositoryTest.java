@@ -133,6 +133,18 @@ class ExceptionCouchDbRepositoryTest {
     }
 
     @Test
+    void countAll_returnsCorrectTotal_whenExceptionsExceedOneThousand() {
+        for (int i = 1; i <= 1500; i++) {
+            repository.save(ExceptionDocument.builder()
+                    .exceptionId("EXC-" + i)
+                    .tradeId("TRD-" + i)
+                    .build());
+        }
+
+        assertThat(repository.countAll()).isEqualTo(1500);
+    }
+
+    @Test
     void countByStatus_returnsFilteredCount() {
         repository.save(ExceptionDocument.builder().exceptionId("EXC-30001").tradeId("T1").status("OPEN").build());
         repository.save(ExceptionDocument.builder().exceptionId("EXC-30002").tradeId("T2").status("OPEN").build());

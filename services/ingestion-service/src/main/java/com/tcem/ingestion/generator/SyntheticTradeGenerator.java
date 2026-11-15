@@ -178,6 +178,7 @@ public class SyntheticTradeGenerator {
         economics.put("underlier", underlier);
         if (premium > 0) {
             economics.put("premiumAmount", premium);
+            economics.put("premiumPaymentDate", effectiveDate.toString());
         }
         economics.put("premiumCurrency", "USD");
         economics.put("settlementType", "CASH");

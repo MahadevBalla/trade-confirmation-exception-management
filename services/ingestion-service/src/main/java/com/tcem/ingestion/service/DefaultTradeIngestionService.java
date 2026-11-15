@@ -145,11 +145,15 @@ public class DefaultTradeIngestionService implements TradeIngestionService {
         // -------------------------------------------------------------------
         // 4. Idempotency Check (Duplicate suppression)
         // -------------------------------------------------------------------
+        // Every replay attempt of a message shares one key, so replays bypass the guard. Without this, attempt 2
+        // emits a duplicate exception that still carries the REPLAY marker and is misread as a successful replay.
         boolean isDuplicate = false;
-        try {
-            isDuplicate = idempotencyRepository.isProcessed(idKey);
-        } catch (Exception ex) {
-            log.warn("Failed to check idempotency in CouchDB for key '{}': {}", idKey.toStorageKey(), ex.getMessage());
+        if (eventType != EventType.REPLAY) {
+            try {
+                isDuplicate = idempotencyRepository.isProcessed(idKey);
+            } catch (Exception ex) {
+                log.warn("Failed to check idempotency in CouchDB for key '{}': {}", idKey.toStorageKey(), ex.getMessage());
+            }
         }
 
         if (isDuplicate) {

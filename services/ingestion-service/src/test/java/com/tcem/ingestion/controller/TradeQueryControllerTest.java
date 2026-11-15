@@ -144,6 +144,25 @@ class TradeQueryControllerTest {
     }
 
     @Test
+    @DisplayName("GET /audit returns a paginated list of audit events")
+    void testListAudit() throws Exception {
+        AuditDocument audit = AuditDocument.builder()
+                .tradeId("TRD-10001")
+                .stage("SCHEMA_VALIDATION")
+                .status(ProcessingStatus.ACCEPTED)
+                .timestamp(Instant.now())
+                .build();
+        when(couchDb.find(eq("audit-events"), any(FindQueryRequest.class), eq(AuditDocument.class)))
+                .thenReturn(List.of(audit));
+
+        mockMvc.perform(get("/audit?page=0&size=10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(1))
+                .andExpect(jsonPath("$.content[0].tradeId").value("TRD-10001"))
+                .andExpect(jsonPath("$.content[0].stage").value("SCHEMA_VALIDATION"));
+    }
+
+    @Test
     @DisplayName("GET /trades/metrics/summary returns current metrics")
     void testGetMetricsSummary() throws Exception {
         metricsService.recordReceived();

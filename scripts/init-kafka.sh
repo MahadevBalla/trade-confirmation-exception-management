@@ -5,7 +5,8 @@
 # ==============================================================================
 set -euo pipefail
 
-BOOTSTRAP_SERVER="${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}"
+# Address of the broker as seen from INSIDE the kafka container (commands run via docker compose exec).
+BOOTSTRAP_SERVER="${INIT_KAFKA_BOOTSTRAP_SERVER:-localhost:9092}"
 TOPICS=(
   "trade.raw"
   "trade.accepted"
@@ -22,7 +23,7 @@ TOPICS=(
 echo "=== [init-kafka] Checking Kafka broker at $BOOTSTRAP_SERVER ==="
 
 # Check broker connectivity via docker compose exec
-if ! docker compose exec -T kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1; then
+if ! docker compose exec -T kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server "$BOOTSTRAP_SERVER" > /dev/null 2>&1; then
   echo "Error: Kafka broker is not reachable. Ensure Kafka is running: docker compose up -d kafka"
   exit 1
 fi
@@ -31,7 +32,7 @@ echo "=== [init-kafka] Creating topics (3 partitions, replication factor 1) ==="
 for topic in "${TOPICS[@]}"; do
   echo -n "  Provisioning topic: $topic ... "
   docker compose exec -T kafka /opt/kafka/bin/kafka-topics.sh \
-    --bootstrap-server localhost:9092 \
+    --bootstrap-server "$BOOTSTRAP_SERVER" \
     --create \
     --if-not-exists \
     --topic "$topic" \
@@ -42,4 +43,4 @@ done
 
 echo ""
 echo "=== [init-kafka] Verified Topics on Broker ==="
-docker compose exec -T kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+docker compose exec -T kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP_SERVER" --list

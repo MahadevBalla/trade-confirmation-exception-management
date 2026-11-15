@@ -469,6 +469,7 @@ export const INITIAL_EXCEPTIONS: ExceptionRecord[] = [
   },
   {
     exceptionId: 'EXC-30004',
+    linkedWorkItemId: 'WI-40006',
     tradeId: 'TRD-10005',
     tradeVersion: 1,
     sourceMessageId: 'MSG-000005',
@@ -583,6 +584,19 @@ export const INITIAL_WORK_ITEMS: WorkItem[] = [
     priority: 'CRITICAL',
     createdAt: '2026-01-15T10:38:15Z',
     updatedAt: '2026-01-15T10:38:15Z',
+  },
+  {
+    workItemId: 'WI-40006',
+    linkedExceptionId: 'EXC-30004',
+    tradeId: 'TRD-10005',
+    type: 'MANUAL_REVIEW',
+    title: 'Manual Review of Business Rule Failure for TRD-10005',
+    description: 'Trade failed a business rule and was routed to the manual review queue for an operations decision.',
+    status: 'OPEN',
+    ownerQueue: 'OPERATIONS_REVIEW',
+    priority: 'HIGH',
+    createdAt: '2026-01-15T10:36:00Z',
+    updatedAt: '2026-01-15T10:36:00Z',
   },
   {
     workItemId: 'WI-40005',

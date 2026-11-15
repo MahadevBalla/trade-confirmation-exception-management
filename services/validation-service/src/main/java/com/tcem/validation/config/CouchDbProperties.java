@@ -15,6 +15,7 @@ public class CouchDbProperties {
     private String username = "admin";
     private String password = "password";
     private String confirmationsDatabase = "confirmations";
+    private String idempotencyDatabase = "validation-idempotency";
     private boolean autoCreateDatabases = true;
     private int connectionTimeoutMs = 3000;
     private int readTimeoutMs = 5000;
@@ -32,6 +33,9 @@ public class CouchDbProperties {
 
     public String getConfirmationsDatabase() { return confirmationsDatabase; }
     public void setConfirmationsDatabase(String confirmationsDatabase) { this.confirmationsDatabase = confirmationsDatabase; }
+
+    public String getIdempotencyDatabase() { return idempotencyDatabase; }
+    public void setIdempotencyDatabase(String idempotencyDatabase) { this.idempotencyDatabase = idempotencyDatabase; }
 
     public boolean isAutoCreateDatabases() { return autoCreateDatabases; }
     public void setAutoCreateDatabases(boolean autoCreateDatabases) { this.autoCreateDatabases = autoCreateDatabases; }

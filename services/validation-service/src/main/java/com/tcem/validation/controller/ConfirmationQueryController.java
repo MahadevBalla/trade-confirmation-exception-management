@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
@@ -26,8 +27,8 @@ import java.util.Optional;
  *       versions for a trade, ordered newest-first.</li>
  *   <li>{@code GET /trades/{tradeId}/confirmation} — fetch the latest (highest
  *       version) confirmation for a trade.</li>
- *   <li>{@code GET /metrics/stp-rate} — simple STP throughput snapshot: total
- *       confirmations persisted.</li>
+ *   <li>{@code GET /metrics/confirmation-count} — total number of persisted
+ *       confirmation documents.</li>
  * </ul>
  *
  * <h3>Error handling</h3>
@@ -45,6 +46,19 @@ public class ConfirmationQueryController {
 
     public ConfirmationQueryController(ConfirmationCouchDbRepository confirmationRepository) {
         this.confirmationRepository = confirmationRepository;
+    }
+
+    /**
+     * Retrieves a page of confirmations across all trades.
+     */
+    @GetMapping("/confirmations")
+    public ResponseEntity<Map<String, Object>> listConfirmations(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "100") int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 1000);
+        List<ConfirmationDocument> content = confirmationRepository.findPage(safeSize, safePage * safeSize);
+        return ResponseEntity.ok(Map.of("content", content, "page", safePage, "size", safeSize, "count", content.size()));
     }
 
     /**
@@ -110,9 +124,9 @@ public class ConfirmationQueryController {
      *
      * @return {@code 200 OK} with a metrics map
      */
-    @GetMapping("/metrics/stp-rate")
-    public ResponseEntity<Map<String, Object>> getStpRate() {
-        log.debug("GET /metrics/stp-rate");
+    @GetMapping("/metrics/confirmation-count")
+    public ResponseEntity<Map<String, Object>> getConfirmationCount() {
+        log.debug("GET /metrics/confirmation-count");
         long total = confirmationRepository.countAll();
         Map<String, Object> metrics = new LinkedHashMap<>();
         metrics.put("totalConfirmations", total);
@@ -120,4 +134,3 @@ public class ConfirmationQueryController {
         return ResponseEntity.ok(metrics);
     }
 }
-

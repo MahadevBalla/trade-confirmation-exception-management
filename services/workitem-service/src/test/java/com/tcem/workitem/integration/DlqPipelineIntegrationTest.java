@@ -38,7 +38,7 @@ class DlqPipelineIntegrationTest {
         TestWiring wiring = new TestWiring(kafka);
         DeadLetterConsumer dlqConsumer = new DeadLetterConsumer(wiring.dlqService);
         PipelineProgressConsumer progressConsumer =
-                new PipelineProgressConsumer(wiring.replayOutcomeService, wiring.confirmationService);
+                new PipelineProgressConsumer(wiring.replayOutcomeService, wiring.confirmationService, wiring.tradeCancellationService);
 
         dlqConsumer.onMessage(new ConsumerRecord<>(TopicNames.DEADLETTER_TRADE, 0, 0L, "TRD-000001",
                 DlqTestSupport.json(DlqTestSupport.deadLetter("DLQ-INT-1", true, 0))));

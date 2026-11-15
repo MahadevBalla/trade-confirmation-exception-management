@@ -7,13 +7,15 @@
 // Constants & Taxonomy
 // ---------------------------------------------------------------------------
 
-export type ProductType = 'FX_OPTION' | 'EQUITY_SWAP' | 'IR_SWAP';
+export type ProductType = 'FX_OPTION' | 'EQUITY_SWAP' | 'IR_SWAP' | 'IRS' | 'FX_FORWARD' | 'UNKNOWN';
 
 export type EventType =
   | 'NEW_TRADE'
   | 'AMEND_TRADE'
   | 'CANCEL_TRADE'
   | 'REPLAY'
+  | 'NOVATION'
+  | 'COMPRESSION'
   | 'HEARTBEAT';
 
 export type ProcessingStatus =
@@ -130,6 +132,9 @@ export interface Party {
   partyRole: 'BANK' | 'COUNTERPARTY' | 'BROKER' | 'CLEARING_HOUSE';
   partyId: string;
   partyName?: string;
+  legalEntityName?: string;
+  lei?: string;
+  country?: string;
 }
 
 export interface FxOptionEconomics {
@@ -180,6 +185,7 @@ export interface Trade {
   nonEconomicTerms?: NonEconomicTerms;
   enrichmentMetadata?: ReferenceDataEnrichment;
   status: ProcessingStatus;
+  receivedAt?: string;
 }
 
 export interface TradeEvent {
@@ -270,6 +276,15 @@ export interface AuditEvent {
   detail: string;
   actorUserId?: string;
   isReplay: boolean;
+  stage?: string;
+}
+
+export type DataMode = 'demo' | 'live';
+
+export interface ConnectionState {
+  status: 'connecting' | 'connected' | 'partial' | 'offline';
+  unavailable: string[];
+  lastUpdated: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -277,7 +292,10 @@ export interface AuditEvent {
 // ---------------------------------------------------------------------------
 
 export interface DeadLetterEvent {
-  dlqId: string;
+  id?: string;
+  dlqId?: string;
+  dlqStatus?: string;
+  status?: 'PENDING_REPLAY' | 'REPLAYING' | 'REPLAY_SUCCEEDED' | 'PERMANENTLY_FAILED';
   messageHeader: MessageHeader;
   originalMessageHeader: MessageHeader;
   originalPayload: string;
@@ -289,7 +307,6 @@ export interface DeadLetterEvent {
   failedAt: string;
   replayCount: number;
   replayable: boolean;
-  status: 'PENDING_REPLAY' | 'REPLAYING' | 'REPLAY_SUCCEEDED' | 'PERMANENTLY_FAILED';
   tradeId: string;
 }
 

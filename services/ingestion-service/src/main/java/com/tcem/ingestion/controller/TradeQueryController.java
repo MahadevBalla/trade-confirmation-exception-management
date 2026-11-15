@@ -127,6 +127,19 @@ public class TradeQueryController {
     }
 
     /**
+     * Returns a page of recent audit events across all trades.
+     */
+    @GetMapping("/audit")
+    public ResponseEntity<Map<String, Object>> listAudit(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "100") int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 1000);
+        List<AuditDocument> events = auditRepository.findRecent(safeSize, safePage * safeSize);
+        return ResponseEntity.ok(Map.of("content", events, "page", safePage, "size", safeSize, "count", events.size()));
+    }
+
+    /**
      * Returns ingestion throughput and validation breakdown summary.
      */
     @GetMapping("/trades/metrics/summary")

@@ -193,6 +193,16 @@ public class WorkItemService {
                 .toList();
     }
 
+    /** Cancels every open work item of a trade, e.g. once the trade itself has been cancelled. */
+    public List<WorkItemDocument> cancelOpenForTrade(String tradeId, String note) {
+        return repository.findOpenByTrade(tradeId).stream()
+                .map(item -> {
+                    applyStatus(item, "CANCELLED", note);
+                    return saveChange(item, "WORKITEM_CANCELLED", note);
+                })
+                .toList();
+    }
+
     /** Raises an item to HIGH (never lowers CRITICAL) and records why. */
     public Optional<WorkItemDocument> escalate(String workItemId, String reason) {
         return repository.findById(workItemId).map(item -> {

@@ -11,6 +11,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Computes a deterministic SHA-256 fingerprint over the <em>confirmable</em> fields
@@ -33,7 +35,10 @@ import java.util.TreeMap;
  * <ol>
  *   <li>Serialise the full trade to a {@link JsonNode}.</li>
  *   <li>For each field path in {@link ConfirmableFieldRegistry#getConfirmableFields(ProductType)},
- *       extract the value (as a string) from the JSON tree.</li>
+ *       extract the value (as a string) from the JSON tree. Paths support plain dot
+ *       notation ({@code fxOptionEconomics.strike}) and array selectors
+ *       ({@code parties[COUNTERPARTY].partyId} or the explicit form
+ *       {@code parties[partyRole=COUNTERPARTY].partyId}).</li>
  *   <li>Sort field paths lexicographically (deterministic ordering).</li>
  *   <li>Concatenate as {@code "field1=value1|field2=value2|…"}.</li>
  *   <li>SHA-256 the UTF-8 bytes; return the hex string.</li>
@@ -104,24 +109,71 @@ public final class ConfirmationFingerprint {
     // -----------------------------------------------------------------------
 
     /**
-     * Extracts a value from a {@link JsonNode} using a dot-notation path.
-     * Handles simple paths (e.g. {@code fxOptionEconomics.strike}) but NOT
-     * the {@code parties[ROLE]} syntax – that requires the calling service to
-     * pre-resolve party nodes before fingerprinting if needed.
+     * Matches a path segment carrying an array selector, e.g. {@code parties[COUNTERPARTY]}
+     * (group 1 = array field name, group 2 = selector).
      */
-    private static String extractValue(JsonNode root, String dotPath) {
+    private static final Pattern ARRAY_SEGMENT = Pattern.compile("^([^\\[\\]]+)\\[([^\\]]+)]$");
+
+    /** Field matched by the shorthand selector {@code parties[COUNTERPARTY]}. */
+    private static final String DEFAULT_SELECTOR_FIELD = "partyRole";
+
+    /**
+     * Extracts a value from a {@link JsonNode} using a dot-notation path.
+     * <p>
+     * Supported syntax:
+     * <ul>
+     *   <li>{@code fxOptionEconomics.strike} - plain nested object access</li>
+     *   <li>{@code parties[COUNTERPARTY].partyId} - shorthand: picks the first element of the
+     *       {@code parties} array whose {@code partyRole} equals {@code COUNTERPARTY}</li>
+     *   <li>{@code parties[partyRole=COUNTERPARTY].partyId} - explicit {@code field=value} selector</li>
+     * </ul>
+     * Selector values must not contain {@code .}. Returns {@code null} when any step of the
+     * path is missing, null, or when no array element matches the selector.
+     * <p>
+     * Package-private so the unit tests can verify path resolution directly.
+     */
+    static String extractValue(JsonNode root, String dotPath) {
         String[] parts = dotPath.split("\\.");
         JsonNode current = root;
         for (String part : parts) {
-            if (current == null || current.isMissingNode()) {
+            if (current == null || current.isMissingNode() || current.isNull()) {
                 return null;
             }
-            current = current.get(part);
+            Matcher matcher = ARRAY_SEGMENT.matcher(part);
+            if (matcher.matches()) {
+                current = selectArrayElement(current.get(matcher.group(1)), matcher.group(2));
+            } else {
+                current = current.get(part);
+            }
         }
         if (current == null || current.isNull() || current.isMissingNode()) {
             return null;
         }
         return current.asText();
+    }
+
+    /**
+     * Returns the first element of {@code array} matching {@code selector}
+     * ({@code VALUE} or {@code field=value}), or {@code null} if there is none.
+     */
+    private static JsonNode selectArrayElement(JsonNode array, String selector) {
+        if (array == null || !array.isArray()) {
+            return null;
+        }
+        String field = DEFAULT_SELECTOR_FIELD;
+        String expected = selector.trim();
+        int eq = selector.indexOf('=');
+        if (eq > 0) {
+            field = selector.substring(0, eq).trim();
+            expected = selector.substring(eq + 1).trim();
+        }
+        for (JsonNode element : array) {
+            JsonNode candidate = element.get(field);
+            if (candidate != null && !candidate.isNull() && expected.equals(candidate.asText())) {
+                return element;
+            }
+        }
+        return null;
     }
 
     private static String sha256Hex(String input) {

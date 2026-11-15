@@ -204,6 +204,12 @@ public class DefaultExceptionProcessingService implements ExceptionProcessingSer
         try {
             classificationResult = classificationRulesEngine.classify(record);
             record.setClassificationConfidence(classificationResult.getClassificationConfidence());
+            if (classificationResult.getConfirmedCategory() != null) {
+                record.setCategory(classificationResult.getConfirmedCategory());
+            }
+            if (classificationResult.getConfirmedSubTheme() != null) {
+                record.setSubTheme(classificationResult.getConfirmedSubTheme());
+            }
             log.debug("Classification result for exceptionId='{}': category={}, confidence={}",
                     record.getExceptionId(),
                     classificationResult.getConfirmedCategory(),
@@ -249,7 +255,8 @@ public class DefaultExceptionProcessingService implements ExceptionProcessingSer
         // ------------------------------------------------------------------
         // Step 8: Route to downstream topic
         // ------------------------------------------------------------------
-        MessageHeader outboundHeader = buildOutboundHeader(tradeId, correlationId);
+        MessageHeader outboundHeader = buildOutboundHeader(tradeId, correlationId, eventType,
+                inboundHeader != null ? inboundHeader.getReplayCount() : 0);
         ExceptionEvent outboundEvent = ExceptionEvent.builder()
                 .messageHeader(outboundHeader)
                 .exception(record)
@@ -311,11 +318,13 @@ public class DefaultExceptionProcessingService implements ExceptionProcessingSer
         return EventType.NEW_TRADE;
     }
 
-    private MessageHeader buildOutboundHeader(String tradeId, String correlationId) {
+    private MessageHeader buildOutboundHeader(String tradeId, String correlationId, EventType eventType, int replayCount) {
         MessageHeader header = new MessageHeader();
         header.setMessageId("MSG-" + UUID.randomUUID().toString().substring(0, 8));
         header.setCorrelationId(correlationId != null ? correlationId : tradeId);
-        header.setEventType(EventType.NEW_TRADE);
+        // workitem-service relies on these to detect a replay's outcome.
+        header.setEventType(eventType);
+        header.setReplayCount(replayCount);
         header.setSchemaVersion(SCHEMA_VERSION);
         header.setSourceService(SOURCE_SERVICE);
         header.setCreatedTimestamp(Instant.now());

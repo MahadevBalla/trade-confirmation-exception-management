@@ -143,7 +143,7 @@ export const TradeDetailModal: React.FC = () => {
                       className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/50 flex flex-col justify-between"
                     >
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-slate-200">{p.partyName || p.partyId}</span>
+                        <span className="font-semibold text-slate-200">{p.legalEntityName || p.partyName || p.partyId}</span>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700">
                           {p.partyRole}
                         </span>
