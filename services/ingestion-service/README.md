@@ -1,21 +1,21 @@
 # Ingestion Service (`ingestion-service`)
 
-> **Entry Gateway, Schema Validation Engine & Audit Ledger for the Trade Confirmation Exception Management Platform**  
-> **Service Port:** `8081` · **Author / Lead:** Mayank Chauhan · **Runtime:** Java 21 / Spring Boot 3.3 · **Storage:** Apache CouchDB · **Streaming:** Apache Kafka
+> **Edge Intake Gateway, Schema Validation Engine & Audit Ledger for the Trade Confirmation & Exception Management (TCEM) Platform**  
+> **Service Port:** `8081` · **Runtime:** Java 21 / Spring Boot 3.3 · **Storage:** Apache CouchDB 3.3 · **Streaming:** Apache Kafka 3.8
 
 ---
 
 ## Table of Contents
 1. [Overview & Real-World Context](#1-overview--real-world-context)
 2. [Architecture & Message Lifecycle](#2-architecture--message-lifecycle)
-3. [Implemented Functional Requirements](#3-implemented-functional-requirements)
+3. [Core Capabilities](#3-core-capabilities)
 4. [Understanding the Data & Numbers](#4-understanding-the-data--numbers)
    - [Why Kafka retains messages (Kafka vs Queues)](#kafka-log-retention-vs-traditional-queues)
    - [The Math: 50 Raw Ingested Trades](#the-math-50-raw-ingested-trades)
    - [Why CouchDB has 98 Trade Docs and 50 Audit Docs](#why-couchdb-has-98-trade-docs-and-50-audit-docs)
 5. [REST API Reference & Quick Examples](#5-rest-api-reference--quick-examples)
 6. [Quickstart: Running & Testing Locally](#6-quickstart-running--testing-locally)
-7. [Downstream Contracts & Team Integration](#7-downstream-contracts--team-integration)
+7. [Downstream Service Contracts](#7-downstream-service-contracts)
 8. [Automated Testing & Test Doubles](#8-automated-testing--test-doubles)
 
 ---
@@ -61,7 +61,6 @@ The **`ingestion-service`** acts as the **Border Control & Customs Office** of t
                │                   │                  │
                ▼                   ▼                  ▼
         Enrichment Svc       Exception Svc       Workitem DLQ
-        (Gunjan)             (Kapish)            (Bhavik)
 ```
 
 ---
@@ -97,15 +96,15 @@ flowchart TD
 
 ---
 
-## 3. Implemented Functional Requirements
+## 3. Core Capabilities
 
-| Requirement | Implementation Detail | Primary Classes |
+| Capability | Description | Primary Classes |
 |---|---|---|
-| **FR1: Synthetic Trade Generator & Seed Loader** | Generates deterministic FX Option trades covering 10 business scenarios (valid vanilla options, barrier options, amendments, missing strike, invalid dates, unknown counterparty, malformed JSON). Loads 500 pre-packaged seed trades. | [`SyntheticTradeGenerator`](src/main/java/com/tcem/ingestion/generator/SyntheticTradeGenerator.java)<br>[`sample-trades.json`](src/main/resources/sample-trades.json)<br>[`TradeProducerController`](src/main/java/com/tcem/ingestion/controller/TradeProducerController.java) |
-| **FR2: Schema Validation Engine** | Validates message envelope headers, ISO-8601 timestamps, BUY/SELL side, CALL/PUT type, currency ISO codes, positive strike & notional values, and party roles (BANK + COUNTERPARTY). Converts failures into standard `ExceptionRecord` instances. | [`TradeValidator`](src/main/java/com/tcem/ingestion/validator/TradeValidator.java)<br>[`ValidationResult`](src/main/java/com/tcem/ingestion/validator/ValidationResult.java)<br>[`ValidationError`](src/main/java/com/tcem/ingestion/validator/ValidationError.java) |
-| **FR3: Raw Payload Persistence & Audit Trail** | Persists un-mutated raw inbound payloads alongside canonical trades in CouchDB `trades` database. Logs chronological, immutable lifecycle records to `audit-events` database with revisions (`_rev`) and Mango query indexes. | [`CouchDbClient`](src/main/java/com/tcem/ingestion/couchdb/CouchDbClient.java)<br>[`TradeCouchDbRepository`](src/main/java/com/tcem/ingestion/repository/TradeCouchDbRepository.java)<br>[`AuditCouchDbRepository`](src/main/java/com/tcem/ingestion/repository/AuditCouchDbRepository.java) |
-| **FR11: Operations Dashboard STP Metrics** | Real-time calculation of Straight-Through Processing (STP) rates and volume counters exposed via REST API and Actuator health checks for the React dashboard. | [`IngestionMetricsService`](src/main/java/com/tcem/ingestion/service/IngestionMetricsService.java)<br>[`TradeQueryController`](src/main/java/com/tcem/ingestion/controller/TradeQueryController.java)<br>[`CouchDbHealthIndicator`](src/main/java/com/tcem/ingestion/couchdb/CouchDbHealthIndicator.java) |
-| **FR12: Dead-Letter Queue & Idempotency Filter** | Traps unparseable JSON into `deadletter.trade` with full error diagnostic metadata. Calculates composite idempotency keys (`idempotency:<tradeId>:<msgId>:<ver>:<eventType>`) to suppress duplicate message processing. | [`TradeRawConsumer`](src/main/java/com/tcem/ingestion/consumer/TradeRawConsumer.java)<br>[`IdempotencyCouchDbRepository`](src/main/java/com/tcem/ingestion/repository/IdempotencyCouchDbRepository.java)<br>[`DeadLetterProducer`](src/main/java/com/tcem/ingestion/producer/DeadLetterProducer.java) |
+| **Synthetic Trade & Scenario Generator** | Generates deterministic FX Option trades covering 10 business scenarios (valid vanilla options, barrier options, amendments, missing strike, invalid dates, unknown counterparty, malformed JSON). Loads 500 pre-packaged seed trades. | [`SyntheticTradeGenerator`](src/main/java/com/tcem/ingestion/generator/SyntheticTradeGenerator.java)<br>[`sample-trades.json`](src/main/resources/sample-trades.json)<br>[`TradeProducerController`](src/main/java/com/tcem/ingestion/controller/TradeProducerController.java) |
+| **FpML Schema Validation Engine** | Validates message envelope headers, ISO-8601 timestamps, BUY/SELL side, CALL/PUT type, currency ISO codes, positive strike & notional values, and party roles (BANK + COUNTERPARTY). Converts failures into standard `ExceptionRecord` instances. | [`TradeValidator`](src/main/java/com/tcem/ingestion/validator/TradeValidator.java)<br>[`ValidationResult`](src/main/java/com/tcem/ingestion/validator/ValidationResult.java)<br>[`ValidationError`](src/main/java/com/tcem/ingestion/validator/ValidationError.java) |
+| **Raw Inbound Persistence & Audit Trail** | Persists un-mutated raw inbound payloads alongside canonical trades in CouchDB `trades` database. Logs chronological, immutable lifecycle records to `audit-events` database with revisions (`_rev`) and Mango query indexes. | [`CouchDbClient`](src/main/java/com/tcem/ingestion/couchdb/CouchDbClient.java)<br>[`TradeCouchDbRepository`](src/main/java/com/tcem/ingestion/repository/TradeCouchDbRepository.java)<br>[`AuditCouchDbRepository`](src/main/java/com/tcem/ingestion/repository/AuditCouchDbRepository.java) |
+| **Operations STP Metrics & Health Telemetry** | Real-time calculation of Straight-Through Processing (STP) rates and volume counters exposed via REST API and Actuator health checks for the React dashboard. | [`IngestionMetricsService`](src/main/java/com/tcem/ingestion/service/IngestionMetricsService.java)<br>[`TradeQueryController`](src/main/java/com/tcem/ingestion/controller/TradeQueryController.java)<br>[`CouchDbHealthIndicator`](src/main/java/com/tcem/ingestion/couchdb/CouchDbHealthIndicator.java) |
+| **Dead-Letter Trapping & Edge Idempotency Filter** | Traps unparseable JSON into `deadletter.trade` with full error diagnostic metadata. Calculates composite idempotency keys (`idempotency:<tradeId>:<msgId>:<ver>:<eventType>`) to suppress duplicate message processing. | [`TradeRawConsumer`](src/main/java/com/tcem/ingestion/consumer/TradeRawConsumer.java)<br>[`IdempotencyCouchDbRepository`](src/main/java/com/tcem/ingestion/repository/IdempotencyCouchDbRepository.java)<br>[`DeadLetterProducer`](src/main/java/com/tcem/ingestion/producer/DeadLetterProducer.java) |
 
 ---
 
@@ -181,7 +180,7 @@ curl -X POST "http://localhost:8081/trades/generate/scenario?scenario=MISSING_EC
 
 ### Operations & Metrics
 
-#### 5. Get Real-Time STP Rate (FR11)
+#### 5. Get Real-Time STP Rate
 ```bash
 curl -s "http://localhost:8081/metrics/stp-rate" | jq
 ```
@@ -271,27 +270,27 @@ mvn spring-boot:run
 
 ---
 
-## 7. Downstream Contracts & Team Integration
+## 7. Downstream Service Contracts
 
-| Team Member | Target Service | Integration Contract | What They Receive |
+| Downstream Service | Integration Channel | Contract / Payload | Operational Role |
 |---|---|---|---|
-| **Gunjan** | `enrichment-service` | Listens to **`trade.accepted`** | Clean `TradeEvent` with validated canonical trade, parties, and FX Option economics. Guaranteed free of schema errors or malformed syntax. |
-| **Kapish** | `exception-service` | Listens to **`exception.created`** | `ExceptionEvent` wrapping an `ExceptionRecord` with `tradeId`, correlation ID, category (`SCHEMA_VALIDATION` or `DUPLICATE_MESSAGE`), and granular error sub-theme. |
-| **Bhavik** | `workitem-service` | Listens to **`deadletter.trade`** | `DeadLetterEvent` containing the raw unparseable payload, failure exception message, stack trace snippet, and original headers for operational replay. |
-| **Oren** | Frontend UI | REST API on Port **8081** | Calls `GET /metrics/stp-rate` for the STP donut chart, `GET /trades` for the trades data table, and `GET /trades/{id}` for trade drill-down. |
+| **Enrichment Service** (`:8082`) | Listens to **`trade.accepted`** | Clean `TradeEvent` (`capstone-fpml-json-1.0`) | Receives validated canonical trade, parties, and FX Option economics. Guaranteed free of schema errors or malformed syntax. |
+| **Exception Service** (`:8084`) | Listens to **`exception.created`** | `ExceptionEvent` (`ExceptionRecord`) | Receives schema validation errors and duplicate message exceptions with correlation IDs and granular sub-theme codes. |
+| **Workitem Service** (`:8085`) | Listens to **`deadletter.trade`** | `DeadLetterEvent` | Receives raw unparseable payloads, error diagnostic messages, and original transport headers for operational DLQ replay. |
+| **Operations Frontend** (`:3000`) | REST APIs on Port **8081** | JSON Responses (`/metrics/stp-rate`, `/trades`) | Powers the real-time STP donut chart, trade search data table, and audit trail drill-down views. |
 
 ---
 
 ## 8. Automated Testing & Test Doubles
 
-The service contains **97 comprehensive automated tests** that run in under 4 seconds in CI:
+The service contains **99 comprehensive automated tests** that run in under 4 seconds in CI:
 
 ```bash
 mvn -f services/ingestion-service/pom.xml test
 ```
 
 ```
-[INFO] Tests run: 97, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 99, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 

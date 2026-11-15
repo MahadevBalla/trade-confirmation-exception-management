@@ -1,23 +1,23 @@
 # Enrichment Service (`enrichment-service`)
 
-> **Reference Data Enrichment, Legal Entity Resolution & Template Matching for the Trade Confirmation Exception Management Platform**  
-> **Service Port:** `8082` · **Author / Lead:** Bhavik · **Runtime:** Java 21 / Spring Boot 3.3 · **Storage:** Apache CouchDB · **Streaming:** Apache Kafka
+> **Enterprise Reference Data Enrichment, Legal Entity Resolution & Template Matching Engine for the TCEM Platform**  
+> **Service Port:** `8082` · **Runtime:** Java 21 / Spring Boot 3.3 · **Storage:** Apache CouchDB 3.3 · **Streaming:** Apache Kafka 3.8
 
 ---
 
 ## 1. Overview & Purpose
 
-In OTC derivative workflows, raw trades accepted by the ingestion pipeline contain basic economics and raw party identifiers (e.g. `PTY-CP-101`), but lack the verified reference metadata necessary for legal confirmation generation and regulatory trade reporting.
+In Over-The-Counter (OTC) derivative post-trade workflows, raw trades accepted by the edge ingestion pipeline contain essential transaction economics and internal party identifiers (e.g. `PTY-CP-101`), but lack the verified regulatory and legal reference metadata necessary for legal confirmation generation and trade reporting.
 
-The **`enrichment-service`** fulfills **Functional Requirement 4 (FR4)**:
+The **`enrichment-service`** provides the automated reference data enrichment layer between edge ingestion and downstream business validation:
 1. Subscribes to the `trade.accepted` topic.
-2. Checks CouchDB `enrichment-idempotency` to prevent duplicate enrichment under redelivery (bypassed for `REPLAY` messages).
-3. Performs in-flight joins against local reference datasets:
-   - **Counterparties (`counterparties.json`):** Resolves official Legal Entity Identifiers (LEI), country codes, and legal entity names.
-   - **Instruments (`instruments.json`):** Validates underlying instrument definitions and currency pair conventions.
-   - **Templates (`templates.json`):** Matches product types and jurisdictions to confirmable legal document templates (e.g. `CONF-TMPL-FXO-STD-v2.1`).
+2. Evaluates CouchDB `enrichment-idempotency` to prevent duplicate enrichment under Kafka redeliveries (automatically bypassed for explicit `REPLAY` messages).
+3. Performs in-flight joins against local reference catalogs:
+   - **Counterparties (`counterparties.json`):** Resolves official Legal Entity Identifiers (LEI), ISO country codes, and registered legal entity names.
+   - **Instruments (`instruments.json`):** Validates underlying instrument definitions, base/quote conventions, and currency pair specifications.
+   - **Templates (`templates.json`):** Matches product types and trading jurisdictions to confirmable master document templates (e.g. `CONF-TMPL-FXO-STD-v2.1`).
    - **Product Permissions (`counterparty-products.json`):** Determines counterparty and product Straight-Through Processing (STP) eligibility flags.
-4. Emits canonical enriched trade events to `trade.enriched` or routes unparseable payloads to `deadletter.trade`.
+4. Emits canonical enriched trade events to `trade.enriched` or safely routes unparseable payloads to `deadletter.trade`.
 
 ---
 
@@ -35,7 +35,7 @@ The **`enrichment-service`** fulfills **Functional Requirement 4 (FR4)**:
 ║  └─────────────────────────┘  └────────────────────┘  ║
 ║                             │                         ║
 ║                             ▼                         ║
-║              TradeEnricher (FR4 Mapping)              ║
+║              TradeEnricher (Reference Mapping)        ║
 ╚═══════════════════════════════════════════════════════╝
           │                                  │
     (Enriched)                           (Fatal Error)
@@ -44,7 +44,7 @@ The **`enrichment-service`** fulfills **Functional Requirement 4 (FR4)**:
 [Kafka: trade.enriched]             [Kafka: deadletter.trade]
           │                                  │
           ▼                                  ▼
-  Validation Service                 Workitem DLQ Store
+   Validation Service                Workitem DLQ Store
 ```
 
 ### Upstream Contract
@@ -85,4 +85,3 @@ The **`enrichment-service`** fulfills **Functional Requirement 4 (FR4)**:
 mvn -f services/pom.xml -pl common-lib,enrichment-service -am test
 ```
 * **Coverage:** 16 passing unit and consumer tests covering reference catalog joins, party enrichment, idempotency deduplication, replay bypass, and DLQ dispatch.
-

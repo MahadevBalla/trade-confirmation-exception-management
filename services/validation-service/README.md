@@ -1,7 +1,7 @@
 # Validation Service (`validation-service`)
 
-> **STP Rules Engine, Legal Confirmation Generation & SHA-256 Fingerprinting for the Trade Confirmation Exception Management Platform**  
-> **Service Port:** `8083` · **Author / Lead:** Mahadev Balla · **Runtime:** Java 21 / Spring Boot 3.3 · **Storage:** Apache CouchDB · **Streaming:** Apache Kafka
+> **STP Rules Engine, Legal Confirmation Generation & SHA-256 Fingerprinting for the TCEM Platform**  
+> **Service Port:** `8083` · **Runtime:** Java 21 / Spring Boot 3.3 · **Storage:** Apache CouchDB 3.3 · **Streaming:** Apache Kafka 3.8
 
 ---
 
@@ -9,18 +9,18 @@
 
 The **`validation-service`** acts as the core decision-making and confirmation issuance authority of the TCEM platform:
 
-1. **Straight-Through Processing (STP) Rules Engine (FR5):** Consumes `trade.enriched` and evaluates non-short-circuiting business validation rules across:
+1. **Straight-Through Processing (STP) Rules Engine:** Consumes `trade.enriched` and evaluates non-short-circuiting business validation rules across:
    - **Economic Terms (`EconomicFieldsRule`):** Strike, notional amount, currencies, option type, buy/sell side, and date sanity (`tradeDate <= expiryDate <= settlementDate`).
    - **Business Eligibility (`BusinessEligibilityRule`):** Validates counterparty active status and product STP eligibility flags.
    - **Template Resolution (`TemplateResolutionRule`):** Verifies the availability of an applicable legal confirmation template.
 2. **STP Audit Publication:** Publishes an evaluation outcome to `stp.validated` with `STP_PASSED` or `STP_FAILED` diagnostics (also handles `CANCEL_TRADE` with `cancelled=true`).
-3. **Legal Confirmation Issuance (FR6):**
+3. **Legal Confirmation Issuance:**
    - Renders deterministic, monospace plain-text ISDA confirmation notices based on the resolved template.
    - Computes a deterministic SHA-256 fingerprint over confirmable contract terms via `ConfirmationFingerprint`.
    - On amendments (`AMEND_TRADE`), checks the previous confirmation fingerprint: if confirmable fields are unchanged, duplicate confirmation issuance is suppressed ("nothing changed = don't resend").
    - Persists confirmation documents to CouchDB `confirmations` database with status `ALLEGED`.
    - Publishes `ConfirmationEvent` to `confirmation.generated`.
-4. **Exception Routing (FR7):** Maps STP failures to structured `ExceptionRecord` entries and dispatches them to `exception.created`.
+4. **Exception Routing:** Maps STP failures to structured `ExceptionRecord` entries and dispatches them to `exception.created`.
 5. **Held Trade & 4-Eyes Manual Review Flow:**
    - When a trade fails STP, its enriched payload is retained in CouchDB as a held trade (`docType=HELD_TRADE`).
    - When an operator approves a manual review in `workitem-service`, a `workitem.linked` event arrives with `reviewDecision=APPROVED`.
@@ -37,7 +37,7 @@ The **`validation-service`** acts as the core decision-making and confirmation i
 ╔═════════════════════════════════════════════════════════════════╗
 ║                      validation-service                         ║
 ║  ┌─────────────────────────┐     ┌───────────────────────────┐  ║
-║  │ Validation Idempotency  │     │   STP Rules Engine (FR5)  │  ║
+║  │ Validation Idempotency  │     │   STP Rules Engine        │  ║
 ║  │ (validation-idempotency)│ ──► │ - EconomicFieldsRule      │  ║
 ║  └─────────────────────────┘     │ - BusinessEligibilityRule │  ║
 ║                                  │ - TemplateResolutionRule  │  ║
@@ -45,7 +45,7 @@ The **`validation-service`** acts as the core decision-making and confirmation i
 ║                                                │                ║
 ║                      ┌─────────────────────────┴────────────┐   ║
 ║                      ▼                                      ▼   ║
-║           [STP Passed: FR6]                         [STP Failed]║
+║             [STP Passed]                            [STP Failed]║
 ║        Confirmation Generator                    Exception Map  ║
 ║        SHA-256 Fingerprinting                    CouchDB Held   ║
 ╚═════════════════════════════════════════════════════════════════╝
@@ -94,4 +94,3 @@ The **`validation-service`** acts as the core decision-making and confirmation i
 mvn -f services/pom.xml -pl common-lib,validation-service -am test
 ```
 * **Coverage:** 145 passing unit and embedded-Kafka integration tests covering STP rule evaluation, fingerprint deduplication, plain-text rendering, held-trade manual reviews, and CouchDB persistence.
-
