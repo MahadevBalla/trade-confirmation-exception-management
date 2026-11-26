@@ -213,3 +213,49 @@ python3 scripts/stress_test.py --mode sustained --rate 100 --duration 30
 # 5. Profile statistical end-to-end confirmation latency
 python3 scripts/benchmark_suite.py --mode latency --samples 20
 ```
+
+---
+
+## 8. How These Numbers Were Obtained & Source Code Traceability
+
+Every figure in this report was produced by executing scripts in `scripts/` against the live Docker Compose stack (`ingestion-service`, `enrichment-service`, `validation-service`, `exception-service`, `workitem-service`, Apache Kafka, and Apache CouchDB) on the host machine. Below is the exact mapping from each metric to the measurement script and backend Java source code that generated it.
+
+### 1. Throughput & Sustained Rate Metrics (`49.9 tr/s`, `8,392.6 tr/s`, `49,223.1 tr/s`)
+
+* **Test Driver Code:** [`scripts/stress_test.py`](../../scripts/stress_test.py)
+  * **SLA Target Formulas (`lines 37-41`):** Computes `DAILY_TARGET_RATE = 1_000_000 / 86400.0` (`11.57 trades/sec`) and `PEAK_HOURLY_RATE = 100_000 / 3600.0` (`27.78 trades/sec`).
+  * **Sustained Rate (`lines 192-234`, `run_sustained_rate_test`):** Runs a 1-second loop for `--duration 20` ticks, posting `count=50` per tick to `POST http://localhost:8081/trades/generate?count=50&publishToKafka=true` and timing each HTTP call with `time.time()`. After 20 seconds (`1,000` trades), it computes `actual_rate = total_published / total_time` (`49.9 trades/sec`).
+  * **Burst Stress Runs (`lines 112-189`, `run_burst_stress_test`):** Sequentially posts `--batch-size 500` (`10` batches = `5,000` trades) or `--batch-size 1000` (`20` batches = `20,000` trades) to `/trades/generate`, measures wall-clock `total_elapsed`, calculates `avg_throughput = published_total / total_elapsed`, and extrapolates capacity (`avg_throughput * 86400.0` and `avg_throughput * 3600.0`).
+* **Backend Code Executed (`ingestion-service`):**
+  1. **REST Controller:** `TradeProducerController.generateTrades()` in [`TradeProducerController.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/controller/TradeProducerController.java#L35-L41).
+  2. **Batch Service:** `SeedLoaderService.generateAndPublish()` in [`SeedLoaderService.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/service/SeedLoaderService.java#L43-L74).
+  3. **Payload Generator:** `SyntheticTradeGenerator.generateBatch()` in [`SyntheticTradeGenerator.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/generator/SyntheticTradeGenerator.java#L47-L76) constructs 70% `VALID_STANDARD_STP` trades and 30% cycling across 9 exception/edge scenarios (`MISSING_ECONOMIC_*`, `MISSING_REFDATA_COUNTERPARTY`, `TEMPLATE_ISSUE_MISSING`, `BUSINESS_RULE_NON_STP`, `DUPLICATE_TRADE`, `MALFORMED_JSON`, `AMEND_TRADE`).
+  4. **Kafka Dispatch:** `TradeRawProducer.sendBatch()` and `sendTradeRaw()` in [`TradeRawProducer.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/producer/TradeRawProducer.java#L38-L79) extract the partition key via Jackson and enqueue each record to `trade.raw`.
+* **What This Benchmark Actually Measures (Important Measurement Nuance):**
+  * **Asynchronous Producer Buffering:** `TradeRawProducer.sendTradeRaw()` (`lines 41-52`) calls `kafkaOperations.send(...).whenComplete(...)` asynchronously and does **not** block waiting for broker acknowledgments or downstream consumer completion. Thus, `8,392.6 tr/s` and `49,223.1 tr/s` measure **intake velocity** (HTTP handling + JSON generation + key extraction + Kafka client buffer enqueueing), while downstream Kafka consumption and CouchDB persistence drain asynchronously afterward.
+  * **Sequence Reuse Across Chunks:** `SyntheticTradeGenerator.generateBatch(count)` (`lines 64-71`) numbers each call starting from `sequenceNumber = 1` (`TRD-000001` onward). In multi-batch runs, Batch #1 inserts unique trades into CouchDB, while overlapping sequences in subsequent batches hit the idempotency check in `DefaultTradeIngestionService.processRawTrade()` ([`DefaultTradeIngestionService.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/service/DefaultTradeIngestionService.java#L150-L193)) and are routed as `DUPLICATE_MESSAGE` exceptions rather than creating 20,000 distinct confirmations.
+
+### 2. End-to-End STP Latency Measurement (`receivedTimestamp` $\rightarrow$ `generatedAt`)
+
+* **Measurement Scripts:**
+  * **Single-Trade Latency Verification:** [`scripts/test-nfr.sh`](../../scripts/test-nfr.sh#L29-L86) (`lines 29-86`). Generates an STP-eligible sequence (`4k + 1` so `SyntheticTradeGenerator` selects `PTY-CP-101` at [`SyntheticTradeGenerator.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/generator/SyntheticTradeGenerator.java#L118)), injects it via `POST /trades/generate/scenario?scenario=VALID_STANDARD_STP&sequence=${SEQ}&publishToKafka=true`, polls `GET http://localhost:8083/trades/${TRADE_ID}/confirmation` until `"ALLEGED"` appears, and subtracts the two server-side `Instant` timestamps (truncating Java nanosecond precision to Python 6-digit microseconds). An unloaded baseline run measured **`182.7 ms`** (`2026-11-09T06:00:58.759387345Z` intake $\rightarrow$ `2026-11-09T06:00:58.942057637Z` confirmation).
+  * **Multi-Sample Statistical Profiler:** [`scripts/benchmark_suite.py`](../../scripts/benchmark_suite.py#L80-L163) (`run_latency_benchmark`, `lines 80-163`). Repeats the same per-trade injection and polling loop to calculate `min`, `p50`, `mean`, `p90`, `p95`, and `max`. *(Note: when invoked immediately after the 25,000-message backlog burst with a 5-second per-trade poll window, new latency probe trades queued behind existing `trade.raw` partition offsets while CouchDB flushed writes, causing those probes to time out awaiting confirmation within 5s.)*
+* **Where the Two Timestamps Are Recorded in Java:**
+  1. **Start Timestamp (`receivedTimestamp`):** Stamped inside `TradeCouchDbRepository.save()` ([`TradeCouchDbRepository.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/repository/TradeCouchDbRepository.java#L49-L52)) right after `TradeRawConsumer.onMessage()` ([`TradeRawConsumer.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/consumer/TradeRawConsumer.java#L38-L50)) and `DefaultTradeIngestionService.processRawTrade()` validate the raw message and persist it to CouchDB `trades`. Exposed via `GET /trades/{id}` in `TradeQueryController.getTradeById()` ([`TradeQueryController.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/controller/TradeQueryController.java#L57-L79)).
+  2. **Pipeline Traversal & End Timestamp (`generatedAt`):** After `trade.accepted` flows through `TradeAcceptedConsumer.onMessage()` ([`TradeAcceptedConsumer.java`](../../services/enrichment-service/src/main/java/com/tcem/enrichment/consumer/TradeAcceptedConsumer.java#L38-L77)) onto `trade.enriched`, `TradeEnrichedConsumer.onMessage()` ([`TradeEnrichedConsumer.java`](../../services/validation-service/src/main/java/com/tcem/validation/consumer/TradeEnrichedConsumer.java#L135-L238)) runs the STP rules engine and calls `ConfirmationService.processConfirmation()` ([`ConfirmationService.java`](../../services/validation-service/src/main/java/com/tcem/validation/confirmation/ConfirmationService.java#L119-L137)), which captures `Instant now = Instant.now()` into `generatedAt` immediately before saving to CouchDB `confirmations`. Exposed via `GET /trades/{tradeId}/confirmation` in `ConfirmationQueryController.getLatestConfirmationForTrade()` ([`ConfirmationQueryController.java`](../../services/validation-service/src/main/java/com/tcem/validation/controller/ConfirmationQueryController.java#L102-L112)).
+
+### 3. Container Memory, CPU & Block I/O Telemetry
+
+* **Command Executed:** `docker stats --no-stream` (also embedded at [`scripts/test-nfr.sh`](../../scripts/test-nfr.sh#L143)), querying live Linux cgroup counters inside the Docker runtime.
+* **Memory Limit Configuration Code:** Each backend microservice sets `mem_limit: 768m` in [`docker-compose.yml`](../../docker-compose.yml#L217) (and lines `248`, `279`, `310`, `341`) alongside `ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC ..."` in [`services/ingestion-service/Dockerfile`](../../services/ingestion-service/Dockerfile#L42) (capping JVM heap at ~576 MB).
+
+### 4. CouchDB Post-Stress Document Census & STP Metrics
+
+* **Database Document Counts:** Retrieved directly from CouchDB's `GET /{db}` metadata endpoint (`doc_count`) across all databases returned by `GET /_all_dbs` (with the actual sum across the 8 listed databases totaling $47,442 + 3,061 + 1,897 + 843 + 1,887 + 711 + 852 + 852 = 57,545$ documents):
+  ```bash
+  curl -s -u admin:password "http://localhost:5984/_all_dbs" | jq -r '.[]' | while read db; do
+    echo -n "$db: "
+    curl -s -u admin:password "http://localhost:5984/$db" | jq -r '.doc_count'
+  done
+  ```
+* **Runtime Counters & Service Metric Endpoints:** In-memory `AtomicLong` counters in `IngestionMetricsService` ([`IngestionMetricsService.java`](../../services/ingestion-service/src/main/java/com/tcem/ingestion/service/IngestionMetricsService.java#L17-L88)) exposed at `GET /metrics/stp-rate` (`TradeQueryController.getStpRate()`), plus CouchDB persisted confirmation count exposed at `GET /metrics/confirmation-count` (`ConfirmationQueryController.getConfirmationCount()`).
