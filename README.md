@@ -243,6 +243,8 @@ Execute the automated NFR performance and latency test suite:
 ./scripts/test-nfr.sh                                  # Measures end-to-end latency & throughput
 python3 scripts/benchmark_suite.py --mode latency      # p50, p90, p95 statistical latency profile
 python3 scripts/benchmark_suite.py --mode load --count 500  # High-volume multi-scenario burst test
+python3 scripts/stress_test.py --count 10000           # High-volume chunked stress test suite
+python3 scripts/stress_test.py --mode sustained --rate 50  # Sustained rate zero-backpressure test
 ```
 
 ---
@@ -253,6 +255,7 @@ python3 scripts/benchmark_suite.py --mode load --count 500  # High-volume multi-
 - [`docs/kafka-topics.md`](docs/kafka-topics.md) — Complete 10-topic specification, partition key strategies, and event schemas
 - [`docs/devops-guide.md`](docs/devops-guide.md) — Docker orchestration, non-root security, provisioning, and container-aware JVM ergonomics
 - [`docs/project-status.md`](docs/project-status.md) — Multi-service implementation details, test coverage (512 tests), and audit status
+- [`docs/reports/stress_testing_report.md`](docs/reports/stress_testing_report.md) — Empirical stress testing report (50k trades, sustained rates, 1M trades/day NFR proof)
 - [`docs/reports/capstone_spec_compliance_report.md`](docs/reports/capstone_spec_compliance_report.md) — 1-to-1 specification compliance matrix, NFR assessment, and enterprise production roadmap
 - [`docs/reports/code_consistency_report.md`](docs/reports/code_consistency_report.md) — Multi-phase architectural consistency audit and resolution records
 - [`docs/reports/live_demo_presentation_guide.md`](docs/reports/live_demo_presentation_guide.md) — Master screen-shared demonstration script and speaking flow
