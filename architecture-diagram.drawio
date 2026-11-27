@@ -1,4 +1,4 @@
-<mxGraphModel dx="2000" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1400" math="0" shadow="1">
+<mxGraphModel dx="2520" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2520" pageHeight="1040" math="0" shadow="1">
   <root>
     <mxCell id="0" />
     <mxCell id="1" parent="0" />
@@ -7,36 +7,33 @@
     <!-- TITLE -->
     <!-- ═══════════════════════════════════════════ -->
     <mxCell id="title" value="Trade Confirmation &amp; Exception Management Platform — Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#1A1A2E;" vertex="1" parent="1">
-      <mxGeometry x="60" y="20" width="2080" height="44" as="geometry" />
+      <mxGeometry x="60" y="10" width="2400" height="36" as="geometry" />
     </mxCell>
 
     <!-- ═══════════════════════════════════════════ -->
     <!-- KAFKA BROKER — tall left column -->
     <!-- ═══════════════════════════════════════════ -->
-    <mxCell id="kafka" value="&lt;b&gt;Apache Kafka&lt;br/&gt;Event Broker&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;KRaft mode · Port 9092&lt;br/&gt;UI: Port 8080&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style='font-size:8px;color:#444'&gt;Topics:&lt;br/&gt;trade.raw&lt;br/&gt;trade.accepted&lt;br/&gt;trade.enriched&lt;br/&gt;stp.validated&lt;br/&gt;confirmation.generated&lt;br/&gt;exception.created&lt;br/&gt;exception.classified&lt;br/&gt;workitem.linked&lt;br/&gt;manual.review.required&lt;br/&gt;deadletter.trade&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=11;verticalAlign=top;arcSize=5;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="260" y="80" width="170" height="560" as="geometry" />
+    <mxCell id="kafka" value="&lt;b&gt;Apache Kafka&lt;br/&gt;Event Broker&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;KRaft mode · Port 9092&lt;br/&gt;Kafka UI: Port 8080&lt;br/&gt;10 topics × 3 partitions (key: tradeId)&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style='font-size:8px;color:#444'&gt;Topics:&lt;br/&gt;trade.raw&lt;br/&gt;trade.accepted&lt;br/&gt;trade.enriched&lt;br/&gt;stp.validated&lt;br/&gt;confirmation.generated&lt;br/&gt;exception.created&lt;br/&gt;exception.classified&lt;br/&gt;workitem.linked&lt;br/&gt;manual.review.required&lt;br/&gt;deadletter.trade&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=11;verticalAlign=top;arcSize=5;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="260" y="80" width="170" height="580" as="geometry" />
     </mxCell>
 
     <!-- ═══════════════════════════════════════════ -->
     <!-- ROW 0 — Producer at top left -->
     <!-- ═══════════════════════════════════════════ -->
-    <mxCell id="producer" value="&lt;b&gt;Synthetic Trade&lt;br/&gt;Producer / Seed Loader&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;FpML-inspired JSON&lt;br/&gt;CSV / JSON seed files&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="60" y="90" width="170" height="90" as="geometry" />
+    <mxCell id="producer" value="&lt;b&gt;Synthetic Trade&lt;br/&gt;Producer / Seed Loader&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;POST /trades/generate &amp;amp; /seed&lt;br/&gt;sample-trades.json (500 trades)&lt;br/&gt;./scripts/seed-data.sh&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="60" y="90" width="170" height="95" as="geometry" />
     </mxCell>
 
-    <!-- Producer → (down arrow) → FpML JSON label -->
     <mxCell id="arr_prod_down" value="↓" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontColor=#23395B;" vertex="1" parent="1">
-      <mxGeometry x="125" y="185" width="40" height="30" as="geometry" />
+      <mxGeometry x="125" y="188" width="40" height="28" as="geometry" />
     </mxCell>
 
-    <!-- FpML JSON events label -->
-    <mxCell id="fpml_label" value="&lt;b&gt;FpML-inspired&lt;br/&gt;JSON events&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="60" y="220" width="170" height="60" as="geometry" />
+    <mxCell id="fpml_label" value="&lt;b&gt;FpML-inspired&lt;br/&gt;JSON events&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;capstone-fpml-json-1.0&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="60" y="220" width="170" height="65" as="geometry" />
     </mxCell>
 
-    <!-- FpML JSON → (right arrow) into Kafka -->
     <mxCell id="arr_fpml_kafka" value="→" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontColor=#23395B;" vertex="1" parent="1">
-      <mxGeometry x="228" y="235" width="35" height="30" as="geometry" />
+      <mxGeometry x="232" y="237" width="26" height="30" as="geometry" />
     </mxCell>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -44,198 +41,222 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <!-- INGESTION SERVICE -->
-    <mxCell id="ingestion" value="&lt;b&gt;Java Ingestion&lt;br/&gt;Service&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8081&lt;br/&gt;FR1: Event intake&lt;br/&gt;FR2: Schema validation&lt;br/&gt;FR3: Raw persistence&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#2D6A4F;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="460" y="210" width="160" height="120" as="geometry" />
+    <mxCell id="ingestion" value="&lt;b&gt;Ingestion Service&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8081&lt;br/&gt;FR1: Event intake &amp;amp; 10 scenarios&lt;br/&gt;FR2: Schema + idempotency&lt;br/&gt;FR3: Raw &amp;amp; audit persistence&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#2D6A4F;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="515" y="215" width="160" height="120" as="geometry" />
     </mxCell>
 
     <!-- Kafka → Ingestion: consumes trade.raw -->
-    <mxCell id="e_kafka_ingest" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.35;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2D6A4F;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="kafka" target="ingestion" parent="1">
+    <mxCell id="e_kafka_ingest" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.336;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2D6A4F;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="kafka" target="ingestion" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
     <mxCell id="lbl_kafka_ingest" value="trade.raw" style="text;html=1;strokeColor=none;fillColor=#e8f5e9;align=center;verticalAlign=middle;fontSize=9;fontColor=#2D6A4F;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="380" y="212" width="72" height="22" as="geometry" />
+      <mxGeometry x="438" y="246" width="68" height="20" as="geometry" />
     </mxCell>
 
     <!-- COUCHDB -->
-    <mxCell id="couchdb" value="&lt;b&gt;CouchDB&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;trades + audit&lt;br/&gt;Port 5984&lt;br/&gt;&lt;br/&gt;DBs: trades, confirmations&lt;br/&gt;exceptions, work-items&lt;br/&gt;reference-data, audit-events&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f0a500;strokeColor=#8B4513;fontColor=#1A1A2E;fontSize=10;verticalAlign=top;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="650" y="200" width="150" height="150" as="geometry" />
+    <mxCell id="couchdb" value="&lt;b&gt;Apache CouchDB&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:8.5px'&gt;Port 5984 · 9 App DBs&lt;br/&gt;&lt;br/&gt;trades · confirmations (+held)&lt;br/&gt;exceptions · work-items&lt;br/&gt;dlq-entries · audit-events&lt;br/&gt;stp-metrics&lt;br/&gt;enrichment-idempotency&lt;br/&gt;validation-idempotency&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f0a500;strokeColor=#8B4513;fontColor=#1A1A2E;fontSize=10;verticalAlign=top;strokeWidth=2;size=14;" vertex="1" parent="1">
+      <mxGeometry x="760" y="198" width="165" height="167" as="geometry" />
     </mxCell>
 
-    <!-- Ingestion → CouchDB (persist raw + audit) -->
-    <mxCell id="e_ingest_couch" value="persist raw + audit" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=9;" edge="1" source="ingestion" target="couchdb" parent="1">
+    <!-- Ingestion → CouchDB (trades + audit + stp-metrics) -->
+    <mxCell id="e_ingest_couch" value="trades + audit" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.35;exitDx=0;exitDy=0;entryX=0;entryY=0.36;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=9;" edge="1" source="ingestion" target="couchdb" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
 
     <!-- ENRICHMENT SERVICE -->
-    <mxCell id="enrichment" value="&lt;b&gt;Enrichment&lt;br/&gt;Service&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8082&lt;br/&gt;FR4: Reference-data&lt;br/&gt;enrichment&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#2D6A4F;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="840" y="210" width="150" height="120" as="geometry" />
+    <mxCell id="enrichment" value="&lt;b&gt;Enrichment Service&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8082&lt;br/&gt;FR4: Counterparty LEI,&lt;br/&gt;instrument &amp;amp; template join&lt;br/&gt;SchemaVersionRouter&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#2D6A4F;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="985" y="215" width="165" height="120" as="geometry" />
     </mxCell>
 
-    <!-- Kafka → Enrichment: trade.accepted -->
-    <mxCell id="e_kafka_enrich" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.42;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2D6A4F;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="kafka" target="enrichment" parent="1">
+    <!-- Kafka → Enrichment: trade.accepted (routed cleanly below CouchDB) -->
+    <mxCell id="e_kafka_enrich" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.52;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;strokeColor=#2D6A4F;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="kafka" target="enrichment" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="440" y="275" />
-          <mxPoint x="440" y="270" />
-          <mxPoint x="630" y="270" />
-          <mxPoint x="630" y="275" />
-          <mxPoint x="840" y="275" />
+          <mxPoint x="430" y="382" />
+          <mxPoint x="1026" y="382" />
         </Array>
       </mxGeometry>
     </mxCell>
-
-    <!-- Ingestion publishes trade.accepted via Kafka (label between ingestion and enrichment) -->
     <mxCell id="lbl_accepted" value="trade.accepted" style="text;html=1;strokeColor=none;fillColor=#e8f5e9;align=center;verticalAlign=middle;fontSize=9;fontColor=#2D6A4F;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="694" y="248" width="100" height="22" as="geometry" />
+      <mxGeometry x="660" y="370" width="96" height="20" as="geometry" />
     </mxCell>
 
-    <!-- Enrichment → CouchDB (persist enriched) -->
-    <mxCell id="e_enrich_couch" value="persist enriched" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=9;" edge="1" source="enrichment" target="couchdb" parent="1">
+    <!-- Enrichment → CouchDB (idempotency only) -->
+    <mxCell id="e_enrich_couch" value="idemp" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.46;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=8.5;" edge="1" source="enrichment" target="couchdb" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
 
     <!-- STP VALIDATION & RULES ENGINE -->
-    <mxCell id="stp_validation" value="&lt;b&gt;STP Validation&lt;br/&gt;&amp; Rules Engine&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8083&lt;br/&gt;FR5: STP rules engine&lt;br/&gt;FR6: Confirmation generation&lt;br/&gt;Decision: OK or FAIL&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1030" y="210" width="170" height="120" as="geometry" />
+    <mxCell id="stp_validation" value="&lt;b&gt;Validation Service (STP)&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8083&lt;br/&gt;FR5: Deterministic STP rules&lt;br/&gt;FR6: Text ISDA confirmations&lt;br/&gt;SHA-256 fingerprint dedup&lt;br/&gt;Holds non-STP trades for review&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="1245" y="205" width="185" height="135" as="geometry" />
     </mxCell>
 
     <!-- Enrichment → STP Validation (trade.enriched) -->
-    <mxCell id="e_enrich_stp" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="enrichment" target="stp_validation" parent="1">
+    <mxCell id="e_enrich_stp" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.52;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="enrichment" target="stp_validation" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
     <mxCell id="lbl_enriched" value="trade.enriched" style="text;html=1;strokeColor=none;fillColor=#FFF3E0;align=center;verticalAlign=middle;fontSize=9;fontColor=#E65100;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="998" y="258" width="100" height="22" as="geometry" />
+      <mxGeometry x="1156" y="246" width="82" height="20" as="geometry" />
+    </mxCell>
+
+    <!-- Validation → CouchDB (confirmations, held-trade snapshots, validation-idempotency) -->
+    <mxCell id="e_stp_couch" value="confirmations (CONF/held) + idemp" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=8.5;" edge="1" source="stp_validation" target="couchdb" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1291" y="184" />
+          <mxPoint x="842" y="184" />
+        </Array>
+      </mxGeometry>
     </mxCell>
 
     <!-- ═══════════════════════════════════════════ -->
     <!-- TOP SECTION: Mock Reference Data + Confirmation Generator -->
     <!-- ═══════════════════════════════════════════ -->
 
-    <!-- Mock Reference Data -->
-    <mxCell id="refdata" value="&lt;b&gt;Mock Reference Data&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;instrument / counterparty / templates&lt;br/&gt;CSV / JSON files&lt;br/&gt;counterparty, instrument&lt;br/&gt;template catalogue, eligibility&lt;/font&gt;" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;fontColor=#1A1A2E;fontSize=10;size=15;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="700" y="90" width="200" height="100" as="geometry" />
+    <!-- Reference Data inside enrichment-service -->
+    <mxCell id="refdata" value="&lt;b&gt;Reference Data (JSON)&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Classpath in enrichment-service&lt;br/&gt;counterparties, instruments,&lt;br/&gt;templates, counterparty-products&lt;/font&gt;" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;fontColor=#1A1A2E;fontSize=10;size=14;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="960" y="75" width="215" height="92" as="geometry" />
     </mxCell>
 
-    <!-- Enrichment ← Mock Reference Data (lookup) -->
-    <mxCell id="e_refdata_enrich" value="lookup" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#F9A825;strokeWidth=1.5;fontColor=#F9A825;fontSize=9;" edge="1" source="refdata" target="enrichment" parent="1">
+    <mxCell id="e_refdata_enrich" value="in-memory join" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#F9A825;strokeWidth=1.5;fontColor=#F9A825;fontSize=9;" edge="1" source="refdata" target="enrichment" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
 
     <!-- Confirmation Generator -->
-    <mxCell id="conf_gen" value="&lt;b&gt;Confirmation&lt;br/&gt;Generator&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;inside Validation Service&lt;br/&gt;HTML/Text template output&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2D6A4F;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1230" y="90" width="160" height="100" as="geometry" />
+    <mxCell id="conf_gen" value="&lt;b&gt;Confirmation&lt;br/&gt;Generator&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;inside Validation Service (8083)&lt;br/&gt;Plain-text ISDA notice (ALLEGED)&lt;br/&gt;+ SHA-256 fingerprint dedup&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2D6A4F;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="1470" y="75" width="185" height="98" as="geometry" />
     </mxCell>
 
-    <!-- STP Validation → Confirmation Generator (OK path) -->
-    <mxCell id="e_stp_confgen" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#2D6A4F;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="stp_validation" target="conf_gen" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="lbl_ok" value="OK →" style="text;html=1;strokeColor=none;fillColor=#C8E6C9;align=center;verticalAlign=middle;fontSize=10;fontColor=#2D6A4F;fontStyle=1;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="1100" y="152" width="50" height="22" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- React + TypeScript UI (far right) -->
-    <!-- ═══════════════════════════════════════════ -->
-    <mxCell id="frontend" value="&lt;b&gt;React + TypeScript&lt;br/&gt;Operations UI&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 3000 (Nginx)&lt;br/&gt;FR11: Dashboards&lt;br/&gt;- Trade lifecycle view&lt;br/&gt;- Exception list + aged items&lt;br/&gt;- Root-cause themes / STP rate&lt;br/&gt;- Manual review screen&lt;br/&gt;- Replay queue + audit history&lt;br/&gt;READ-ONLY (never creates trades)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1620" y="80" width="200" height="240" as="geometry" />
-    </mxCell>
-
-    <!-- Confirmation Generator → → → React UI -->
-    <mxCell id="e_confgen_ui" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#23395B;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="conf_gen" target="frontend" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="lbl_confgen_ui" value="confirmation.generated" style="text;html=1;strokeColor=none;fillColor=#e3f2fd;align=center;verticalAlign=middle;fontSize=9;fontColor=#23395B;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="1406" y="118" width="170" height="22" as="geometry" />
-    </mxCell>
-
-    <!-- workitem.linked → React UI -->
-    <mxCell id="e_workitem_ui" value="workitem.linked" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;strokeColor=#23395B;strokeWidth=2;endArrow=block;endFill=1;fontColor=#23395B;fontSize=9;" edge="1" source="workitem" target="frontend" parent="1">
+    <mxCell id="e_stp_confgen" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2D6A4F;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="stp_validation" target="conf_gen" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="1560" y="430" />
-          <mxPoint x="1590" y="430" />
-          <mxPoint x="1590" y="248" />
+          <mxPoint x="1384" y="124" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lbl_ok" value="STP OK →" style="text;html=1;strokeColor=none;fillColor=#C8E6C9;align=center;verticalAlign=middle;fontSize=10;fontColor=#2D6A4F;fontStyle=1;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1354" y="142" width="60" height="22" as="geometry" />
+    </mxCell>
+
+    <!-- confirmation.generated → Workitem Service (closes open work items + progress) -->
+    <mxCell id="e_confgen_workitem" value="confirmation.generated" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.55;exitDx=0;exitDy=0;entryX=0.45;entryY=0;entryDx=0;entryDy=0;strokeColor=#2D6A4F;strokeWidth=2;endArrow=block;endFill=1;fontColor=#2D6A4F;fontSize=9;" edge="1" source="conf_gen" target="workitem" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1848" y="129" />
         </Array>
       </mxGeometry>
     </mxCell>
 
-    <!-- manual.review.required → React UI -->
-    <mxCell id="e_manual_ui" value="manual.review.required" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;strokeColor=#C62828;strokeWidth=1.5;dashed=1;fontColor=#C62828;fontSize=9;" edge="1" source="topic_manual_review" target="frontend" parent="1">
+    <!-- stp.validated (CANCEL_TRADE cascade + replay tracking) → Workitem Service -->
+    <mxCell id="e_stp_validated_workitem" value="stp.validated (CANCEL_TRADE / progress)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.72;exitDx=0;exitDy=0;entryX=0.28;entryY=0;entryDx=0;entryDy=0;strokeColor=#23395B;strokeWidth=1.8;endArrow=block;endFill=1;fontColor=#23395B;fontSize=8.5;" edge="1" source="stp_validation" target="workitem" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="1600" y="570" />
-          <mxPoint x="1600" y="290" />
+          <mxPoint x="1815" y="302" />
         </Array>
       </mxGeometry>
     </mxCell>
 
     <!-- ═══════════════════════════════════════════ -->
-    <!-- ROW 2 — FAIL PATH: Exception Service | Classification | Work Item Linker -->
+    <!-- React + TypeScript UI + Nginx API Gateway -->
+    <!-- ═══════════════════════════════════════════ -->
+    <mxCell id="frontend" value="&lt;b&gt;React + TypeScript&lt;br/&gt;Operations Cockpit&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 3000 (Nginx /api/* Gateway)&lt;br/&gt;FR11: 8 Interactive Views&lt;br/&gt;- Live (5s REST poll) &amp;amp; Demo modes&lt;br/&gt;- Scenario injector (no manual form)&lt;br/&gt;- Trade lifecycle &amp;amp; ISDA notes&lt;br/&gt;- Exceptions, SLA aging &amp;amp; STP %&lt;br/&gt;- 4-eyes review &amp;amp; DLQ replay UI&lt;br/&gt;- Work items, Audit &amp;amp; Topology Map&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#23395B;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="1995" y="75" width="210" height="250" as="geometry" />
+    </mxCell>
+
+    <!-- REST calls from Nginx /api/* Gateway → Services (:8081-8085) -->
+    <mxCell id="e_ui_rest_bus" value="HTTP REST (/api/trades, /api/audit, /api/validation, /api/exceptions)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#7B1FA2;strokeWidth=1.8;fontColor=#7B1FA2;fontSize=8.5;startArrow=open;startFill=0;endArrow=open;endFill=0;" edge="1" source="frontend" target="ingestion" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="2100" y="55" />
+          <mxPoint x="595" y="55" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_ui_rest_workitem" value="REST (/api/workitems, /api/dlq)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.82;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#7B1FA2;strokeWidth=1.8;fontColor=#7B1FA2;fontSize=8.5;startArrow=open;startFill=0;endArrow=open;endFill=0;" edge="1" source="frontend" target="workitem" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1906" y="280" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ROW 2 — FAIL PATH: Exception Service | Classification | Workitem Service -->
     <!-- ═══════════════════════════════════════════ -->
 
-    <!-- FAIL label + arrow -->
-    <mxCell id="lbl_fail" value="Fail ↓" style="text;html=1;strokeColor=none;fillColor=#FFCDD2;align=center;verticalAlign=middle;fontSize=11;fontColor=#C62828;fontStyle=1;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="1046" y="342" width="60" height="28" as="geometry" />
+    <mxCell id="lbl_fail" value="Fail ↓" style="text;html=1;strokeColor=none;fillColor=#FFCDD2;align=center;verticalAlign=middle;fontSize=10;fontColor=#C62828;fontStyle=1;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1256" y="348" width="52" height="24" as="geometry" />
     </mxCell>
 
     <!-- EXCEPTION SERVICE -->
-    <mxCell id="exception_svc" value="&lt;b&gt;Exception&lt;br/&gt;Service&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8084&lt;br/&gt;FR7: Exception capture&lt;br/&gt;FR8: Classification&lt;br/&gt;FR9: Recommendation&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1030" y="390" width="170" height="120" as="geometry" />
+    <mxCell id="exception_svc" value="&lt;b&gt;Exception&lt;br/&gt;Service&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Port 8084&lt;br/&gt;FR7: Exception capture&lt;br/&gt;FR8: Classification + SLA&lt;br/&gt;FR9: Recommendation engine&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="1245" y="405" width="185" height="120" as="geometry" />
     </mxCell>
 
-    <!-- STP Validation → Exception Service (FAIL) -->
+    <!-- STP Validation → Exception Service (exception.created) -->
     <mxCell id="e_stp_excep" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#C62828;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="stp_validation" target="exception_svc" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
     <mxCell id="lbl_exception_created" value="exception.created" style="text;html=1;strokeColor=none;fillColor=#FFCDD2;align=center;verticalAlign=middle;fontSize=9;fontColor=#C62828;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="1060" y="348" width="120" height="22" as="geometry" />
+      <mxGeometry x="1318" y="352" width="106" height="20" as="geometry" />
     </mxCell>
 
-    <!-- Exception Service → CouchDB -->
-    <mxCell id="e_excep_couch" value="persist exceptions" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=9;" edge="1" source="exception_svc" target="couchdb" parent="1">
+    <!-- Ingestion → Exception Service (schema/dup fail → exception.created) -->
+    <mxCell id="e_ingest_excep" value="exception.created (schema/dup)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.55;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.55;entryDx=0;entryDy=0;strokeColor=#C62828;strokeWidth=1.5;endArrow=block;endFill=1;fontColor=#C62828;fontSize=8.5;" edge="1" source="ingestion" target="exception_svc" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="980" y="450" />
-          <mxPoint x="980" y="330" />
-          <mxPoint x="860" y="330" />
+          <mxPoint x="603" y="471" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Exception Service → CouchDB (exceptions + audit-events) -->
+    <mxCell id="e_excep_couch" value="exceptions + audit" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=0.7;entryY=1;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=9;" edge="1" source="exception_svc" target="couchdb" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="876" y="441" />
         </Array>
       </mxGeometry>
     </mxCell>
 
     <!-- CLASSIFICATION & RECOMMENDATION ENGINE -->
     <mxCell id="classif" value="&lt;b&gt;Classification &amp;&lt;br/&gt;Recommendation Engine&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;inside Exception Service&lt;br/&gt;6 categories:&lt;br/&gt;- Missing economic data&lt;br/&gt;- Missing static/ref data&lt;br/&gt;- Template issue&lt;br/&gt;- Business rule failure&lt;br/&gt;- Technical processing&lt;br/&gt;- Counterparty/matching&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1240" y="380" width="190" height="190" as="geometry" />
+      <mxGeometry x="1470" y="395" width="190" height="190" as="geometry" />
     </mxCell>
 
     <!-- Exception Service → Classification -->
-    <mxCell id="e_excep_classif" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="exception_svc" target="classif" parent="1">
+    <mxCell id="e_excep_classif" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.37;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="exception_svc" target="classif" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lbl_classified" value="exception.classified" style="text;html=1;strokeColor=none;fillColor=#FFF3E0;align=center;verticalAlign=middle;fontSize=9;fontColor=#E65100;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="1205" y="418" width="140" height="22" as="geometry" />
+
+    <!-- WORKITEM SERVICE (real Spring Boot + CouchDB service) -->
+    <mxCell id="workitem" value="&lt;b&gt;Workitem Service&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:8.5px'&gt;Port 8085 (CouchDB-backed)&lt;br/&gt;FR10: Work-item lifecycle + 7 queues&lt;br/&gt;FR12: Audit trail + DLQ replay&lt;br/&gt;Consumes: exception.classified,&lt;br/&gt;manual.review.required, deadletter.trade,&lt;br/&gt;confirmation.generated, stp.validated&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="1760" y="395" width="195" height="165" as="geometry" />
     </mxCell>
 
-    <!-- WORK ITEM LINKER / MOCK TRACKER -->
-    <mxCell id="workitem" value="&lt;b&gt;Work Item Linker&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Mock tracker&lt;br/&gt;Port 8085&lt;br/&gt;FR10: Work-item linking&lt;br/&gt;FR12: Audit trail + Replay/DLQ&lt;br/&gt;Consumes: exception.classified&lt;br/&gt;confirmation.generated&lt;br/&gt;deadletter.trade&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1460" y="380" width="190" height="160" as="geometry" />
-    </mxCell>
-
-    <!-- Classification → Work Item Linker -->
-    <mxCell id="e_classif_workitem" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#546E7A;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="classif" target="workitem" parent="1">
+    <!-- Classification → Workitem (exception.classified) -->
+    <mxCell id="e_classif_workitem" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.35;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;strokeColor=#546E7A;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="classif" target="workitem" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lbl_workitem" value="exception.classified" style="text;html=1;strokeColor=none;fillColor=#ECEFF1;align=center;verticalAlign=middle;fontSize=9;fontColor=#546E7A;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="1448" y="420" width="130" height="22" as="geometry" />
+    <mxCell id="lbl_workitem" value="exception.classified" style="text;html=1;strokeColor=none;fillColor=#ECEFF1;align=center;verticalAlign=middle;fontSize=8.5;fontColor=#546E7A;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1665" y="434" width="90" height="20" as="geometry" />
     </mxCell>
 
-    <!-- WorkItem → CouchDB -->
-    <mxCell id="e_workitem_couch" value="persist work-items + audit" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=9;" edge="1" source="workitem" target="couchdb" parent="1">
+    <!-- Workitem → Validation (4-eyes APPROVE via workitem.linked confirms held trade) -->
+    <mxCell id="e_workitem_approve_stp" value="workitem.linked (APPROVE → confirm held trade)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.38;entryDx=0;entryDy=0;strokeColor=#6A1B9A;strokeWidth=2;endArrow=block;endFill=1;fontColor=#6A1B9A;fontSize=8.5;" edge="1" source="workitem" target="stp_validation" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="940" y="460" />
-          <mxPoint x="940" y="345" />
-          <mxPoint x="800" y="345" />
+          <mxPoint x="1780" y="256" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Workitem → CouchDB (work-items + dlq-entries + audit-events) -->
+    <mxCell id="e_workitem_couch" value="work-items + dlq + audit" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.12;exitY=1;exitDx=0;exitDy=0;entryX=0.42;entryY=1;entryDx=0;entryDy=0;dashed=1;strokeColor=#8B4513;strokeWidth=1.5;fontColor=#8B4513;fontSize=9;" edge="1" source="workitem" target="couchdb" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1783" y="594" />
+          <mxPoint x="829" y="594" />
         </Array>
       </mxGeometry>
     </mxCell>
@@ -243,35 +264,31 @@
     <!-- ═══════════════════════════════════════════ -->
     <!-- Manual Review Queue -->
     <!-- ═══════════════════════════════════════════ -->
-    <mxCell id="topic_manual_review" value="&lt;b&gt;Manual Review&lt;br/&gt;Queue&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;manual.review.required&lt;br/&gt;Routed to manual review&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#6A1B9A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1460" y="590" width="190" height="100" as="geometry" />
+    <mxCell id="topic_manual_review" value="&lt;b&gt;Manual Review Queue&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;manual.review.required&lt;br/&gt;Low-conf / dispute / 4-eyes review&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#6A1B9A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="1760" y="610" width="195" height="82" as="geometry" />
     </mxCell>
 
     <!-- Classification → Manual Review Queue -->
-    <mxCell id="e_classif_manual" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6A1B9A;strokeWidth=2;endArrow=block;endFill=1;" edge="1" source="classif" target="topic_manual_review" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="lbl_manual" value="manual.review.required" style="text;html=1;strokeColor=none;fillColor=#EDE7F6;align=center;verticalAlign=middle;fontSize=9;fontColor=#6A1B9A;rounded=1;" vertex="1" parent="1">
-      <mxGeometry x="1450" y="570" width="150" height="22" as="geometry" />
-    </mxCell>
-
-    <!-- ↑ arrow from bottom cross-cutting up to manual review area -->
-    <mxCell id="arr_up" value="↑" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=20;fontColor=#6A1B9A;" vertex="1" parent="1">
-      <mxGeometry x="1790" y="680" width="40" height="40" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- KAFKA — also connects to WorkItem for workitem.linked read by UI -->
-    <!-- ═══════════════════════════════════════════ -->
-
-    <!-- WorkItem → publishes workitem.linked back to Kafka -->
-    <mxCell id="e_workitem_kafka_pub" value="workitem.linked" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.15;exitDx=0;exitDy=0;entryX=1;entryY=0.65;entryDx=0;entryDy=0;dashed=1;strokeColor=#23395B;strokeWidth=1.5;fontColor=#23395B;fontSize=9;" edge="1" source="workitem" target="kafka" parent="1">
+    <mxCell id="e_classif_manual" value="manual.review.required" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6A1B9A;strokeWidth=2;endArrow=block;endFill=1;fontColor=#6A1B9A;fontSize=8.5;" edge="1" source="classif" target="topic_manual_review" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="1380" y="404" />
-          <mxPoint x="1380" y="360" />
-          <mxPoint x="440" y="360" />
-          <mxPoint x="440" y="450" />
+          <mxPoint x="1565" y="651" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Manual Review Queue → Workitem Service (consumes manual.review.required) -->
+    <mxCell id="e_manual_workitem" value="consumes" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#6A1B9A;strokeWidth=2;endArrow=block;endFill=1;fontColor=#6A1B9A;fontSize=8.5;" edge="1" source="topic_manual_review" target="workitem" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Workitem → DLQ (REJECT manual review) -->
+    <mxCell id="e_workitem_dlq_reject" value="REJECT → deadletter.trade" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0.9;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=8.5;" edge="1" source="workitem" target="cc_dlq" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1990" y="510" />
+          <mxPoint x="1990" y="725" />
+          <mxPoint x="422" y="725" />
         </Array>
       </mxGeometry>
     </mxCell>
@@ -281,85 +298,93 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <!-- Dead-letter Queue -->
-    <mxCell id="cc_dlq" value="&lt;b&gt;Dead-letter&lt;br/&gt;Queue&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;deadletter.trade topic&lt;br/&gt;Any service on failure&lt;br/&gt;FR12 - diagnostic context&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCDD2;strokeColor=#C62828;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="260" y="740" width="170" height="100" as="geometry" />
+    <mxCell id="cc_dlq" value="&lt;b&gt;Dead-letter Queue&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;deadletter.trade topic&lt;br/&gt;Any service on failure&lt;br/&gt;FR12 · persisted in dlq-entries&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCDD2;strokeColor=#C62828;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="260" y="765" width="180" height="95" as="geometry" />
     </mxCell>
 
-    <!-- ↔ -->
     <mxCell id="arr_dlq_replay" value="↔" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontColor=#546E7A;" vertex="1" parent="1">
-      <mxGeometry x="438" y="775" width="36" height="30" as="geometry" />
+      <mxGeometry x="444" y="798" width="32" height="30" as="geometry" />
     </mxCell>
 
     <!-- Replay Controls -->
-    <mxCell id="cc_replay" value="&lt;b&gt;Replay&lt;br/&gt;Controls&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;FR12: Controlled replay&lt;br/&gt;Safe re-processing&lt;br/&gt;of DLQ messages&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="478" y="740" width="170" height="100" as="geometry" />
+    <mxCell id="cc_replay" value="&lt;b&gt;Replay Controls&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;FR12: POST /dlq/{id}/replay&lt;br/&gt;eventType=REPLAY (max 3)&lt;br/&gt;Bypasses idempotency dedup&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="480" y="765" width="180" height="95" as="geometry" />
     </mxCell>
 
-    <!-- ↔ -->
     <mxCell id="arr_replay_obs" value="↔" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontColor=#546E7A;" vertex="1" parent="1">
-      <mxGeometry x="656" y="775" width="36" height="30" as="geometry" />
+      <mxGeometry x="664" y="798" width="32" height="30" as="geometry" />
     </mxCell>
 
     <!-- Observability -->
-    <mxCell id="cc_obs" value="&lt;b&gt;Observability:&lt;br/&gt;metrics / logs / traces&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Correlation IDs&lt;br/&gt;/actuator/health per service&lt;br/&gt;Structured logs&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="696" y="740" width="190" height="100" as="geometry" />
+    <mxCell id="cc_obs" value="&lt;b&gt;Observability:&lt;br/&gt;metrics / logs / health&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Correlation IDs · stp-metrics&lt;br/&gt;/actuator/health per service&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="700" y="765" width="195" height="95" as="geometry" />
     </mxCell>
 
-    <!-- ↔ -->
     <mxCell id="arr_obs_audit" value="↔" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontColor=#546E7A;" vertex="1" parent="1">
-      <mxGeometry x="894" y="775" width="36" height="30" as="geometry" />
+      <mxGeometry x="899" y="798" width="32" height="30" as="geometry" />
     </mxCell>
 
     <!-- Audit Trail -->
-    <mxCell id="cc_audit" value="&lt;b&gt;Audit Trail&lt;br/&gt;immutable events&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Every status transition captured&lt;br/&gt;Stored in CouchDB&lt;br/&gt;audit-events database&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="934" y="740" width="190" height="100" as="geometry" />
+    <mxCell id="cc_audit" value="&lt;b&gt;Audit Trail&lt;br/&gt;immutable events&lt;/b&gt;&lt;br/&gt;&lt;font style='font-size:9px'&gt;Ingestion, Exception &amp;amp; Workitem&lt;br/&gt;Stored in CouchDB audit-events&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=10;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="935" y="765" width="195" height="95" as="geometry" />
     </mxCell>
 
-    <!-- Services → DLQ on failure (representative arrows) -->
-    <mxCell id="e_ingest_dlq" value="on failure" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="ingestion" target="cc_dlq" parent="1">
+    <!-- Services → DLQ on failure -->
+    <mxCell id="e_ingest_dlq" value="on failure" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="ingestion" target="cc_dlq" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="508" y="700" />
-          <mxPoint x="312" y="700" />
+          <mxPoint x="555" y="705" />
+          <mxPoint x="296" y="705" />
         </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="e_enrich_dlq" value="on failure" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.6;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="enrichment" target="cc_dlq" parent="1">
+    <mxCell id="e_enrich_dlq" value="on failure / schema 9.9" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.6;exitY=1;exitDx=0;exitDy=0;entryX=0.45;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=8.5;" edge="1" source="enrichment" target="cc_dlq" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="915" y="700" />
-          <mxPoint x="360" y="700" />
+          <mxPoint x="1084" y="705" />
+          <mxPoint x="341" y="705" />
         </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="e_stp_dlq" value="on failure" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="stp_validation" target="cc_dlq" parent="1">
+    <mxCell id="e_stp_dlq" value="on failure" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.8;exitY=1;exitDx=0;exitDy=0;entryX=0.68;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="stp_validation" target="cc_dlq" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="1115" y="700" />
-          <mxPoint x="396" y="700" />
+          <mxPoint x="1393" y="375" />
+          <mxPoint x="1445" y="375" />
+          <mxPoint x="1445" y="705" />
+          <mxPoint x="382" y="705" />
         </Array>
       </mxGeometry>
     </mxCell>
-
-    <!-- DLQ → WorkItem (audit) -->
-    <mxCell id="e_dlq_workitem" value="DLQ audit" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="cc_dlq" target="workitem" parent="1">
+    <mxCell id="e_excep_dlq" value="on failure" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.78;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="exception_svc" target="cc_dlq" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="500" y="770" />
-          <mxPoint x="500" y="720" />
-          <mxPoint x="1555" y="720" />
-          <mxPoint x="1555" y="540" />
+          <mxPoint x="1338" y="705" />
+          <mxPoint x="400" y="705" />
         </Array>
       </mxGeometry>
     </mxCell>
 
-    <!-- Replay Controls → Kafka (replay to broker) -->
-    <mxCell id="e_replay_kafka" value="replay to broker" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;dashed=1;strokeColor=#E65100;strokeWidth=1.5;fontColor=#E65100;fontSize=9;" edge="1" source="cc_replay" target="kafka" parent="1">
+    <!-- DLQ → Workitem (deadletter.trade stored + DATA_FIX WI) -->
+    <mxCell id="e_dlq_workitem" value="deadletter.trade → store + DATA_FIX WI" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=1;entryDx=0;entryDy=0;dashed=1;strokeColor=#C62828;strokeWidth=1.5;fontColor=#C62828;fontSize=9;" edge="1" source="cc_dlq" target="workitem" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="420" y="790" />
-          <mxPoint x="345" y="790" />
-          <mxPoint x="345" y="645" />
+          <mxPoint x="350" y="905" />
+          <mxPoint x="1970" y="905" />
+          <mxPoint x="1970" y="575" />
+          <mxPoint x="1916" y="575" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Replay Controls → Kafka (re-publish to failed topic) -->
+    <mxCell id="e_replay_kafka" value="replay to failed topic" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;dashed=1;strokeColor=#E65100;strokeWidth=1.5;fontColor=#E65100;fontSize=9;" edge="1" source="cc_replay" target="kafka" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="570" y="742" />
+          <mxPoint x="240" y="742" />
+          <mxPoint x="240" y="675" />
+          <mxPoint x="345" y="675" />
         </Array>
       </mxGeometry>
     </mxCell>
@@ -367,57 +392,56 @@
     <!-- ═══════════════════════════════════════════ -->
     <!-- COMMON-LIB annotation -->
     <!-- ═══════════════════════════════════════════ -->
-    <mxCell id="cc_commonlib" value="&lt;b&gt;common-lib&lt;/b&gt; (shared Maven module)&lt;br/&gt;&lt;font style='font-size:9px'&gt;FpML-inspired JSON DTOs · Kafka event contracts · Constants&lt;br/&gt;Used by all 5 backend services&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=5;strokeWidth=2;" vertex="1" parent="1">
-      <mxGeometry x="1180" y="745" width="440" height="80" as="geometry" />
+    <mxCell id="cc_commonlib" value="&lt;b&gt;common-lib&lt;/b&gt; (shared Maven module) — Used by all 5 backend services&lt;br/&gt;&lt;font style='font-size:9px'&gt;FpML-inspired JSON DTOs · TopicNames &amp;amp; Event contracts · ConfirmationFingerprint (SHA-256) · SchemaVersionRouter · IdempotencyKey&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;fontColor=#1A1A2E;fontSize=10;verticalAlign=middle;arcSize=5;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="1165" y="765" width="790" height="95" as="geometry" />
     </mxCell>
 
     <!-- ═══════════════════════════════════════════ -->
-    <!-- LEGEND -->
+    <!-- RIGHT SIDEBAR: LEGEND · KEY NFRs · TEAM OWNERSHIP -->
     <!-- ═══════════════════════════════════════════ -->
     <mxCell id="legend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#BDBDBD;" vertex="1" parent="1">
-      <mxGeometry x="60" y="740" width="185" height="270" as="geometry" />
+      <mxGeometry x="2235" y="75" width="235" height="270" as="geometry" />
     </mxCell>
     <mxCell id="legend_title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=13;fontColor=#1A1A2E;" vertex="1" parent="1">
-      <mxGeometry x="70" y="746" width="160" height="22" as="geometry" />
+      <mxGeometry x="2247" y="81" width="160" height="22" as="geometry" />
     </mxCell>
 
-    <mxCell id="l1box" value="" style="rounded=1;fillColor=#dae8fc;strokeColor=#23395B;" vertex="1" parent="1"><mxGeometry x="70" y="774" width="16" height="16" as="geometry" /></mxCell>
-    <mxCell id="l1txt" value="Kafka / Infrastructure" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="92" y="772" width="148" height="20" as="geometry" /></mxCell>
+    <mxCell id="l1box" value="" style="rounded=1;fillColor=#dae8fc;strokeColor=#23395B;" vertex="1" parent="1"><mxGeometry x="2247" y="109" width="16" height="16" as="geometry" /></mxCell>
+    <mxCell id="l1txt" value="Kafka / UI Gateway" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2269" y="107" width="190" height="20" as="geometry" /></mxCell>
 
-    <mxCell id="l2box" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#2D6A4F;" vertex="1" parent="1"><mxGeometry x="70" y="798" width="16" height="16" as="geometry" /></mxCell>
-    <mxCell id="l2txt" value="Ingestion / Enrichment Service" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="92" y="796" width="148" height="20" as="geometry" /></mxCell>
+    <mxCell id="l2box" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#2D6A4F;" vertex="1" parent="1"><mxGeometry x="2247" y="133" width="16" height="16" as="geometry" /></mxCell>
+    <mxCell id="l2txt" value="Ingestion / Enrichment / Conf" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2269" y="131" width="190" height="20" as="geometry" /></mxCell>
 
-    <mxCell id="l3box" value="" style="rounded=1;fillColor=#FFE0B2;strokeColor=#E65100;" vertex="1" parent="1"><mxGeometry x="70" y="822" width="16" height="16" as="geometry" /></mxCell>
-    <mxCell id="l3txt" value="STP Validation / Exception Path" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="92" y="820" width="148" height="20" as="geometry" /></mxCell>
+    <mxCell id="l3box" value="" style="rounded=1;fillColor=#FFE0B2;strokeColor=#E65100;" vertex="1" parent="1"><mxGeometry x="2247" y="157" width="16" height="16" as="geometry" /></mxCell>
+    <mxCell id="l3txt" value="STP Validation / Exception Path" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2269" y="155" width="190" height="20" as="geometry" /></mxCell>
 
-    <mxCell id="l4box" value="" style="rounded=1;fillColor=#ECEFF1;strokeColor=#546E7A;" vertex="1" parent="1"><mxGeometry x="70" y="846" width="16" height="16" as="geometry" /></mxCell>
-    <mxCell id="l4txt" value="Work Item / Cross-cutting" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="92" y="844" width="148" height="20" as="geometry" /></mxCell>
+    <mxCell id="l4box" value="" style="rounded=1;fillColor=#ECEFF1;strokeColor=#546E7A;" vertex="1" parent="1"><mxGeometry x="2247" y="181" width="16" height="16" as="geometry" /></mxCell>
+    <mxCell id="l4txt" value="Workitem / Cross-cutting" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2269" y="179" width="190" height="20" as="geometry" /></mxCell>
 
-    <mxCell id="l5box" value="" style="rounded=1;fillColor=#EDE7F6;strokeColor=#6A1B9A;" vertex="1" parent="1"><mxGeometry x="70" y="870" width="16" height="16" as="geometry" /></mxCell>
-    <mxCell id="l5txt" value="Manual Review Queue" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="92" y="868" width="148" height="20" as="geometry" /></mxCell>
+    <mxCell id="l5box" value="" style="rounded=1;fillColor=#EDE7F6;strokeColor=#6A1B9A;" vertex="1" parent="1"><mxGeometry x="2247" y="205" width="16" height="16" as="geometry" /></mxCell>
+    <mxCell id="l5txt" value="Manual Review / REST Gateway" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2269" y="203" width="190" height="20" as="geometry" /></mxCell>
 
-    <mxCell id="l6box" value="" style="rounded=1;fillColor=#FFCDD2;strokeColor=#C62828;" vertex="1" parent="1"><mxGeometry x="70" y="894" width="16" height="16" as="geometry" /></mxCell>
-    <mxCell id="l6txt" value="Dead-letter Queue / Error" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="92" y="892" width="148" height="20" as="geometry" /></mxCell>
+    <mxCell id="l6box" value="" style="rounded=1;fillColor=#FFCDD2;strokeColor=#C62828;" vertex="1" parent="1"><mxGeometry x="2247" y="229" width="16" height="16" as="geometry" /></mxCell>
+    <mxCell id="l6txt" value="Dead-letter Queue / Error" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2269" y="227" width="190" height="20" as="geometry" /></mxCell>
 
-    <mxCell id="l7txt" value="Solid → Kafka event flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="70" y="918" width="168" height="20" as="geometry" /></mxCell>
-    <mxCell id="l8txt" value="Dashed → REST/HTTP / persist" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="70" y="938" width="168" height="20" as="geometry" /></mxCell>
-    <mxCell id="l9txt" value="↔ Bidirectional cross-cut" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="70" y="958" width="168" height="20" as="geometry" /></mxCell>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- Figure caption -->
-    <!-- ═══════════════════════════════════════════ -->
-    <mxCell id="caption" value="Figure 1. Event-driven architecture: the MVP demonstrates the full flow on a representative subset; stretch goals expand scale, automation, self-healing, and analytics." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
-      <mxGeometry x="60" y="858" width="860" height="30" as="geometry" />
-    </mxCell>
+    <mxCell id="l7txt" value="Solid → Kafka event flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2247" y="255" width="210" height="20" as="geometry" /></mxCell>
+    <mxCell id="l8txt" value="Purple dashed ↔ Nginx /api/* REST" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2247" y="275" width="210" height="20" as="geometry" /></mxCell>
+    <mxCell id="l9txt" value="Brown/Red dashed → CouchDB / DLQ" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2247" y="295" width="210" height="20" as="geometry" /></mxCell>
+    <mxCell id="l10txt" value="↔ Bidirectional cross-cut" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" vertex="1" parent="1"><mxGeometry x="2247" y="315" width="210" height="20" as="geometry" /></mxCell>
 
     <!-- NFR annotation box -->
-    <mxCell id="nfr_note" value="&lt;b&gt;Key NFRs&lt;/b&gt;&lt;br/&gt;SLA: ≤10s end-to-end&lt;br/&gt;Volume: 1M trades/day (design target)&lt;br/&gt;Peak: 100K trades/hour&lt;br/&gt;Horizontal consumer scaling&lt;br/&gt;Partition key: tradeId&lt;br/&gt;Idempotent writes to CouchDB" style="text;html=1;strokeColor=#BDBDBD;fillColor=#FAFAFA;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontColor=#333333;" vertex="1" parent="1">
-      <mxGeometry x="1660" y="340" width="210" height="160" as="geometry" />
+    <mxCell id="nfr_note" value="&lt;b&gt;Key NFRs&lt;/b&gt;&lt;br/&gt;SLA: ≤10s end-to-end STP&lt;br/&gt;Volume: 1M trades/day target&lt;br/&gt;Peak: 100K trades/hour&lt;br/&gt;Horizontal consumer scaling (3 partitions)&lt;br/&gt;Partition key: tradeId&lt;br/&gt;Idempotent CouchDB persistence" style="text;html=1;strokeColor=#BDBDBD;fillColor=#FAFAFA;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontColor=#333333;spacing=8;" vertex="1" parent="1">
+      <mxGeometry x="2235" y="365" width="235" height="150" as="geometry" />
     </mxCell>
 
-    <!-- Team Ownership annotation box -->
-    <mxCell id="team_note" value="&lt;b&gt;Team Ownership&lt;/b&gt;&lt;br/&gt;Mayank → ingestion-service&lt;br/&gt;Gunjan → enrichment-service&lt;br/&gt;Mahadev → validation-service&lt;br/&gt;Kapish → exception-service&lt;br/&gt;Bhavik → workitem-service (DevOps)&lt;br/&gt;Oren → frontend + QA" style="text;html=1;strokeColor=#BDBDBD;fillColor=#FAFAFA;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontColor=#333333;" vertex="1" parent="1">
-      <mxGeometry x="1660" y="520" width="210" height="160" as="geometry" />
+    <!-- Team Ownership annotation box (synced to docs/project-status.md) -->
+    <mxCell id="team_note" value="&lt;b&gt;Team Ownership&lt;/b&gt;&lt;br/&gt;Mayank → Team Lead + ingestion-service&lt;br/&gt;Bhavik → enrichment-service&lt;br/&gt;Mahadev → validation-service&lt;br/&gt;Kapish → exception-service&lt;br/&gt;Oren → workitem-service + DevOps&lt;br/&gt;Gunjan → frontend + QA" style="text;html=1;strokeColor=#BDBDBD;fillColor=#FAFAFA;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontColor=#333333;spacing=8;" vertex="1" parent="1">
+      <mxGeometry x="2235" y="535" width="235" height="150" as="geometry" />
+    </mxCell>
+
+    <!-- Figure caption -->
+    <mxCell id="caption" value="Figure 1. Implemented TCEM event-driven architecture: 5 Spring Boot microservices (:8081–:8085), 10 Kafka topics (3 partitions), 9 CouchDB databases, Nginx /api/* REST gateway (:3000), 4-eyes manual review feedback loop, and controlled DLQ replay." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+      <mxGeometry x="260" y="930" width="1695" height="30" as="geometry" />
     </mxCell>
 
   </root>
